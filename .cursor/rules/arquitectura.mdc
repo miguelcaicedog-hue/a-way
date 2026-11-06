@@ -1,0 +1,12 @@
+---
+description: Límites fijos de la plataforma A-WAY
+alwaysApply: true
+---
+
+# Arquitectura A-WAY
+
+- `a-way-core` es Java 11, Spring Boot 2.7.18 (`javax.*`) y un WAR en Tomcat 9. `spring-boot-starter-tomcat` queda en scope `provided`.
+- `a-way-web` es React con Vite y TypeScript. Nginx sirve el build y proxea `/api` hacia `a-way-core`.
+- La comunicación entre las aplicaciones es REST JSON.
+- PostgreSQL, la API y el front se despliegan con Docker Compose.
+- Spring Boot 3 y Tomcat 10 quedan fuera: exigen Java 17.

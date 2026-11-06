@@ -1,0 +1,1 @@
+-- Initial schema. Business tables arrive in later phases.
