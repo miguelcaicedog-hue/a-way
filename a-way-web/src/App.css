@@ -1,15 +1,132 @@
 main {
-  max-width: 32rem;
+  width: min(24rem, 100%);
   margin: 4rem auto;
   padding: 2rem;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg);
+  text-align: left;
+  box-sizing: border-box;
 }
 
-h1 {
+main h1 {
   margin: 0 0 0.25rem;
+  font-size: 2.5rem;
+  letter-spacing: -0.04em;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+input {
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
   color: var(--text-h);
+}
+
+button {
+  font: inherit;
+  margin-top: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  border: 0;
+  border-radius: 8px;
+  background: #163a5f;
+  color: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.shell {
+  width: 100%;
+  text-align: left;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.45rem 0.75rem 0.55rem;
+  background: #163a5f;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex: 0 0 auto;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 0.15rem;
+  overflow-x: auto;
+  flex: 1 0 100%;
+  order: 3;
+  min-width: 0;
+  padding-bottom: 0.15rem;
+}
+
+.topbar nav button,
+.session button {
+  margin: 0;
+  background: transparent;
+  color: white;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  white-space: nowrap;
+}
+
+.topbar nav button[aria-current='page'] {
+  background: white;
+  color: #163a5f;
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+}
+
+.session button {
+  background: white;
+  color: #163a5f;
+}
+
+.workspace {
+  width: min(46rem, calc(100% - 2rem));
+  margin: 2rem auto;
+  padding: 0 0 2rem;
+  border: 0;
+  background: transparent;
+}
+
+.workspace h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
 }
 
 ul {
