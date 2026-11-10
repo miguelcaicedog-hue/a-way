@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
+import { api } from './api'
+import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
 
 type Health = {
   service?: string
@@ -28,7 +30,7 @@ const sections = [
   { id: 'ediciones', label: 'Ediciones', summary: 'Temporadas de cada liga.' },
   { id: 'categorias', label: 'Categorías', summary: 'Categorías de una edición, tope de jugadores y criterios de desempate.' },
   { id: 'equipos', label: 'Equipos', summary: 'Clubes de la liga e inscripción a una categoría.' },
-  { id: 'jugadores', label: 'Jugadores', summary: 'Ficha del plantel: nombre, alias, número, foto y rotación.' },
+  { id: 'jugadores', label: 'Jugadores', summary: 'Ficha del plantel: cédula, nombre, alias, número de camisa, foto y rotación.' },
   { id: 'grupos', label: 'Grupos', summary: 'De uno a n grupos, cargados a mano, al azar o por sorteo.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
   { id: 'calendario', label: 'Calendario', summary: 'Jornadas, fechas, horarios, cancha y árbitro de cada partido.' },
@@ -46,6 +48,16 @@ const sections = [
   { id: 'usuarios', label: 'Usuarios', summary: 'Master, administrativo y asistente de cada liga.' },
 ] as const
 
+const menuGroups = [
+  { label: 'Inicio', ids: ['inicio'] },
+  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores'] },
+  { label: 'Fixture', ids: ['grupos', 'fases', 'calendario'] },
+  { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
+  { label: 'Disciplina', ids: ['suspensiones', 'sanciones'] },
+  { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
+  { label: 'Administración', ids: ['importaciones', 'configuracion', 'usuarios'] },
+] as const
+
 type SectionId = (typeof sections)[number]['id']
 
 function roleLabel(profile: Profile) {
@@ -56,8 +68,7 @@ function roleLabel(profile: Profile) {
   if (!membership) {
     return 'Sin rol'
   }
-  const role = membership.role === 'ADMINISTRATIVO' ? 'Administrativo' : 'Asistente'
-  return `${role} · ${membership.leagueName}`
+  return membership.role === 'ADMINISTRATIVO' ? 'Administrativo' : 'Asistente'
 }
 
 function App() {
@@ -69,6 +80,22 @@ function App() {
   const [submitting, setSubmitting] = useState(false)
   const [health, setHealth] = useState<Health | null>(null)
   const [section, setSection] = useState<SectionId>('inicio')
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [leagues, setLeagues] = useState<{ id: string; name: string }[]>([])
+  const [editions, setEditions] = useState<{ id: string; name: string }[]>([])
+  const [leagueId, setLeagueId] = useState('')
+  const [editionId, setEditionId] = useState('')
+  const [scopeVersion, setScopeVersion] = useState(0)
+
+  function refreshScope(next?: { leagueId?: string; editionId?: string }) {
+    if (next?.leagueId) {
+      setLeagueId(next.leagueId)
+    }
+    if (next?.editionId) {
+      setEditionId(next.editionId)
+    }
+    setScopeVersion((value) => value + 1)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -121,6 +148,63 @@ function App() {
       cancelled = true
     }
   }, [profile])
+
+  useEffect(() => {
+    if (!profile) {
+      return
+    }
+    let cancelled = false
+    api<{ id: string; name: string }[]>('/api/leagues')
+      .then((items) => {
+        if (cancelled) {
+          return
+        }
+        setLeagues(items)
+        setLeagueId((current) => {
+          if (!profile.master) {
+            return profile.memberships[0]?.leagueId || items[0]?.id || ''
+          }
+          if (current && items.some((item) => item.id === current)) {
+            return current
+          }
+          return items[0]?.id ?? ''
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLeagues([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [profile, scopeVersion])
+
+  useEffect(() => {
+    if (!leagueId) {
+      setEditions([])
+      setEditionId('')
+      return
+    }
+    let cancelled = false
+    api<{ id: string; name: string }[]>(`/api/editions?leagueId=${leagueId}`)
+      .then((items) => {
+        if (cancelled) {
+          return
+        }
+        setEditions(items)
+        setEditionId((current) => (current && items.some((item) => item.id === current) ? current : items[0]?.id ?? ''))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEditions([])
+          setEditionId('')
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [leagueId, scopeVersion])
 
   async function onLogin(event: FormEvent) {
     event.preventDefault()
@@ -202,18 +286,80 @@ function App() {
       <header className="topbar">
         <div className="brand">A-WAY</div>
         <nav aria-label="Principal">
-          {sections.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-current={item.id === section ? 'page' : undefined}
-              onClick={() => setSection(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
+          {menuGroups.map((group) => {
+            const items = group.ids.flatMap((id) => {
+              const item = sections.find((sectionItem) => sectionItem.id === id)
+              return item ? [item] : []
+            })
+            if (items.length === 1 && items[0].id === 'inicio') {
+              return (
+                <button
+                  key={group.label}
+                  type="button"
+                  aria-current={section === 'inicio' ? 'page' : undefined}
+                  onClick={() => setSection('inicio')}
+                >
+                  Inicio
+                </button>
+              )
+            }
+            const active = items.some((item) => item.id === section)
+            return (
+              <div
+                key={group.label}
+                className={openMenu === group.label ? 'menu-group is-open' : 'menu-group'}
+                onMouseEnter={() => setOpenMenu(group.label)}
+                onMouseLeave={() => setOpenMenu(null)}
+              >
+                <button
+                  type="button"
+                  className={active ? 'is-current' : undefined}
+                  aria-expanded={openMenu === group.label}
+                  aria-haspopup="true"
+                  onClick={() => setOpenMenu(openMenu === group.label ? null : group.label)}
+                >
+                  {group.label}
+                </button>
+                <div className="menu-tree" role="group" aria-label={group.label}>
+                  {items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-current={item.id === section ? 'page' : undefined}
+                      onClick={() => {
+                        setSection(item.id)
+                        setOpenMenu(null)
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </nav>
         <div className="session">
+          <label>
+            Liga
+            <select
+              value={leagueId}
+              disabled={!profile.master}
+              onChange={(event) => setLeagueId(event.target.value)}
+            >
+              {leagues.map((league) => (
+                <option key={league.id} value={league.id}>{league.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Edición
+            <select value={editionId} onChange={(event) => setEditionId(event.target.value)}>
+              {editions.map((edition) => (
+                <option key={edition.id} value={edition.id}>{edition.name}</option>
+              ))}
+            </select>
+          </label>
           <span>{roleLabel(profile)}</span>
           <button type="button" onClick={onLogout}>
             Salir
@@ -230,6 +376,11 @@ function App() {
             <li>Base de datos: {health.database}</li>
           </ul>
         )}
+        {section === 'ligas' && <LeagueScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}
+        {section === 'ediciones' && <EditionScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}
+        {section === 'categorias' && <CategoryScreen profile={profile} editionId={editionId} />}
+        {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} />}
+        {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
       </main>
     </div>
   )
