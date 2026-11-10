@@ -500,6 +500,7 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
       <table>
         <thead>
           <tr>
+            <th className="numero">Nº</th>
             <th>Nombre</th>
             <th>Representante</th>
             <th>Teléfono</th>
@@ -507,8 +508,9 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {rows.map((row, index) => (
             <tr key={row.id}>
+              <td className="numero">{index + 1}</td>
               <td>{row.name}</td>
               <td>{row.nombreRepresentante}</td>
               <td>{row.numeroTelefono}</td>
@@ -520,7 +522,7 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
               )}
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={writable ? 4 : 3}>No hay equipos.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 5 : 4}>No hay equipos.</td></tr>}
         </tbody>
       </table>
       {writable && (
@@ -825,6 +827,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
         <table>
           <thead>
             <tr>
+              <th className="numero">Nº</th>
               <th>Foto</th>
               <th>Cédula</th>
               <th>Nº de camisa</th>
@@ -834,8 +837,9 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, index) => (
               <tr key={row.id}>
+                <td className="numero">{index + 1}</td>
                 <td>
                   {row.hasPhoto && (
                     <img
@@ -858,7 +862,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 )}
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={6}>No hay jugadores.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={writable ? 7 : 6}>No hay jugadores.</td></tr>}
           </tbody>
         </table>
       )}

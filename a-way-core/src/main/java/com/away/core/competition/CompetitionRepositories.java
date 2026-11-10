@@ -24,6 +24,20 @@ interface CategoryRepository extends JpaRepository<Category, UUID> {
 
 interface TeamRepository extends JpaRepository<Team, UUID> {
     List<Team> findByLeague_IdOrderByNameAsc(UUID leagueId);
+
+    Optional<Team> findByLeague_IdAndName(UUID leagueId, String name);
+}
+
+interface InscripcionArchivoRepository extends JpaRepository<InscripcionArchivo, UUID> {
+    List<InscripcionArchivo> findByIdLigaAndIdEdicionAndEstadoOrderByFechaCreacionDesc(UUID idLiga, UUID idEdicion, String estado);
+}
+
+interface InscripcionEquipoRepository extends JpaRepository<InscripcionEquipo, UUID> {
+    List<InscripcionEquipo> findByIdInscripcionArchivoAndEstadoOrderByNumeroFilaAsc(UUID idInscripcionArchivo, String estado);
+}
+
+interface InscripcionJugadorRepository extends JpaRepository<InscripcionJugador, UUID> {
+    List<InscripcionJugador> findByIdInscripcionEquipoAndEstadoOrderByOrdenAsc(UUID idInscripcionEquipo, String estado);
 }
 
 interface TeamEntryRepository extends JpaRepository<TeamEntry, UUID> {

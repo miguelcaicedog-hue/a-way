@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 import { api } from './api'
 import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
+import { InscripcionScreen } from './Inscripciones'
 
 type Health = {
   service?: string
@@ -31,6 +32,7 @@ const sections = [
   { id: 'categorias', label: 'Categorías', summary: 'Categorías de una edición, tope de jugadores y criterios de desempate.' },
   { id: 'equipos', label: 'Equipos', summary: 'Clubes de la liga e inscripción a una categoría.' },
   { id: 'jugadores', label: 'Jugadores', summary: 'Ficha del plantel: cédula, nombre, alias, número de camisa, foto y rotación.' },
+  { id: 'inscripciones', label: 'Inscripciones', summary: 'Carga del archivo de inscripciones y alta de equipos y jugadores por categoría.' },
   { id: 'grupos', label: 'Grupos', summary: 'De uno a n grupos, cargados a mano, al azar o por sorteo.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
   { id: 'calendario', label: 'Calendario', summary: 'Jornadas, fechas, horarios, cancha y árbitro de cada partido.' },
@@ -50,7 +52,7 @@ const sections = [
 
 const menuGroups = [
   { label: 'Inicio', ids: ['inicio'] },
-  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores'] },
+  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'calendario'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
   { label: 'Disciplina', ids: ['suspensiones', 'sanciones'] },
@@ -388,6 +390,7 @@ function App() {
         {section === 'categorias' && <CategoryScreen profile={profile} editionId={editionId} />}
         {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} />}
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
+        {section === 'inscripciones' && <InscripcionScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
       </main>
       </div>
     </div>
