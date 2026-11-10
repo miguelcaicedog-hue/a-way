@@ -81,7 +81,7 @@ function App() {
   const [health, setHealth] = useState<Health | null>(null)
   const [section, setSection] = useState<SectionId>('inicio')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
-  const [leagues, setLeagues] = useState<{ id: string; name: string }[]>([])
+  const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean }[]>([])
   const [editions, setEditions] = useState<{ id: string; name: string }[]>([])
   const [leagueId, setLeagueId] = useState('')
   const [editionId, setEditionId] = useState('')
@@ -154,7 +154,7 @@ function App() {
       return
     }
     let cancelled = false
-    api<{ id: string; name: string }[]>('/api/leagues')
+    api<{ id: string; name: string; hasLogo: boolean }[]>('/api/leagues')
       .then((items) => {
         if (cancelled) {
           return
@@ -283,7 +283,7 @@ function App() {
 
   return (
     <div className="shell">
-      <header className="topbar">
+      <aside className="sidebar">
         <div className="brand">A-WAY</div>
         <nav aria-label="Principal">
           {menuGroups.map((group) => {
@@ -339,10 +339,14 @@ function App() {
             )
           })}
         </nav>
-        <div className="session">
+      </aside>
+      <div className="content">
+        <header className="topbar">
+          <div className="session">
           <label>
             Liga
             <select
+              className="league-select"
               value={leagueId}
               disabled={!profile.master}
               onChange={(event) => setLeagueId(event.target.value)}
@@ -360,13 +364,16 @@ function App() {
               ))}
             </select>
           </label>
+          {leagues.some((league) => league.id === leagueId && league.hasLogo) && (
+            <img className="league-logo" alt="" src={`/api/leagues/${leagueId}/logo?v=${scopeVersion}`} />
+          )}
           <span>{roleLabel(profile)}</span>
           <button type="button" onClick={onLogout}>
             Salir
           </button>
-        </div>
-      </header>
-      <main className="workspace">
+          </div>
+        </header>
+        <main className="workspace">
         <h1>{current.label}</h1>
         <p>{current.summary}</p>
         {section === 'inicio' && health && (
@@ -382,6 +389,7 @@ function App() {
         {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} />}
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
       </main>
+      </div>
     </div>
   )
 }

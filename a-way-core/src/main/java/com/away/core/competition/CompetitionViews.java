@@ -15,6 +15,9 @@ class LeagueRequest {
     @NotNull
     private LocalDate validUntil;
     private boolean active = true;
+    private String logoBase64;
+    private String logoContentType;
+    private boolean clearLogo;
 
     public String getName() {
         return name;
@@ -46,6 +49,30 @@ class LeagueRequest {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getLogoBase64() {
+        return logoBase64;
+    }
+
+    public void setLogoBase64(String logoBase64) {
+        this.logoBase64 = logoBase64;
+    }
+
+    public String getLogoContentType() {
+        return logoContentType;
+    }
+
+    public void setLogoContentType(String logoContentType) {
+        this.logoContentType = logoContentType;
+    }
+
+    public boolean isClearLogo() {
+        return clearLogo;
+    }
+
+    public void setClearLogo(boolean clearLogo) {
+        this.clearLogo = clearLogo;
     }
 }
 
@@ -130,6 +157,10 @@ class TeamRequest {
     private UUID leagueId;
     @NotBlank
     private String name;
+    @Size(max = 160)
+    private String nombreRepresentante;
+    @Size(max = 30)
+    private String numeroTelefono;
 
     public UUID getLeagueId() {
         return leagueId;
@@ -146,6 +177,22 @@ class TeamRequest {
     public void setName(String name) {
         this.name = name;
     }
+
+    public String getNombreRepresentante() {
+        return nombreRepresentante;
+    }
+
+    public void setNombreRepresentante(String nombreRepresentante) {
+        this.nombreRepresentante = nombreRepresentante;
+    }
+
+    public String getNumeroTelefono() {
+        return numeroTelefono;
+    }
+
+    public void setNumeroTelefono(String numeroTelefono) {
+        this.numeroTelefono = numeroTelefono;
+    }
 }
 
 class LeagueView {
@@ -154,13 +201,15 @@ class LeagueView {
     private final LocalDate validFrom;
     private final LocalDate validUntil;
     private final boolean active;
+    private final boolean hasLogo;
 
-    LeagueView(UUID id, String name, LocalDate validFrom, LocalDate validUntil, boolean active) {
+    LeagueView(UUID id, String name, LocalDate validFrom, LocalDate validUntil, boolean active, boolean hasLogo) {
         this.id = id;
         this.name = name;
         this.validFrom = validFrom;
         this.validUntil = validUntil;
         this.active = active;
+        this.hasLogo = hasLogo;
     }
 
     public UUID getId() {
@@ -181,6 +230,10 @@ class LeagueView {
 
     public boolean isActive() {
         return active;
+    }
+
+    public boolean isHasLogo() {
+        return hasLogo;
     }
 }
 
@@ -279,12 +332,16 @@ class TeamView {
     private final UUID leagueId;
     private final String leagueName;
     private final String name;
+    private final String nombreRepresentante;
+    private final String numeroTelefono;
 
-    TeamView(UUID id, UUID leagueId, String leagueName, String name) {
+    TeamView(UUID id, UUID leagueId, String leagueName, String name, String nombreRepresentante, String numeroTelefono) {
         this.id = id;
         this.leagueId = leagueId;
         this.leagueName = leagueName;
         this.name = name;
+        this.nombreRepresentante = nombreRepresentante;
+        this.numeroTelefono = numeroTelefono;
     }
 
     public UUID getId() {
@@ -301,6 +358,14 @@ class TeamView {
 
     public String getName() {
         return name;
+    }
+
+    public String getNombreRepresentante() {
+        return nombreRepresentante;
+    }
+
+    public String getNumeroTelefono() {
+        return numeroTelefono;
     }
 }
 

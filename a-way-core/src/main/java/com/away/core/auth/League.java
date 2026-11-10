@@ -26,6 +26,12 @@ public class League {
     @Column(nullable = false)
     private boolean active;
 
+    @Column(name = "logo")
+    private byte[] logo;
+
+    @Column(name = "logo_content_type")
+    private String logoContentType;
+
     public UUID getId() {
         return id;
     }
@@ -64,5 +70,21 @@ public class League {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public byte[] getLogo() {
+        return logo;
+    }
+
+    public void setLogo(byte[] logo) {
+        this.logo = logo;
+    }
+
+    public String getLogoContentType() {
+        return logoContentType;
+    }
+
+    public void setLogoContentType(String logoContentType) {
+        this.logoContentType = logoContentType;
     }
 }

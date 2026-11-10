@@ -186,7 +186,7 @@ public class CompetitionService {
         Team team = new Team();
         team.setId(UUID.randomUUID());
         team.setLeague(league);
-        team.setName(request.getName().trim());
+        applyTeam(team, request);
         return teamView(teams.save(team));
     }
 
@@ -196,7 +196,7 @@ public class CompetitionService {
         assertWrite(team.getLeague().getId());
         assertWrite(league.getId());
         team.setLeague(league);
-        team.setName(request.getName().trim());
+        applyTeam(team, request);
         return teamView(team);
     }
 
@@ -297,11 +297,59 @@ public class CompetitionService {
         return player;
     }
 
+    @Transactional(readOnly = true)
+    public League leagueLogo(UUID id) {
+        League league = league(id);
+        assertRead(league.getId());
+        league.getLogo();
+        return league;
+    }
+
+    private void applyTeam(Team team, TeamRequest request) {
+        team.setName(request.getName().trim());
+        String representative = request.getNombreRepresentante() == null ? "" : request.getNombreRepresentante().trim();
+        String phone = request.getNumeroTelefono() == null ? "" : request.getNumeroTelefono().trim();
+        team.setNombreRepresentante(representative.isEmpty() ? null : representative);
+        team.setNumeroTelefono(phone.isEmpty() ? null : phone);
+    }
+
     private void applyLeague(League league, LeagueRequest request) {
         league.setName(request.getName().trim());
         league.setValidFrom(request.getValidFrom());
         league.setValidUntil(request.getValidUntil());
         league.setActive(request.isActive());
+        if (request.isClearLogo()) {
+            league.getLogo();
+            league.setLogo(null);
+            league.setLogoContentType(null);
+        }
+        if (request.getLogoBase64() != null && !request.getLogoBase64().trim().isEmpty()) {
+            applyLogo(league, request);
+        }
+    }
+
+    private void applyLogo(League league, LeagueRequest request) {
+        String encoded = request.getLogoBase64().trim();
+        String type = imageType(request.getLogoContentType(), encoded);
+        if (!Arrays.asList("image/jpeg", "image/png", "image/webp", "image/gif").contains(type)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo debe ser JPEG, PNG, WEBP o GIF");
+        }
+        int comma = encoded.indexOf(',');
+        if (encoded.startsWith("data:") && comma > 0) {
+            encoded = encoded.substring(comma + 1);
+        }
+        byte[] logo;
+        try {
+            logo = Base64.getDecoder().decode(encoded);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo no se pudo leer");
+        }
+        if (logo.length == 0 || logo.length > 2_000_000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo debe pesar como máximo 2 MB");
+        }
+        league.getLogo();
+        league.setLogo(logo);
+        league.setLogoContentType(type);
     }
 
     private void assertDateOrder(LocalDate start, LocalDate end, String message) {
@@ -441,7 +489,8 @@ public class CompetitionService {
     }
 
     private LeagueView leagueView(League league) {
-        return new LeagueView(league.getId(), league.getName(), league.getValidFrom(), league.getValidUntil(), league.isActive());
+        byte[] logo = league.getLogo();
+        return new LeagueView(league.getId(), league.getName(), league.getValidFrom(), league.getValidUntil(), league.isActive(), logo != null && logo.length > 0);
     }
 
     private EditionView editionView(Edition edition) {
@@ -457,7 +506,8 @@ public class CompetitionService {
     }
 
     private TeamView teamView(Team team) {
-        return new TeamView(team.getId(), team.getLeague().getId(), team.getLeague().getName(), team.getName());
+        return new TeamView(team.getId(), team.getLeague().getId(), team.getLeague().getName(), team.getName(),
+                team.getNombreRepresentante(), team.getNumeroTelefono());
     }
 
     private TeamEntryView teamEntryView(TeamEntry entry) {

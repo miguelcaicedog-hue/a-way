@@ -1,5 +1,6 @@
 package com.away.core.competition;
 
+import com.away.core.auth.League;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -49,6 +50,18 @@ public class CompetitionController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLeague(@PathVariable UUID id) {
         competition.deleteLeague(id);
+    }
+
+    @GetMapping("/leagues/{id}/logo")
+    public ResponseEntity<byte[]> leagueLogo(@PathVariable UUID id) {
+        League league = competition.leagueLogo(id);
+        if (league.getLogo() == null || league.getLogoContentType() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .contentType(MediaType.parseMediaType(league.getLogoContentType()))
+                .body(league.getLogo());
     }
 
     @GetMapping("/editions")

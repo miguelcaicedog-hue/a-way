@@ -25,6 +25,12 @@ public class Team {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "nombre_representante")
+    private String nombreRepresentante;
+
+    @Column(name = "numero_telefono")
+    private String numeroTelefono;
+
     public UUID getId() {
         return id;
     }
@@ -47,5 +53,21 @@ public class Team {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getNombreRepresentante() {
+        return nombreRepresentante;
+    }
+
+    public void setNombreRepresentante(String nombreRepresentante) {
+        this.nombreRepresentante = nombreRepresentante;
+    }
+
+    public String getNumeroTelefono() {
+        return numeroTelefono;
+    }
+
+    public void setNumeroTelefono(String numeroTelefono) {
+        this.numeroTelefono = numeroTelefono;
     }
 }

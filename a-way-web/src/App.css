@@ -56,13 +56,36 @@ button:disabled {
 
 .shell {
   width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: stretch;
   text-align: left;
+}
+
+.sidebar {
+  width: 15.5rem;
+  flex: 0 0 15.5rem;
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: auto;
+  background: #163a5f;
+  color: white;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .topbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem 0.75rem;
   padding: 0.45rem 0.75rem 0.55rem;
   background: #163a5f;
@@ -75,34 +98,26 @@ button:disabled {
 .brand {
   font-weight: 700;
   letter-spacing: 0.04em;
-  flex: 0 0 auto;
+  padding: 0.85rem 0.9rem 0.35rem;
 }
 
-.topbar nav {
+.sidebar nav {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.1rem;
-  flex: 1 1 auto;
-  min-width: 0;
+  padding: 0.25rem 0.45rem 1rem;
 }
 
 .menu-group {
-  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .menu-tree {
   display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 5;
-  min-width: 12rem;
   margin: 0;
-  padding: 0.35rem 0.7rem 0.45rem 0.35rem;
-  background: #0f2c49;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  padding: 0.1rem 0 0.3rem 0.35rem;
 }
 
 .menu-group:hover .menu-tree,
@@ -115,9 +130,10 @@ button:disabled {
 .menu-tree button {
   position: relative;
   margin-left: 0.85rem;
-  padding-left: 0.7rem;
+  padding-left: 0.85rem;
   text-align: left;
   border-radius: 4px;
+  color: #9eb0c2;
 }
 
 .menu-tree button::before,
@@ -130,7 +146,7 @@ button:disabled {
 .menu-tree button::before {
   top: 0;
   bottom: 0;
-  border-left: 2px solid rgba(255, 255, 255, 0.7);
+  border-left: 2px solid rgba(158, 176, 194, 0.85);
 }
 
 .menu-tree button:last-child::before {
@@ -140,10 +156,10 @@ button:disabled {
 .menu-tree button::after {
   top: 50%;
   width: 0.55rem;
-  border-top: 2px solid rgba(255, 255, 255, 0.7);
+  border-top: 2px solid rgba(158, 176, 194, 0.85);
 }
 
-.topbar nav button,
+.sidebar nav button,
 .session button {
   margin: 0;
   background: transparent;
@@ -153,11 +169,24 @@ button:disabled {
   white-space: nowrap;
 }
 
-.topbar nav button.is-current {
-  box-shadow: inset 0 -2px 0 white;
+.sidebar nav > button,
+.menu-group > button {
+  width: 100%;
+  text-align: left;
+  color: white;
 }
 
-.topbar nav button[aria-current='page'] {
+.sidebar .menu-tree button {
+  margin-left: 1.45rem;
+  padding-left: 0.9rem;
+  color: #9eb0c2;
+}
+
+.sidebar nav button.is-current {
+  box-shadow: inset 3px 0 0 white;
+}
+
+.sidebar nav button[aria-current='page'] {
   background: white;
   color: #163a5f;
 }
@@ -168,7 +197,6 @@ button:disabled {
   gap: 0.55rem;
   flex: 0 0 auto;
   font-size: 0.9rem;
-  margin-left: auto;
 }
 
 .session label {
@@ -183,6 +211,11 @@ button:disabled {
   min-width: 8.5rem;
   max-width: 13rem;
   padding: 0.28rem 0.4rem;
+}
+
+.session select.league-select {
+  width: 24rem;
+  max-width: none;
 }
 
 .session select:disabled {
@@ -284,4 +317,17 @@ button.ghost {
 .player-photo.preview {
   width: 96px;
   height: 96px;
+}
+
+.league-logo {
+  height: 36px;
+  max-width: 72px;
+  object-fit: contain;
+  background: white;
+  border-radius: 4px;
+}
+
+.league-logo.preview {
+  height: 96px;
+  max-width: 160px;
 }

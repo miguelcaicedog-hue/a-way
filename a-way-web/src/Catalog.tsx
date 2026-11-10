@@ -12,6 +12,7 @@ type League = {
   validFrom: string
   validUntil: string
   active: boolean
+  hasLogo: boolean
 }
 
 type Edition = {
@@ -38,6 +39,8 @@ type Team = {
   leagueId: string
   leagueName: string
   name: string
+  nombreRepresentante: string | null
+  numeroTelefono: string | null
 }
 
 function canWrite(profile: Profile) {
@@ -53,11 +56,16 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
   const [validFrom, setValidFrom] = useState('')
   const [validUntil, setValidUntil] = useState('')
   const [active, setActive] = useState(true)
+  const [logo, setLogo] = useState<string | null>(null)
+  const [logoType, setLogoType] = useState<string | null>(null)
+  const [clearLogo, setClearLogo] = useState(false)
+  const [logoStamp, setLogoStamp] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
   async function load() {
     setRows(await api<League[]>('/api/leagues'))
+    setLogoStamp(Date.now())
   }
 
   useEffect(() => {
@@ -70,6 +78,9 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
     setValidFrom('')
     setValidUntil('')
     setActive(true)
+    setLogo(null)
+    setLogoType(null)
+    setClearLogo(false)
   }
 
   function edit(row: League) {
@@ -78,12 +89,38 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
     setValidFrom(row.validFrom)
     setValidUntil(row.validUntil)
     setActive(row.active)
+    setLogo(null)
+    setLogoType(null)
+    setClearLogo(false)
+  }
+
+  function onLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+    if (file.size > 2_000_000) {
+      setError('El logo debe pesar como máximo 2 MB')
+      event.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null
+      const declared = (file.type || dataUrl?.slice(5, dataUrl.indexOf(';')) || '').toLowerCase()
+      const type = declared === 'image/jpg' || declared === 'image/pjpeg' ? 'image/jpeg' : declared
+      setLogo(dataUrl)
+      setLogoType(type)
+      setClearLogo(false)
+      setError(null)
+    }
+    reader.readAsDataURL(file)
   }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    const body = { name, validFrom, validUntil, active }
+    const body = { name, validFrom, validUntil, active, logoBase64: logo, logoContentType: logoType, clearLogo }
     try {
       const saved = editing
         ? await api<League>(`/api/leagues/${editing.id}`, { method: 'PUT', body: JSON.stringify(body) })
@@ -120,6 +157,7 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
             <th>Desde</th>
             <th>Hasta</th>
             <th>Estado</th>
+            <th>Logo</th>
             {writable && <th></th>}
           </tr>
         </thead>
@@ -130,6 +168,11 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
               <td>{row.validFrom}</td>
               <td>{row.validUntil}</td>
               <td>{row.active ? 'Activa' : 'Inactiva'}</td>
+              <td>
+                {row.hasLogo && (
+                  <img className="league-logo" alt="" src={`/api/leagues/${row.id}/logo?v=${logoStamp}`} />
+                )}
+              </td>
               {writable && (
                 <td className="actions">
                   <button type="button" onClick={() => edit(row)}>Editar</button>
@@ -140,7 +183,7 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
           ))}
           {rows.filter((row) => row.id === leagueId).length === 0 && (
             <tr>
-              <td colSpan={5}>No hay ligas.</td>
+              <td colSpan={6}>No hay ligas.</td>
             </tr>
           )}
         </tbody>
@@ -164,6 +207,23 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
             <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
             Activa
           </label>
+          <label>
+            Logo
+            <input key={editing?.id ?? 'nueva'} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={onLogo} />
+          </label>
+          {(logo || (editing?.hasLogo && !clearLogo)) && (
+            <img
+              className="league-logo preview"
+              alt=""
+              src={logo ?? `/api/leagues/${editing?.id}/logo?v=${logoStamp}`}
+            />
+          )}
+          {editing?.hasLogo && (
+            <label className="check">
+              <input type="checkbox" checked={clearLogo} onChange={(event) => setClearLogo(event.target.checked)} />
+              Quitar logo
+            </label>
+          )}
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
@@ -374,6 +434,8 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
   const [rows, setRows] = useState<Team[]>([])
   const [editing, setEditing] = useState<Team | null>(null)
   const [name, setName] = useState('')
+  const [nombreRepresentante, setNombreRepresentante] = useState('')
+  const [numeroTelefono, setNumeroTelefono] = useState('')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
@@ -390,6 +452,15 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
   function reset() {
     setEditing(null)
     setName('')
+    setNombreRepresentante('')
+    setNumeroTelefono('')
+  }
+
+  function edit(row: Team) {
+    setEditing(row)
+    setName(row.name)
+    setNombreRepresentante(row.nombreRepresentante ?? '')
+    setNumeroTelefono(row.numeroTelefono ?? '')
   }
 
   async function reload() {
@@ -399,7 +470,7 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    const body = { leagueId, name }
+    const body = { leagueId, name, nombreRepresentante, numeroTelefono }
     try {
       if (editing) {
         await api(`/api/teams/${editing.id}`, { method: 'PUT', body: JSON.stringify(body) })
@@ -430,6 +501,8 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
         <thead>
           <tr>
             <th>Nombre</th>
+            <th>Representante</th>
+            <th>Teléfono</th>
             {writable && <th></th>}
           </tr>
         </thead>
@@ -437,21 +510,25 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
           {rows.map((row) => (
             <tr key={row.id}>
               <td>{row.name}</td>
+              <td>{row.nombreRepresentante}</td>
+              <td>{row.numeroTelefono}</td>
               {writable && (
                 <td className="actions">
-                  <button type="button" onClick={() => { setEditing(row); setName(row.name) }}>Editar</button>
+                  <button type="button" onClick={() => edit(row)}>Editar</button>
                   <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>
                 </td>
               )}
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={2}>No hay equipos.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 4 : 3}>No hay equipos.</td></tr>}
         </tbody>
       </table>
       {writable && (
         <form onSubmit={onSubmit}>
           <h2>{editing ? 'Editar equipo' : 'Nuevo equipo'}</h2>
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
+          <label>Nombre de representante<input value={nombreRepresentante} maxLength={160} onChange={(event) => setNombreRepresentante(event.target.value)} /></label>
+          <label>Número de teléfono<input value={numeroTelefono} maxLength={30} onChange={(event) => setNumeroTelefono(event.target.value)} /></label>
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
