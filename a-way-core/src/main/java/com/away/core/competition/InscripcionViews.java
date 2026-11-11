@@ -179,6 +179,24 @@ class SeleccionRequest {
     }
 }
 
+class AccesoFotosView {
+    private final boolean acceso;
+    private final String mensaje;
+
+    AccesoFotosView(boolean acceso, String mensaje) {
+        this.acceso = acceso;
+        this.mensaje = mensaje;
+    }
+
+    public boolean isAcceso() {
+        return acceso;
+    }
+
+    public String getMensaje() {
+        return mensaje;
+    }
+}
+
 class ProcesoRequest {
     private List<UUID> equipoIds;
 

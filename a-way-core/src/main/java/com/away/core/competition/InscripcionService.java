@@ -169,6 +169,40 @@ public class InscripcionService {
         return detalle(archivoId);
     }
 
+    public AccesoFotosView accesoFotos(UUID archivoId, List<UUID> equipoIds) {
+        InscripcionArchivo archivo = archivo(archivoId);
+        assertWrite(archivo.getIdLiga());
+        Set<UUID> elegidos = new HashSet<>(equipoIds == null ? List.of() : equipoIds);
+        List<String> muestras = new ArrayList<>();
+        for (InscripcionEquipo equipo : filas(archivoId)) {
+            if (!elegidos.contains(equipo.getId()) || "OK".equals(equipo.getResultado())) {
+                continue;
+            }
+            for (InscripcionJugador jugador : jugadores.findByIdInscripcionEquipoAndEstadoOrderByOrdenAsc(equipo.getId(), "ACTIVO")) {
+                if (jugador.isFotoCargada() || jugador.getUrlFoto() == null || jugador.getUrlFoto().isBlank()) {
+                    continue;
+                }
+                muestras.add(jugador.getUrlFoto());
+                if (muestras.size() == 3) {
+                    break;
+                }
+            }
+            if (muestras.size() == 3) {
+                break;
+            }
+        }
+        if (muestras.isEmpty()) {
+            return new AccesoFotosView(true, null);
+        }
+        for (String url : muestras) {
+            if (FotoInscripcion.descargar(url).error == null) {
+                return new AccesoFotosView(true, null);
+            }
+        }
+        return new AccesoFotosView(false,
+                "No hay acceso a las fotos de Google Drive. Si continúas, los jugadores se cargarán y las fotos que no se puedan descargar quedarán para revisar.");
+    }
+
     public InscripcionEquipoView procesarUno(UUID equipoId) {
         InscripcionEquipo equipo = equipo(equipoId);
         InscripcionArchivo archivo = archivo(equipo.getIdInscripcionArchivo());
@@ -245,12 +279,20 @@ public class InscripcionService {
         for (InscripcionJugador jugador : plantel) {
             auditar(jugador, usuario, false);
             if (jugador.isCargado()) {
-                if (!jugador.isFotoCargada() && jugador.getUrlFoto() != null) {
-                    Player guardado = existentes.stream()
-                            .filter(item -> item.getCedula().equals(jugador.getCedula().trim()))
-                            .findFirst()
-                            .orElse(null);
-                    if (guardado != null) {
+                Player guardado = existentes.stream()
+                        .filter(item -> item.getCedula().equals(jugador.getCedula().trim()))
+                        .findFirst()
+                        .orElse(null);
+                if (guardado != null) {
+                    if (guardado.getAlias() == null || guardado.getAlias().isBlank()) {
+                        String alias = aliasDesdeNombre(guardado.getName());
+                        if (alias != null) {
+                            guardado.setAlias(alias);
+                            jugador.setAlias(alias);
+                            players.save(guardado);
+                        }
+                    }
+                    if (!jugador.isFotoCargada() && esperaFoto(jugador)) {
                         aplicarFoto(jugador, guardado);
                     }
                 }
@@ -294,13 +336,12 @@ public class InscripcionService {
             cedulas.add(cedula);
             camisas.add(numero);
             existentes.add(player);
-            if (jugador.getUrlFoto() != null) {
+            if (esperaFoto(jugador)) {
                 aplicarFoto(jugador, player);
             }
         }
         boolean alguno = plantel.stream().anyMatch(InscripcionJugador::isCargado);
-        boolean pendiente = plantel.stream().anyMatch(jugador -> !jugador.isCargado()
-                || (jugador.getUrlFoto() != null && !jugador.isFotoCargada()));
+        boolean pendiente = plantel.stream().anyMatch(jugador -> !jugador.isCargado() || esperaFoto(jugador));
         for (InscripcionJugador jugador : plantel) {
             if (jugador.getMotivo() != null && !jugador.getMotivo().isBlank()) {
                 avisos.add(jugador.getMotivo());
@@ -319,6 +360,14 @@ public class InscripcionService {
     }
 
     private void aplicarFoto(InscripcionJugador jugador, Player player) {
+        if (tieneFoto(jugador)) {
+            player.setPhoto(jugador.getFoto());
+            player.setPhotoContentType(jugador.getTipoFoto() == null ? "image/jpeg" : jugador.getTipoFoto());
+            players.save(player);
+            jugador.setFotoCargada(true);
+            jugador.setMotivo(null);
+            return;
+        }
         FotoInscripcion.Descarga descarga = FotoInscripcion.descargar(jugador.getUrlFoto());
         if (descarga.error != null) {
             jugador.setFotoCargada(false);
@@ -330,6 +379,156 @@ public class InscripcionService {
         players.save(player);
         jugador.setFotoCargada(true);
         jugador.setMotivo(null);
+    }
+
+    @Transactional
+    public InscripcionJugadorView editarJugador(UUID jugadorId, String cedula, String nombre, String alias,
+                                                String numeroCamisa, MultipartFile foto) {
+        InscripcionJugador jugador = jugadores.findById(jugadorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador no encontrado"));
+        if (!"ACTIVO".equals(jugador.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Jugador no encontrado");
+        }
+        InscripcionEquipo equipo = equipo(jugador.getIdInscripcionEquipo());
+        InscripcionArchivo archivo = archivo(equipo.getIdInscripcionArchivo());
+        assertWrite(archivo.getIdLiga());
+        String cedulaNueva = cedula == null ? "" : cedula.trim();
+        String nombreNuevo = nombre == null ? "" : nombre.trim().replaceAll("\\s+", " ");
+        String camisaNueva = numeroCamisa == null ? "" : numeroCamisa.trim();
+        if (cedulaNueva.isEmpty() || cedulaNueva.length() > 30) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cédula debe tener hasta 30 caracteres");
+        }
+        if (nombreNuevo.isEmpty() || nombreNuevo.length() > 200) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre es obligatorio");
+        }
+        Integer numero = camisa(camisaNueva);
+        if (numero == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El número de camisa debe ser un entero mayor que cero");
+        }
+        String aliasNuevo = alias == null ? "" : alias.trim().replaceAll("\\s+", " ");
+        if (aliasNuevo.isEmpty()) {
+            aliasNuevo = aliasDesdeNombre(nombreNuevo);
+        }
+        if (aliasNuevo != null && aliasNuevo.length() > 80) {
+            aliasNuevo = aliasNuevo.substring(0, 80);
+        }
+        byte[] fotoNueva = null;
+        String tipoFoto = null;
+        if (foto != null && !foto.isEmpty()) {
+            try {
+                FotoInscripcion.Descarga descarga = FotoInscripcion.preparar(foto.getBytes(), foto.getContentType());
+                if (descarga.error != null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, descarga.error);
+                }
+                fotoNueva = descarga.bytes;
+                tipoFoto = descarga.contentType;
+            } catch (IOException exception) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La foto no se pudo leer");
+            }
+        }
+        String cedulaAnterior = jugador.getCedula() == null ? "" : jugador.getCedula().trim();
+        jugador.setCedula(cedulaNueva);
+        jugador.setNombre(limitar(nombreNuevo, 200));
+        jugador.setNumeroCamisa(String.valueOf(numero));
+        jugador.setAlias(aliasNuevo);
+        if (fotoNueva != null) {
+            jugador.setFoto(fotoNueva);
+            jugador.setTipoFoto(tipoFoto);
+        }
+        String usuario = usuario();
+        auditar(jugador, usuario, false);
+        TeamEntry entrada = entrada(archivo, equipo);
+        boolean actualizado = false;
+        if (entrada != null && jugador.isCargado()) {
+            List<Player> plantel = players.findByTeamEntry_IdOrderByCedulaAsc(entrada.getId());
+            Player player = plantel.stream()
+                    .filter(item -> item.getCedula().equals(cedulaAnterior) || item.getCedula().equals(cedulaNueva))
+                    .findFirst()
+                    .orElse(null);
+            if (player != null) {
+                boolean cedulaRepetida = plantel.stream()
+                        .anyMatch(item -> !item.getId().equals(player.getId()) && item.getCedula().equalsIgnoreCase(cedulaNueva));
+                boolean camisaRepetida = plantel.stream()
+                        .anyMatch(item -> !item.getId().equals(player.getId()) && item.getNumeroCamisa() == numero);
+                if (cedulaRepetida) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "La cédula ya está registrada en el equipo");
+                }
+                if (camisaRepetida) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "El número de camisa ya está usado en el equipo");
+                }
+                player.setCedula(cedulaNueva);
+                player.setName(nombreNuevo);
+                player.setAlias(aliasNuevo);
+                player.setNumeroCamisa(numero);
+                if (fotoNueva != null) {
+                    player.setPhoto(fotoNueva);
+                    player.setPhotoContentType(tipoFoto);
+                    jugador.setFotoCargada(true);
+                    jugador.setMotivo(null);
+                }
+                players.save(player);
+                actualizado = true;
+            }
+        }
+        if (!jugador.isCargado()) {
+            jugador.setFotoCargada(false);
+            String nota = fotoNueva != null
+                    ? "la foto quedó lista y se aplicará al procesar el equipo."
+                    : "datos corregidos. Vuelve a procesar este equipo.";
+            jugador.setMotivo(etiqueta(jugador) + nota);
+        } else if (actualizado && (fotoNueva != null || !esperaFoto(jugador))) {
+            jugador.setMotivo(null);
+        }
+        jugadores.save(jugador);
+        refrescarResultado(equipo, usuario);
+        return jugadorView(jugador);
+    }
+
+    private boolean tieneFoto(InscripcionJugador jugador) {
+        return jugador.getFoto() != null && jugador.getFoto().length > 0;
+    }
+
+    private boolean esperaFoto(InscripcionJugador jugador) {
+        return (jugador.getUrlFoto() != null || tieneFoto(jugador)) && !jugador.isFotoCargada();
+    }
+
+    private TeamEntry entrada(InscripcionArchivo archivo, InscripcionEquipo equipo) {
+        if (equipo.getCategoria() == null || equipo.getCategoria().isBlank() || equipo.getNombreEquipo() == null) {
+            return null;
+        }
+        Category categoria = categorias.findByEdition_IdOrderByNameAsc(archivo.getIdEdicion()).stream()
+                .filter(item -> item.getName() != null && item.getName().trim().equalsIgnoreCase(equipo.getCategoria().trim()))
+                .findFirst()
+                .orElse(null);
+        if (categoria == null) {
+            return null;
+        }
+        Team team = teams.findByLeague_IdAndName(archivo.getIdLiga(), equipo.getNombreEquipo().trim()).orElse(null);
+        if (team == null) {
+            return null;
+        }
+        return entries.findByTeam_IdAndCategory_Id(team.getId(), categoria.getId()).orElse(null);
+    }
+
+    private void refrescarResultado(InscripcionEquipo equipo, String usuario) {
+        List<InscripcionJugador> plantel = jugadores.findByIdInscripcionEquipoAndEstadoOrderByOrdenAsc(equipo.getId(), "ACTIVO");
+        boolean alguno = plantel.stream().anyMatch(InscripcionJugador::isCargado);
+        if (!alguno) {
+            return;
+        }
+        List<String> avisos = new ArrayList<>();
+        for (InscripcionJugador jugador : plantel) {
+            if (jugador.getMotivo() != null && !jugador.getMotivo().isBlank()) {
+                avisos.add(jugador.getMotivo());
+            }
+        }
+        boolean pendiente = plantel.stream().anyMatch(jugador -> !jugador.isCargado() || esperaFoto(jugador));
+        String detalle = avisos.stream().filter(aviso -> aviso != null && !aviso.isBlank()).collect(Collectors.joining("\n"));
+        if (!pendiente && detalle.isBlank()) {
+            cerrar(equipo, "OK", null, usuario);
+        } else {
+            cerrar(equipo, "ERROR", detalle.isBlank() ? null : detalle, usuario);
+        }
     }
 
     private boolean cedulaValida(InscripcionJugador jugador) {
@@ -374,11 +573,18 @@ public class InscripcionService {
     }
 
     private String aliasDesdeNombre(String nombre) {
-        String[] partes = nombre.trim().split("\\s+");
-        if (partes.length < 4) {
+        if (nombre == null) {
             return null;
         }
-        return partes[0] + " " + partes[2];
+        String limpio = nombre.trim().replaceAll("\\s+", " ");
+        String[] partes = limpio.split(" ");
+        if (partes.length == 2) {
+            return limpio;
+        }
+        if (partes.length >= 4) {
+            return partes[0] + " " + partes[2];
+        }
+        return null;
     }
 
     private String telefono(String raw) {

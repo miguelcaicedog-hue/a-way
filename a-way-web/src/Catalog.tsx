@@ -552,6 +552,9 @@ type TeamEntry = {
 
 function aliasFromName(fullName: string) {
   const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 2) {
+    return parts.join(' ')
+  }
   if (parts.length < 4) {
     return ''
   }

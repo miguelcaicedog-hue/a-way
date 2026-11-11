@@ -31,6 +31,11 @@ public class InscripcionJugador {
     @Column(name = "url_foto")
     private String urlFoto;
 
+    private byte[] foto;
+
+    @Column(name = "tipo_foto")
+    private String tipoFoto;
+
     private String alias;
 
     @Column(nullable = false)
@@ -110,6 +115,22 @@ public class InscripcionJugador {
 
     public void setUrlFoto(String urlFoto) {
         this.urlFoto = urlFoto;
+    }
+
+    public byte[] getFoto() {
+        return foto;
+    }
+
+    public void setFoto(byte[] foto) {
+        this.foto = foto;
+    }
+
+    public String getTipoFoto() {
+        return tipoFoto;
+    }
+
+    public void setTipoFoto(String tipoFoto) {
+        this.tipoFoto = tipoFoto;
     }
 
     public String getAlias() {

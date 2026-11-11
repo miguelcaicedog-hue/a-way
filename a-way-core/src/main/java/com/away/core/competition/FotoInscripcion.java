@@ -1,5 +1,15 @@
 package com.away.core.competition;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +19,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,9 +27,20 @@ final class FotoInscripcion {
 
     private static final Pattern DRIVE_ID = Pattern.compile("(?:[?&]id=|/file/d/)([A-Za-z0-9_-]+)");
     private static final Pattern CONFIRM = Pattern.compile("confirm=([0-9A-Za-z_-]+)");
-    private static final int MAX_BYTES = 2_000_000;
+    private static final int LIMITE = 1_500_000;
+    private static final int MAX_BYTES = 15_000_000;
 
     private FotoInscripcion() {
+    }
+
+    static Descarga preparar(byte[] cuerpo, String contentType) {
+        if (cuerpo == null || cuerpo.length == 0) {
+            return Descarga.error("La foto no se pudo leer");
+        }
+        if (cuerpo.length > MAX_BYTES) {
+            return Descarga.error("La foto es demasiado grande para reducirla");
+        }
+        return validar(new Respuesta(cuerpo, contentType == null ? "" : contentType));
     }
 
     static Descarga descargar(String celda) {
@@ -52,6 +74,9 @@ final class FotoInscripcion {
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
+            if (exception instanceof IOException && "foto demasiado grande".equals(exception.getMessage())) {
+                return Descarga.error("La foto es demasiado grande para reducirla");
+            }
             return Descarga.error("No se pudo descargar la foto");
         }
     }
@@ -60,14 +85,94 @@ final class FotoInscripcion {
         if (respuesta.cuerpo.length == 0) {
             return Descarga.error("No se pudo descargar la foto");
         }
-        if (respuesta.cuerpo.length > 1_500_000) {
-            return Descarga.error("La foto debe pesar menos de 1.5 MB");
-        }
         String tipo = tipo(respuesta);
         if (tipo == null) {
             return Descarga.error("La foto debe ser JPEG, PNG, WEBP o GIF");
         }
-        return Descarga.ok(respuesta.cuerpo, tipo);
+        if (respuesta.cuerpo.length <= LIMITE) {
+            return Descarga.ok(respuesta.cuerpo, tipo);
+        }
+        byte[] reducida = reducir(respuesta.cuerpo);
+        if (reducida == null) {
+            return Descarga.error("La foto supera 1.5 MB y no se pudo reducir");
+        }
+        return Descarga.ok(reducida, "image/jpeg");
+    }
+
+    private static byte[] reducir(byte[] origen) {
+        BufferedImage imagen;
+        try {
+            imagen = ImageIO.read(new ByteArrayInputStream(origen));
+        } catch (IOException exception) {
+            return null;
+        }
+        if (imagen == null) {
+            return null;
+        }
+        int ancho = Math.max(1, imagen.getWidth());
+        int alto = Math.max(1, imagen.getHeight());
+        double factor = Math.sqrt((double) LIMITE / origen.length) * 0.9d;
+        if (factor < 1d) {
+            ancho = Math.max(1, (int) Math.round(ancho * factor));
+            alto = Math.max(1, (int) Math.round(alto * factor));
+        }
+        float calidad = 0.82f;
+        byte[] menor = null;
+        for (int intento = 0; intento < 8; intento++) {
+            byte[] jpeg = jpeg(escalar(imagen, ancho, alto), calidad);
+            if (jpeg == null) {
+                return null;
+            }
+            if (jpeg.length <= LIMITE) {
+                return jpeg;
+            }
+            if (menor == null || jpeg.length < menor.length) {
+                menor = jpeg;
+            }
+            if (calidad > 0.5f) {
+                calidad -= 0.16f;
+                continue;
+            }
+            if (Math.max(ancho, alto) <= 480) {
+                break;
+            }
+            ancho = Math.max(1, (int) Math.round(ancho * 0.75d));
+            alto = Math.max(1, (int) Math.round(alto * 0.75d));
+            calidad = 0.72f;
+        }
+        return menor != null && menor.length <= LIMITE ? menor : null;
+    }
+
+    private static BufferedImage escalar(BufferedImage origen, int ancho, int alto) {
+        BufferedImage destino = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_RGB);
+        Graphics2D grafico = destino.createGraphics();
+        grafico.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        grafico.setColor(Color.WHITE);
+        grafico.fillRect(0, 0, ancho, alto);
+        grafico.drawImage(origen, 0, 0, ancho, alto, null);
+        grafico.dispose();
+        return destino;
+    }
+
+    private static byte[] jpeg(BufferedImage imagen, float calidad) {
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
+        if (!writers.hasNext()) {
+            return null;
+        }
+        ImageWriter writer = writers.next();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try (ImageOutputStream stream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(stream);
+            ImageWriteParam param = writer.getDefaultWriteParam();
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(calidad);
+            writer.write(null, new IIOImage(imagen, null, null), param);
+        } catch (IOException exception) {
+            return null;
+        } finally {
+            writer.dispose();
+        }
+        return output.toByteArray();
     }
 
     private static Respuesta pedir(HttpClient client, String url) throws IOException, InterruptedException {

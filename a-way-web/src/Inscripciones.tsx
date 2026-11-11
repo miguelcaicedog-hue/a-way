@@ -45,6 +45,17 @@ function canWrite(profile: Profile) {
   return profile.master || profile.memberships.some((membership) => membership.role === 'ADMINISTRATIVO')
 }
 
+function aliasFromName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 2) {
+    return parts.join(' ')
+  }
+  if (parts.length < 4) {
+    return ''
+  }
+  return `${parts[0]} ${parts[2]}`
+}
+
 export function InscripcionScreen({ profile, leagueId, editionId }: { profile: Profile; leagueId: string; editionId: string }) {
   const [archivos, setArchivos] = useState<Archivo[]>([])
   const [detalle, setDetalle] = useState<Detalle | null>(null)
@@ -54,6 +65,12 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   const [procesando, setProcesando] = useState(false)
   const [progreso, setProgreso] = useState<{ hecho: number; total: number; nombre: string } | null>(null)
   const [revision, setRevision] = useState<Equipo | null>(null)
+  const [comprobando, setComprobando] = useState(false)
+  const [avisoFotos, setAvisoFotos] = useState<string | null>(null)
+  const [editor, setEditor] = useState<Jugador | null>(null)
+  const [formJugador, setFormJugador] = useState({ cedula: '', nombre: '', alias: '', numeroCamisa: '' })
+  const [fotoJugador, setFotoJugador] = useState<File | null>(null)
+  const [guardando, setGuardando] = useState(false)
   const writable = canWrite(profile)
 
   async function abrir(id: string) {
@@ -130,10 +147,6 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
       return
     }
     setAbierto(equipo.id)
-    if (!equipo.resultado) {
-      setJugadores([])
-      return
-    }
     try {
       setJugadores(await api<Jugador[]>(`/api/inscripciones/equipos/${equipo.id}/jugadores`))
     } catch (reason) {
@@ -141,7 +154,62 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
     }
   }
 
-  async function procesar() {
+  function abrirEditor(jugador: Jugador) {
+    setEditor(jugador)
+    setFotoJugador(null)
+    setFormJugador({
+      cedula: jugador.cedula ?? '',
+      nombre: jugador.nombre ?? '',
+      alias: jugador.alias || aliasFromName(jugador.nombre ?? ''),
+      numeroCamisa: jugador.numeroCamisa ?? '',
+    })
+  }
+
+  function cambiarNombre(nombre: string) {
+    setFormJugador((current) => {
+      const anterior = aliasFromName(current.nombre)
+      const sugerido = aliasFromName(nombre)
+      const alias = !current.alias || current.alias === anterior ? sugerido : current.alias
+      return { ...current, nombre, alias }
+    })
+  }
+
+  async function guardarJugador() {
+    if (!editor || !detalle) {
+      return
+    }
+    setError(null)
+    setGuardando(true)
+    const body = new FormData()
+    body.append('cedula', formJugador.cedula.trim())
+    body.append('nombre', formJugador.nombre.trim())
+    body.append('alias', formJugador.alias.trim())
+    body.append('numeroCamisa', formJugador.numeroCamisa.trim())
+    if (fotoJugador) {
+      body.append('foto', fotoJugador)
+    }
+    try {
+      const response = await fetch(`/api/inscripciones/jugadores/${editor.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        body,
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(typeof payload.error === 'string' ? payload.error : 'No se pudo guardar el jugador')
+      }
+      const saved = payload as Jugador
+      setJugadores((current) => current.map((item) => item.id === saved.id ? saved : item))
+      setDetalle(await api<Detalle>(`/api/inscripciones/${detalle.id}`))
+      setEditor(null)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo guardar el jugador')
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  async function procesar(forzar = false) {
     if (!detalle) {
       return
     }
@@ -151,6 +219,25 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
       return
     }
     setError(null)
+    setAvisoFotos(null)
+    if (!forzar) {
+      setComprobando(true)
+      try {
+        const acceso = await api<{ acceso: boolean; mensaje: string | null }>(`/api/inscripciones/${detalle.id}/acceso-fotos`, {
+          method: 'POST',
+          body: JSON.stringify({ equipoIds: pendientes.map((equipo) => equipo.id) }),
+        })
+        if (!acceso.acceso) {
+          setAvisoFotos(acceso.mensaje ?? 'No hay acceso a las fotos de Google Drive.')
+          return
+        }
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : 'No se pudo comprobar el acceso a las fotos')
+        return
+      } finally {
+        setComprobando(false)
+      }
+    }
     setProcesando(true)
     setAbierto(null)
     setJugadores([])
@@ -175,17 +262,19 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   }
 
   useEffect(() => {
-    if (!revision) {
+    if (!revision && !avisoFotos && !editor) {
       return
     }
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setRevision(null)
+        setAvisoFotos(null)
+        setEditor(null)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [revision])
+  }, [revision, avisoFotos, editor])
 
   if (!leagueId || !editionId) {
     return <p>Selecciona una liga y una edición.</p>
@@ -263,6 +352,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
               ))}
             </tbody>
           </table>
+          {comprobando && <p>Comprobando el acceso a las fotos…</p>}
           {progreso && (
             <div className="progreso">
               <p>Procesando {Math.min(progreso.hecho + 1, progreso.total)} de {progreso.total}: {progreso.nombre}</p>
@@ -272,15 +362,15 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
             </div>
           )}
           {writable && (
-            <button type="button" onClick={procesar} disabled={procesando}>
-              {procesando ? 'Procesando…' : 'Procesar'}
+            <button type="button" onClick={() => procesar()} disabled={procesando || comprobando}>
+              {procesando ? 'Procesando…' : comprobando ? 'Comprobando…' : 'Procesar'}
             </button>
           )}
           {equipoAbierto && (
             <div className="inscripcion-jugadores">
               <h2>{equipoAbierto.nombreEquipo}</h2>
-              {!equipoAbierto.resultado && <p>Este equipo todavía no tiene jugadores cargados.</p>}
-              {equipoAbierto.resultado && (
+              {!equipoAbierto.resultado && <p>Este equipo todavía no tiene jugadores cargados. Puedes corregir los datos antes de procesar.</p>}
+              {jugadores.length > 0 && (
                 <table>
                   <thead>
                     <tr>
@@ -291,6 +381,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                       <th>Nº de camisa</th>
                       <th>Foto</th>
                       <th>Revisar</th>
+                      {writable && <th></th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -303,11 +394,50 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                         <td>{jugador.numeroCamisa}</td>
                         <td>{jugador.fotoCargada ? 'Guardada' : jugador.cargado ? 'Sin foto' : 'No cargado'}</td>
                         <td className="detalle">{jugador.motivo}</td>
+                        {writable && (
+                          <td>
+                            <button type="button" className="ghost" onClick={() => abrirEditor(jugador)}>Editar</button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
+            </div>
+          )}
+          {avisoFotos && (
+            <div className="modal-fondo" onClick={() => setAvisoFotos(null)}>
+              <div className="modal" role="dialog" aria-modal="true" aria-labelledby="aviso-fotos-titulo" onClick={(event) => event.stopPropagation()}>
+                <h2 id="aviso-fotos-titulo">Fotos sin acceso</h2>
+                <p className="detalle">{avisoFotos}</p>
+                <div className="actions">
+                  <button type="button" onClick={() => procesar(true)}>Procesar de todas formas</button>
+                  <button type="button" className="ghost" onClick={() => setAvisoFotos(null)}>Cancelar</button>
+                </div>
+              </div>
+            </div>
+          )}
+          {editor && (
+            <div className="modal-fondo" onClick={() => setEditor(null)}>
+              <div className="modal" role="dialog" aria-modal="true" aria-labelledby="editor-jugador-titulo" onClick={(event) => event.stopPropagation()}>
+                <h2 id="editor-jugador-titulo">Editar jugador</h2>
+                <form onSubmit={(event) => { event.preventDefault(); void guardarJugador() }}>
+                  <label>Cédula<input value={formJugador.cedula} maxLength={30} onChange={(event) => setFormJugador({ ...formJugador, cedula: event.target.value })} required /></label>
+                  <label>Nombre<input value={formJugador.nombre} maxLength={200} onChange={(event) => cambiarNombre(event.target.value)} required /></label>
+                  <label>Alias<input value={formJugador.alias} maxLength={80} onChange={(event) => setFormJugador({ ...formJugador, alias: event.target.value })} /></label>
+                  <label>Número de camisa<input value={formJugador.numeroCamisa} onChange={(event) => setFormJugador({ ...formJugador, numeroCamisa: event.target.value })} required /></label>
+                  <label>
+                    Foto
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setFotoJugador(event.target.files?.[0] ?? null)} />
+                  </label>
+                  <p>{editor.cargado ? 'Si eliges una foto, reemplaza la del plantel.' : 'Si eliges una foto, se aplicará al procesar el equipo.'}</p>
+                  <div className="actions">
+                    <button type="submit" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
+                    <button type="button" className="ghost" onClick={() => setEditor(null)}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
           {revision && (

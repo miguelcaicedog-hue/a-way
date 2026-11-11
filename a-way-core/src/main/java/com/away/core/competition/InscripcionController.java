@@ -51,6 +51,21 @@ public class InscripcionController {
         return inscripciones.seleccionar(id, request.isSeleccionado());
     }
 
+    @PutMapping(value = "/jugadores/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public InscripcionJugadorView editarJugador(@PathVariable UUID id,
+                                                @RequestParam String cedula,
+                                                @RequestParam String nombre,
+                                                @RequestParam(required = false) String alias,
+                                                @RequestParam String numeroCamisa,
+                                                @RequestParam(value = "foto", required = false) MultipartFile foto) {
+        return inscripciones.editarJugador(id, cedula, nombre, alias, numeroCamisa, foto);
+    }
+
+    @PostMapping("/{id}/acceso-fotos")
+    public AccesoFotosView accesoFotos(@PathVariable UUID id, @RequestBody ProcesoRequest request) {
+        return inscripciones.accesoFotos(id, request.getEquipoIds());
+    }
+
     @PostMapping("/{id}/procesar")
     public InscripcionDetalleView procesar(@PathVariable UUID id, @RequestBody ProcesoRequest request) {
         return inscripciones.procesar(id, request.getEquipoIds());
