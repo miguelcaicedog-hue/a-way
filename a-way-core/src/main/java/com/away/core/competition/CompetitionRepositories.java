@@ -86,3 +86,23 @@ interface GrupoEquipoRepository extends JpaRepository<GrupoEquipo, UUID> {
 
     List<GrupoEquipo> findByIdGrupoAndEstado(UUID idGrupo, String estado);
 }
+
+interface FaseRepository extends JpaRepository<Fase, UUID> {
+    List<Fase> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
+}
+
+interface CruceRepository extends JpaRepository<Cruce, UUID> {
+    List<Cruce> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
+
+    List<Cruce> findByIdFaseAndEstadoOrderByOrdenAsc(UUID idFase, String estado);
+}
+
+interface JornadaRepository extends JpaRepository<Jornada, UUID> {
+    List<Jornada> findByIdCategoriaAndEstadoOrderByNumeroAsc(UUID idCategoria, String estado);
+}
+
+interface PartidoRepository extends JpaRepository<Partido, UUID> {
+    List<Partido> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
+
+    List<Partido> findByIdJornadaAndEstadoOrderByOrdenAsc(UUID idJornada, String estado);
+}

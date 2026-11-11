@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 import { api } from './api'
 import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
+import { CalendarioScreen } from './Calendario'
+import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
 import { InscripcionScreen } from './Inscripciones'
 
@@ -398,6 +400,8 @@ function App() {
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'inscripciones' && <InscripcionScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
+        {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
+        {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
       </main>
       </div>
     </div>
