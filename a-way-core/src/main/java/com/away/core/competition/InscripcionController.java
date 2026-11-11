@@ -1,6 +1,8 @@
 package com.away.core.competition;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,6 +51,15 @@ public class InscripcionController {
     @PutMapping("/equipos/{id}/seleccion")
     public InscripcionEquipoView seleccionar(@PathVariable UUID id, @RequestBody SeleccionRequest request) {
         return inscripciones.seleccionar(id, request.isSeleccionado());
+    }
+
+    @GetMapping("/jugadores/{id}/foto")
+    public ResponseEntity<byte[]> foto(@PathVariable UUID id) {
+        InscripcionService.FotoContenido contenido = inscripciones.foto(id);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .contentType(MediaType.parseMediaType(contenido.tipo))
+                .body(contenido.bytes);
     }
 
     @PutMapping(value = "/jugadores/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

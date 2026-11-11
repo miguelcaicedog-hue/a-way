@@ -2,7 +2,10 @@ package com.away.core.competition;
 
 import com.away.core.auth.League;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,9 +26,18 @@ interface CategoryRepository extends JpaRepository<Category, UUID> {
 }
 
 interface TeamRepository extends JpaRepository<Team, UUID> {
-    List<Team> findByLeague_IdOrderByNameAsc(UUID leagueId);
+    @Query("select team from Team team "
+            + "where team.league.id = :leagueId "
+            + "and (:estado = '' or team.estado = :estado) "
+            + "and (:nombre = '' or lower(team.name) like lower(concat('%', :nombre, '%'))) "
+            + "and (:representante = '' or lower(coalesce(team.nombreRepresentante, '')) like lower(concat('%', :representante, '%'))) "
+            + "order by team.name asc")
+    List<Team> buscar(@Param("leagueId") UUID leagueId,
+                      @Param("nombre") String nombre,
+                      @Param("representante") String representante,
+                      @Param("estado") String estado);
 
-    Optional<Team> findByLeague_IdAndName(UUID leagueId, String name);
+    Optional<Team> findByLeague_IdAndNameAndEstadoNot(UUID leagueId, String name, String estado);
 }
 
 interface InscripcionArchivoRepository extends JpaRepository<InscripcionArchivo, UUID> {
@@ -50,4 +62,9 @@ interface PlayerRepository extends JpaRepository<Player, UUID> {
     List<Player> findByTeamEntry_IdOrderByCedulaAsc(UUID teamEntryId);
 
     List<Player> findByCedulaIgnoreCaseOrderByNameAsc(String cedula);
+
+    @Query("select player.teamEntry.team.id, count(player.id) from Player player "
+            + "where player.teamEntry.category.edition.id = :editionId and player.teamEntry.team.id in :teamIds "
+            + "group by player.teamEntry.team.id")
+    List<Object[]> contarPorEquipo(@Param("editionId") UUID editionId, @Param("teamIds") Collection<UUID> teamIds);
 }

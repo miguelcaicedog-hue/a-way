@@ -41,6 +41,42 @@ type Team = {
   name: string
   nombreRepresentante: string | null
   numeroTelefono: string | null
+  estado: string
+  hasLogo: boolean
+  totalJugadores: number
+}
+
+function etiquetaEstado(estado: string) {
+  if (estado === 'BLOQUEADO') return 'Bloqueado'
+  if (estado === 'INACTIVO') return 'Inactivo'
+  if (estado === 'ELIMINADO') return 'Eliminado'
+  return 'Activo'
+}
+
+function whatsappUrl(phone: string | null) {
+  let number = (phone ?? '').replace(/\D/g, '')
+  if (number.startsWith('00')) {
+    number = number.slice(2)
+  }
+  if (number.startsWith('0') && number.length === 10) {
+    number = `593${number.slice(1)}`
+  } else if (number.length === 9 && number.startsWith('9')) {
+    number = `593${number}`
+  }
+  return number.length >= 11 ? `https://wa.me/${number}` : null
+}
+
+function LogoEquipo({ id, hasLogo, stamp, grande = false }: { id?: string; hasLogo: boolean; stamp: number; grande?: boolean }) {
+  if (hasLogo && id) {
+    return <img className={grande ? 'team-logo preview' : 'team-logo'} alt="" src={`/api/teams/${id}/logo?v=${stamp}`} />
+  }
+  return (
+    <span className={grande ? 'team-logo vacio preview' : 'team-logo vacio'} aria-label="Sin logo">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 6l20 8v16c0 14-8 24-20 28C20 54 12 44 12 30V14z" fill="none" stroke="currentColor" strokeWidth="3" />
+      </svg>
+    </span>
+  )
 }
 
 function canWrite(profile: Profile) {
@@ -430,30 +466,59 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
   )
 }
 
-export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: string }) {
+export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile; leagueId: string; editionId: string }) {
   const [rows, setRows] = useState<Team[]>([])
   const [editing, setEditing] = useState<Team | null>(null)
   const [name, setName] = useState('')
   const [nombreRepresentante, setNombreRepresentante] = useState('')
   const [numeroTelefono, setNumeroTelefono] = useState('')
+  const [estado, setEstado] = useState('ACTIVO')
+  const [logo, setLogo] = useState<string | null>(null)
+  const [logoType, setLogoType] = useState<string | null>(null)
+  const [clearLogo, setClearLogo] = useState(false)
+  const [logoStamp, setLogoStamp] = useState(0)
+  const [filtroNombre, setFiltroNombre] = useState('')
+  const [filtroRepresentante, setFiltroRepresentante] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
+  function equiposUrl(nombre: string, representante: string, estadoEquipo: string) {
+    const params = new URLSearchParams({ leagueId })
+    if (editionId) params.set('editionId', editionId)
+    if (nombre.trim()) params.set('nombre', nombre.trim())
+    if (representante.trim()) params.set('representante', representante.trim())
+    params.set('estado', estadoEquipo)
+    return `/api/teams?${params.toString()}`
+  }
+
   useEffect(() => {
+    setFiltroNombre('')
+    setFiltroRepresentante('')
+    setFiltroEstado('ACTIVO')
     if (!leagueId) {
       setRows([])
       return
     }
-    api<Team[]>(`/api/teams?leagueId=${leagueId}`)
-      .then(setRows)
+    const params = new URLSearchParams({ leagueId, estado: 'ACTIVO' })
+    if (editionId) params.set('editionId', editionId)
+    api<Team[]>(`/api/teams?${params.toString()}`)
+      .then((items) => {
+        setRows(items)
+        setLogoStamp(Date.now())
+      })
       .catch((reason: Error) => setError(reason.message))
-  }, [leagueId])
+  }, [leagueId, editionId])
 
   function reset() {
     setEditing(null)
     setName('')
     setNombreRepresentante('')
     setNumeroTelefono('')
+    setEstado('ACTIVO')
+    setLogo(null)
+    setLogoType(null)
+    setClearLogo(false)
   }
 
   function edit(row: Team) {
@@ -461,16 +526,54 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
     setName(row.name)
     setNombreRepresentante(row.nombreRepresentante ?? '')
     setNumeroTelefono(row.numeroTelefono ?? '')
+    setEstado(row.estado === 'BLOQUEADO' || row.estado === 'INACTIVO' ? row.estado : 'ACTIVO')
+    setLogo(null)
+    setLogoType(null)
+    setClearLogo(false)
+  }
+
+  function onLogo(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
+    if (file.size > 2_000_000) {
+      setError('El logo debe pesar como máximo 2 MB')
+      event.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null
+      const declared = (file.type || dataUrl?.slice(5, dataUrl.indexOf(';')) || '').toLowerCase()
+      const type = declared === 'image/jpg' || declared === 'image/pjpeg' ? 'image/jpeg' : declared
+      setLogo(dataUrl)
+      setLogoType(type)
+      setClearLogo(false)
+      setError(null)
+    }
+    reader.readAsDataURL(file)
   }
 
   async function reload() {
-    setRows(await api<Team[]>(`/api/teams?leagueId=${leagueId}`))
+    setRows(await api<Team[]>(equiposUrl(filtroNombre, filtroRepresentante, filtroEstado)))
+    setLogoStamp(Date.now())
+  }
+
+  async function consultar(event: FormEvent) {
+    event.preventDefault()
+    setError(null)
+    try {
+      await reload()
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudieron consultar los equipos')
+    }
   }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    const body = { leagueId, name, nombreRepresentante, numeroTelefono }
+    const body = { leagueId, name, nombreRepresentante, numeroTelefono, estado, logoBase64: logo, logoContentType: logoType, clearLogo }
     try {
       if (editing) {
         await api(`/api/teams/${editing.id}`, { method: 'PUT', body: JSON.stringify(body) })
@@ -497,23 +600,54 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
   return (
     <section className="catalog">
       {error && <p className="down">{error}</p>}
+      <form className="filtros" onSubmit={consultar}>
+        <label>Nombre<input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} /></label>
+        <label>Representante<input value={filtroRepresentante} onChange={(event) => setFiltroRepresentante(event.target.value)} /></label>
+        <label>
+          Estado
+          <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)}>
+            <option value="ACTIVO">Activo</option>
+            <option value="BLOQUEADO">Bloqueado</option>
+            <option value="INACTIVO">Inactivo</option>
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <button type="submit">Consultar</button>
+      </form>
       <table>
         <thead>
           <tr>
             <th className="numero">Nº</th>
+            <th>Logo</th>
             <th>Nombre</th>
             <th>Representante</th>
             <th>Teléfono</th>
+            <th className="numero" title="Jugadores inscritos">JI</th>
+            <th>Estado</th>
             {writable && <th></th>}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
+          {rows.map((row, index) => {
+            const whatsapp = whatsappUrl(row.numeroTelefono)
+            return (
             <tr key={row.id}>
               <td className="numero">{index + 1}</td>
+              <td><LogoEquipo id={row.id} hasLogo={row.hasLogo} stamp={logoStamp} /></td>
               <td>{row.name}</td>
               <td>{row.nombreRepresentante}</td>
-              <td>{row.numeroTelefono}</td>
+              <td className="telefono">
+                {row.numeroTelefono}
+                {whatsapp && (
+                  <a className="whatsapp" href={whatsapp} target="_blank" rel="noreferrer" aria-label={`Chatear por WhatsApp con ${row.nombreRepresentante || row.name}`}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path fill="currentColor" d="M12.04 2C6.58 2 2.15 6.4 2.15 11.83c0 1.74.46 3.44 1.33 4.94L2 22l5.39-1.41a10.1 10.1 0 0 0 4.65 1.12h.01c5.46 0 9.89-4.4 9.89-9.83C21.94 6.4 17.5 2 12.04 2zm5.76 13.89c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.13.11-1.82-.11-.42-.14-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.16-1.54-1.16-2.94s.73-2.08 1-2.37c.24-.27.64-.39.86-.39h.62c.2 0 .46-.07.72.55.26.64.9 2.2.98 2.36.08.16.13.35.03.56-.1.22-.15.35-.3.54-.15.19-.31.42-.44.56-.15.15-.3.32-.13.62.16.3.73 1.2 1.57 1.95 1.08.96 1.99 1.26 2.27 1.4.28.14.45.12.61-.07.17-.19.7-.81.89-1.09.19-.28.38-.23.64-.14.26.08 1.66.78 1.95.92.28.15.47.22.54.34.07.12.07.7-.17 1.38z" />
+                    </svg>
+                  </a>
+                )}
+              </td>
+              <td className="numero">{row.totalJugadores ?? 0}</td>
+              <td>{etiquetaEstado(row.estado)}</td>
               {writable && (
                 <td className="actions">
                   <button type="button" onClick={() => edit(row)}>Editar</button>
@@ -521,8 +655,9 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
                 </td>
               )}
             </tr>
-          ))}
-          {rows.length === 0 && <tr><td colSpan={writable ? 5 : 4}>No hay equipos.</td></tr>}
+            )
+          })}
+          {rows.length === 0 && <tr><td colSpan={writable ? 8 : 7}>No hay equipos.</td></tr>}
         </tbody>
       </table>
       {writable && (
@@ -531,6 +666,27 @@ export function TeamScreen({ profile, leagueId }: { profile: Profile; leagueId: 
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Nombre de representante<input value={nombreRepresentante} maxLength={160} onChange={(event) => setNombreRepresentante(event.target.value)} /></label>
           <label>Número de teléfono<input value={numeroTelefono} maxLength={30} onChange={(event) => setNumeroTelefono(event.target.value)} /></label>
+          <label>
+            Estado
+            <select value={estado} onChange={(event) => setEstado(event.target.value)}>
+              <option value="ACTIVO">Activo</option>
+              <option value="BLOQUEADO">Bloqueado</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </label>
+          <label>
+            Logo
+            <input key={editing?.id ?? 'nuevo'} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={onLogo} />
+          </label>
+          {logo
+            ? <img className="team-logo preview" alt="" src={logo} />
+            : <LogoEquipo id={editing?.id} hasLogo={Boolean(editing?.hasLogo) && !clearLogo} stamp={logoStamp} grande />}
+          {editing?.hasLogo && (
+            <label className="check">
+              <input type="checkbox" checked={clearLogo} onChange={(event) => setClearLogo(event.target.checked)} />
+              Quitar logo
+            </label>
+          )}
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
@@ -602,7 +758,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
       setTeamId('')
       return
     }
-    api<Team[]>(`/api/teams?leagueId=${leagueId}`)
+    api<Team[]>(`/api/teams?leagueId=${leagueId}&estado=ACTIVO`)
       .then((items) => {
         setTeams(items)
         setTeamId(items[0]?.id ?? '')
@@ -890,7 +1046,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
             />
           </label>
           <label>Alias<input value={alias} onChange={(event) => setAlias(event.target.value)} /></label>
-          <label>Número de camisa<input type="number" min={1} value={numeroCamisa} onChange={(event) => setNumeroCamisa(event.target.value)} required /></label>
+          <label>Número de camisa<input type="number" min={0} value={numeroCamisa} onChange={(event) => setNumeroCamisa(event.target.value)} required /></label>
           <label>
             Foto
             <input key={editing?.id ?? 'nuevo'} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={onPhoto} />

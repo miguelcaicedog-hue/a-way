@@ -11,9 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -173,10 +177,16 @@ public class CompetitionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TeamView> listTeams(UUID leagueId) {
+    public List<TeamView> listTeams(UUID leagueId, String nombre, String representante, String estado, UUID editionId) {
         assertRead(leagueId);
-        return teams.findByLeague_IdOrderByNameAsc(leagueId).stream()
-                .map(this::teamView)
+        String filtroEstado = estado == null ? "ACTIVO" : estado.trim();
+        if (!filtroEstado.isEmpty()) {
+            filtroEstado = estadoEquipo(filtroEstado);
+        }
+        List<Team> encontrados = teams.buscar(leagueId, textoFiltro(nombre), textoFiltro(representante), filtroEstado);
+        Map<UUID, Long> jugadores = totalesJugadores(leagueId, editionId, encontrados);
+        return encontrados.stream()
+                .map(team -> teamView(team, jugadores.getOrDefault(team.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
@@ -187,6 +197,7 @@ public class CompetitionService {
         team.setId(UUID.randomUUID());
         team.setLeague(league);
         applyTeam(team, request);
+        auditarEquipo(team, true);
         return teamView(teams.save(team));
     }
 
@@ -197,13 +208,23 @@ public class CompetitionService {
         assertWrite(league.getId());
         team.setLeague(league);
         applyTeam(team, request);
+        auditarEquipo(team, false);
         return teamView(team);
     }
 
     public void deleteTeam(UUID id) {
         Team team = team(id);
         assertWrite(team.getLeague().getId());
-        teams.delete(team);
+        team.setEstado("INACTIVO");
+        auditarEquipo(team, false);
+    }
+
+    @Transactional(readOnly = true)
+    public Team teamLogo(UUID id) {
+        Team team = team(id);
+        assertRead(team.getLeague().getId());
+        team.getLogo();
+        return team;
     }
 
     @Transactional(readOnly = true)
@@ -211,6 +232,7 @@ public class CompetitionService {
         Category category = category(categoryId);
         assertRead(category.getEdition().getLeague().getId());
         return entries.findByCategory_IdOrderByTeam_NameAsc(categoryId).stream()
+                .filter(entry -> "ACTIVO".equals(entry.getTeam().getEstado()))
                 .map(this::teamEntryView)
                 .collect(Collectors.toList());
     }
@@ -222,6 +244,9 @@ public class CompetitionService {
         assertWrite(category.getEdition().getLeague().getId());
         if (!team.getLeague().getId().equals(category.getEdition().getLeague().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo y la categoría son de ligas distintas");
+        }
+        if (!"ACTIVO".equals(team.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solo se puede inscribir un equipo activo");
         }
         return entries.findByTeam_IdAndCategory_Id(team.getId(), category.getId())
                 .map(this::teamEntryView)
@@ -252,6 +277,9 @@ public class CompetitionService {
         Player chosen = null;
         for (Player player : players.findByCedulaIgnoreCaseOrderByNameAsc(value)) {
             if (!canRead(player.getTeamEntry().getTeam().getLeague().getId())) {
+                continue;
+            }
+            if (!"ACTIVO".equals(player.getTeamEntry().getTeam().getEstado())) {
                 continue;
             }
             if (chosen == null || (chosen.getPhoto() == null && player.getPhoto() != null)) {
@@ -311,6 +339,77 @@ public class CompetitionService {
         String phone = request.getNumeroTelefono() == null ? "" : request.getNumeroTelefono().trim();
         team.setNombreRepresentante(representative.isEmpty() ? null : representative);
         team.setNumeroTelefono(phone.isEmpty() ? null : phone);
+        team.setEstado(estadoEquipo(request.getEstado()));
+        if (request.isClearLogo()) {
+            team.setLogo(null);
+            team.setLogoContentType(null);
+        }
+        if (request.getLogoBase64() != null && !request.getLogoBase64().trim().isEmpty()) {
+            byte[] logo = leerLogo(request.getLogoBase64(), request.getLogoContentType());
+            team.setLogo(logo);
+            team.setLogoContentType(imageType(request.getLogoContentType(), request.getLogoBase64()));
+        }
+    }
+
+    private Map<UUID, Long> totalesJugadores(UUID leagueId, UUID editionId, List<Team> encontrados) {
+        Map<UUID, Long> totales = new HashMap<>();
+        if (editionId == null || encontrados.isEmpty()) {
+            return totales;
+        }
+        Edition edition = editions.findById(editionId).orElse(null);
+        if (edition == null || !leagueId.equals(edition.getLeague().getId())) {
+            return totales;
+        }
+        List<UUID> ids = encontrados.stream().map(Team::getId).collect(Collectors.toList());
+        for (Object[] fila : players.contarPorEquipo(editionId, ids)) {
+            totales.put((UUID) fila[0], (Long) fila[1]);
+        }
+        return totales;
+    }
+
+    private byte[] leerLogo(String encoded, String declaredType) {
+        String type = imageType(declaredType, encoded);
+        if (!Arrays.asList("image/jpeg", "image/png", "image/webp", "image/gif").contains(type)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo debe ser JPEG, PNG, WEBP o GIF");
+        }
+        int comma = encoded.indexOf(',');
+        String payload = encoded.startsWith("data:") && comma > 0 ? encoded.substring(comma + 1) : encoded.trim();
+        byte[] logo;
+        try {
+            logo = Base64.getDecoder().decode(payload.trim());
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo no se pudo leer");
+        }
+        if (logo.length == 0 || logo.length > 2_000_000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo debe pesar como máximo 2 MB");
+        }
+        return logo;
+    }
+
+    private void auditarEquipo(Team team, boolean nuevo) {
+        OffsetDateTime ahora = OffsetDateTime.now();
+        String usuario = currentUser().getUsername();
+        if (nuevo) {
+            team.setFechaCreacion(ahora);
+            team.setUsuarioCreacion(usuario);
+        }
+        team.setFechaModificacion(ahora);
+        team.setUsuarioModificacion(usuario);
+    }
+
+    private String estadoEquipo(String estado) {
+        if (estado == null || estado.isBlank()) {
+            return "ACTIVO";
+        }
+        String value = estado.trim().toUpperCase(Locale.ROOT);
+        if (!Arrays.asList("ACTIVO", "BLOQUEADO", "INACTIVO").contains(value)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El estado del equipo debe ser activo, bloqueado o inactivo");
+        }
+        return value;
+    }
+
+    private String textoFiltro(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void applyLeague(League league, LeagueRequest request) {
@@ -329,27 +428,10 @@ public class CompetitionService {
     }
 
     private void applyLogo(League league, LeagueRequest request) {
-        String encoded = request.getLogoBase64().trim();
-        String type = imageType(request.getLogoContentType(), encoded);
-        if (!Arrays.asList("image/jpeg", "image/png", "image/webp", "image/gif").contains(type)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo debe ser JPEG, PNG, WEBP o GIF");
-        }
-        int comma = encoded.indexOf(',');
-        if (encoded.startsWith("data:") && comma > 0) {
-            encoded = encoded.substring(comma + 1);
-        }
-        byte[] logo;
-        try {
-            logo = Base64.getDecoder().decode(encoded);
-        } catch (IllegalArgumentException exception) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo no se pudo leer");
-        }
-        if (logo.length == 0 || logo.length > 2_000_000) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El logo debe pesar como máximo 2 MB");
-        }
+        byte[] logo = leerLogo(request.getLogoBase64(), request.getLogoContentType());
         league.getLogo();
         league.setLogo(logo);
-        league.setLogoContentType(type);
+        league.setLogoContentType(imageType(request.getLogoContentType(), request.getLogoBase64()));
     }
 
     private void assertDateOrder(LocalDate start, LocalDate end, String message) {
@@ -506,8 +588,14 @@ public class CompetitionService {
     }
 
     private TeamView teamView(Team team) {
+        return teamView(team, 0);
+    }
+
+    private TeamView teamView(Team team, long totalJugadores) {
+        byte[] logo = team.getLogo();
         return new TeamView(team.getId(), team.getLeague().getId(), team.getLeague().getName(), team.getName(),
-                team.getNombreRepresentante(), team.getNumeroTelefono());
+                team.getNombreRepresentante(), team.getNumeroTelefono(), team.getEstado(),
+                logo != null && logo.length > 0, totalJugadores);
     }
 
     private TeamEntryView teamEntryView(TeamEntry entry) {

@@ -248,6 +248,11 @@ ul {
   color: #b42318;
 }
 
+.ok {
+  color: #1d7a3a;
+  font-weight: 600;
+}
+
 .catalog {
   display: flex;
   flex-direction: column;
@@ -258,6 +263,19 @@ ul {
 .catalog form {
   margin-top: 0;
   max-width: 24rem;
+}
+
+.catalog form.filtros {
+  max-width: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-end;
+  margin-right: auto;
+}
+
+.catalog form.filtros label {
+  flex: 0 0 16rem;
 }
 
 select {
@@ -286,6 +304,17 @@ td.numero {
   width: 2.5rem;
   text-align: right;
   color: #5c6b7a;
+}
+
+.telefono {
+  white-space: nowrap;
+}
+
+.whatsapp {
+  display: inline-flex;
+  margin-left: 0.35rem;
+  color: #128c7e;
+  vertical-align: middle;
 }
 
 .actions {
@@ -324,6 +353,57 @@ button.ghost {
 .player-photo.preview {
   width: 96px;
   height: 96px;
+}
+
+.player-photo.vacio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8aa0b5;
+  border: 1px solid #d5e0ea;
+  box-sizing: border-box;
+}
+
+.player-photo.vacio svg {
+  width: 70%;
+  height: 70%;
+}
+
+.editor-ficha {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.editor-ficha form {
+  margin-top: 0;
+}
+
+.team-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  background: white;
+  border-radius: 4px;
+}
+
+.team-logo.preview {
+  width: 96px;
+  height: 96px;
+}
+
+.team-logo.vacio {
+  color: #8aa0b4;
+  border: 1px solid var(--border);
+}
+
+.team-logo.vacio svg {
+  width: 70%;
+  height: 70%;
 }
 
 .league-logo {

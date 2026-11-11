@@ -38,11 +38,23 @@ type Jugador = {
   numeroCamisa: string | null
   cargado: boolean
   fotoCargada: boolean
+  tieneFoto: boolean
   motivo: string | null
 }
 
 function canWrite(profile: Profile) {
   return profile.master || profile.memberships.some((membership) => membership.role === 'ADMINISTRATIVO')
+}
+
+function FotoVacia({ grande = false }: { grande?: boolean }) {
+  return (
+    <span className={grande ? 'player-photo preview vacio' : 'player-photo vacio'} aria-label="Sin foto">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="22" r="10" fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d="M14 54c2.5-11 8.5-16 18-16s15.5 5 18 16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    </span>
+  )
 }
 
 function aliasFromName(fullName: string) {
@@ -71,6 +83,9 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   const [formJugador, setFormJugador] = useState({ cedula: '', nombre: '', alias: '', numeroCamisa: '' })
   const [fotoJugador, setFotoJugador] = useState<File | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [mensaje, setMensaje] = useState<string | null>(null)
+  const [fotoMarca, setFotoMarca] = useState(0)
+  const [vistaFoto, setVistaFoto] = useState<string | null>(null)
   const writable = canWrite(profile)
 
   async function abrir(id: string) {
@@ -157,6 +172,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   function abrirEditor(jugador: Jugador) {
     setEditor(jugador)
     setFotoJugador(null)
+    setVistaFoto(null)
     setFormJugador({
       cedula: jugador.cedula ?? '',
       nombre: jugador.nombre ?? '',
@@ -201,7 +217,10 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
       const saved = payload as Jugador
       setJugadores((current) => current.map((item) => item.id === saved.id ? saved : item))
       setDetalle(await api<Detalle>(`/api/inscripciones/${detalle.id}`))
+      setFotoMarca((current) => current + 1)
+      setMensaje('Grabado OK')
       setEditor(null)
+      setVistaFoto(null)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo guardar el jugador')
     } finally {
@@ -281,9 +300,11 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   }
 
   const equipoAbierto = detalle?.equipos.find((equipo) => equipo.id === abierto)
+  const todosProcesados = Boolean(detalle?.equipos.length) && detalle.equipos.every((equipo) => equipo.resultado === 'OK')
 
   return (
     <section className="catalog">
+      {mensaje && <p className="ok">{mensaje}</p>}
       {error && <p className="down">{error}</p>}
       {writable && (
         <label>
@@ -362,7 +383,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
             </div>
           )}
           {writable && (
-            <button type="button" onClick={() => procesar()} disabled={procesando || comprobando}>
+            <button type="button" onClick={() => procesar()} disabled={procesando || comprobando || todosProcesados}>
               {procesando ? 'Procesando…' : comprobando ? 'Comprobando…' : 'Procesar'}
             </button>
           )}
@@ -375,11 +396,11 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                   <thead>
                     <tr>
                       <th className="numero">Nº</th>
+                      <th>Foto</th>
                       <th>Cédula</th>
+                      <th>Nº de camisa</th>
                       <th>Nombre</th>
                       <th>Alias</th>
-                      <th>Nº de camisa</th>
-                      <th>Foto</th>
                       <th>Revisar</th>
                       {writable && <th></th>}
                     </tr>
@@ -388,11 +409,15 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                     {jugadores.map((jugador, index) => (
                       <tr key={jugador.id}>
                         <td className="numero">{index + 1}</td>
+                        <td>
+                          {jugador.tieneFoto ? (
+                            <img className="player-photo" alt="" src={`/api/inscripciones/jugadores/${jugador.id}/foto?v=${fotoMarca}`} />
+                          ) : <FotoVacia />}
+                        </td>
                         <td>{jugador.cedula}</td>
+                        <td>{jugador.numeroCamisa}</td>
                         <td>{jugador.nombre}</td>
                         <td>{jugador.alias}</td>
-                        <td>{jugador.numeroCamisa}</td>
-                        <td>{jugador.fotoCargada ? 'Guardada' : jugador.cargado ? 'Sin foto' : 'No cargado'}</td>
                         <td className="detalle">{jugador.motivo}</td>
                         {writable && (
                           <td>
@@ -422,21 +447,38 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
             <div className="modal-fondo" onClick={() => setEditor(null)}>
               <div className="modal" role="dialog" aria-modal="true" aria-labelledby="editor-jugador-titulo" onClick={(event) => event.stopPropagation()}>
                 <h2 id="editor-jugador-titulo">Editar jugador</h2>
-                <form onSubmit={(event) => { event.preventDefault(); void guardarJugador() }}>
+                <div className="editor-ficha">
+                  {vistaFoto || editor.tieneFoto ? (
+                    <img
+                      className="player-photo preview"
+                      alt=""
+                      src={vistaFoto ?? `/api/inscripciones/jugadores/${editor.id}/foto?v=${fotoMarca}`}
+                    />
+                  ) : <FotoVacia grande />}
+                  <form onSubmit={(event) => { event.preventDefault(); void guardarJugador() }}>
                   <label>Cédula<input value={formJugador.cedula} maxLength={30} onChange={(event) => setFormJugador({ ...formJugador, cedula: event.target.value })} required /></label>
                   <label>Nombre<input value={formJugador.nombre} maxLength={200} onChange={(event) => cambiarNombre(event.target.value)} required /></label>
                   <label>Alias<input value={formJugador.alias} maxLength={80} onChange={(event) => setFormJugador({ ...formJugador, alias: event.target.value })} /></label>
                   <label>Número de camisa<input value={formJugador.numeroCamisa} onChange={(event) => setFormJugador({ ...formJugador, numeroCamisa: event.target.value })} required /></label>
                   <label>
                     Foto
-                    <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setFotoJugador(event.target.files?.[0] ?? null)} />
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] ?? null
+                        setFotoJugador(file)
+                        setVistaFoto(file ? URL.createObjectURL(file) : null)
+                      }}
+                    />
                   </label>
-                  <p>{editor.cargado ? 'Si eliges una foto, reemplaza la del plantel.' : 'Si eliges una foto, se aplicará al procesar el equipo.'}</p>
+                  <p>Al guardar se corrige el jugador y se vuelve a procesar.</p>
                   <div className="actions">
                     <button type="submit" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
                     <button type="button" className="ghost" onClick={() => setEditor(null)}>Cancelar</button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>
           )}

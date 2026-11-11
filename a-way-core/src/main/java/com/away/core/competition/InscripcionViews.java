@@ -120,10 +120,11 @@ class InscripcionJugadorView {
     private final String numeroCamisa;
     private final boolean cargado;
     private final boolean fotoCargada;
+    private final boolean tieneFoto;
     private final String motivo;
 
     InscripcionJugadorView(UUID id, String cedula, String nombre, String alias, String numeroCamisa,
-                           boolean cargado, boolean fotoCargada, String motivo) {
+                           boolean cargado, boolean fotoCargada, boolean tieneFoto, String motivo) {
         this.id = id;
         this.cedula = cedula;
         this.nombre = nombre;
@@ -131,6 +132,7 @@ class InscripcionJugadorView {
         this.numeroCamisa = numeroCamisa;
         this.cargado = cargado;
         this.fotoCargada = fotoCargada;
+        this.tieneFoto = tieneFoto;
         this.motivo = motivo;
     }
 
@@ -160,6 +162,10 @@ class InscripcionJugadorView {
 
     public boolean isFotoCargada() {
         return fotoCargada;
+    }
+
+    public boolean isTieneFoto() {
+        return tieneFoto;
     }
 
     public String getMotivo() {

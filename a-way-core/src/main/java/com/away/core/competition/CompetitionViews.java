@@ -161,6 +161,11 @@ class TeamRequest {
     private String nombreRepresentante;
     @Size(max = 30)
     private String numeroTelefono;
+    @Size(max = 20)
+    private String estado;
+    private String logoBase64;
+    private String logoContentType;
+    private boolean clearLogo;
 
     public UUID getLeagueId() {
         return leagueId;
@@ -192,6 +197,38 @@ class TeamRequest {
 
     public void setNumeroTelefono(String numeroTelefono) {
         this.numeroTelefono = numeroTelefono;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public String getLogoBase64() {
+        return logoBase64;
+    }
+
+    public void setLogoBase64(String logoBase64) {
+        this.logoBase64 = logoBase64;
+    }
+
+    public String getLogoContentType() {
+        return logoContentType;
+    }
+
+    public void setLogoContentType(String logoContentType) {
+        this.logoContentType = logoContentType;
+    }
+
+    public boolean isClearLogo() {
+        return clearLogo;
+    }
+
+    public void setClearLogo(boolean clearLogo) {
+        this.clearLogo = clearLogo;
     }
 }
 
@@ -334,14 +371,20 @@ class TeamView {
     private final String name;
     private final String nombreRepresentante;
     private final String numeroTelefono;
+    private final String estado;
+    private final boolean hasLogo;
+    private final long totalJugadores;
 
-    TeamView(UUID id, UUID leagueId, String leagueName, String name, String nombreRepresentante, String numeroTelefono) {
+    TeamView(UUID id, UUID leagueId, String leagueName, String name, String nombreRepresentante, String numeroTelefono, String estado, boolean hasLogo, long totalJugadores) {
         this.id = id;
         this.leagueId = leagueId;
         this.leagueName = leagueName;
         this.name = name;
         this.nombreRepresentante = nombreRepresentante;
         this.numeroTelefono = numeroTelefono;
+        this.estado = estado;
+        this.hasLogo = hasLogo;
+        this.totalJugadores = totalJugadores;
     }
 
     public UUID getId() {
@@ -366,6 +409,18 @@ class TeamView {
 
     public String getNumeroTelefono() {
         return numeroTelefono;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public boolean isHasLogo() {
+        return hasLogo;
+    }
+
+    public long getTotalJugadores() {
+        return totalJugadores;
     }
 }
 
@@ -446,7 +501,7 @@ class PlayerRequest {
     @Size(max = 30)
     private String cedula;
     @NotNull
-    @Min(1)
+    @Min(0)
     private Integer numeroCamisa;
     @NotNull
     private Integer rotationDegrees;

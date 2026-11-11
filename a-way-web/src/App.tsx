@@ -388,7 +388,7 @@ function App() {
         {section === 'ligas' && <LeagueScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}
         {section === 'ediciones' && <EditionScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}
         {section === 'categorias' && <CategoryScreen profile={profile} editionId={editionId} />}
-        {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} />}
+        {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'inscripciones' && <InscripcionScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
       </main>

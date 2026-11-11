@@ -109,8 +109,12 @@ public class CompetitionController {
     }
 
     @GetMapping("/teams")
-    public List<TeamView> teams(@RequestParam UUID leagueId) {
-        return competition.listTeams(leagueId);
+    public List<TeamView> teams(@RequestParam UUID leagueId,
+                                @RequestParam(required = false) String nombre,
+                                @RequestParam(required = false) String representante,
+                                @RequestParam(required = false) String estado,
+                                @RequestParam(required = false) UUID editionId) {
+        return competition.listTeams(leagueId, nombre, representante, estado, editionId);
     }
 
     @PostMapping("/teams")
@@ -128,6 +132,18 @@ public class CompetitionController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTeam(@PathVariable UUID id) {
         competition.deleteTeam(id);
+    }
+
+    @GetMapping("/teams/{id}/logo")
+    public ResponseEntity<byte[]> teamLogo(@PathVariable UUID id) {
+        Team team = competition.teamLogo(id);
+        if (team.getLogo() == null || team.getLogoContentType() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .contentType(MediaType.parseMediaType(team.getLogoContentType()))
+                .body(team.getLogo());
     }
 
     @GetMapping("/team-entries")
