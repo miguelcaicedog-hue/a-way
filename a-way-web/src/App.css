@@ -29,6 +29,47 @@ label {
   font-size: 0.95rem;
 }
 
+.fecha-campo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+input.fecha {
+  width: 9.5rem;
+  padding-right: 2rem;
+}
+
+.fecha-nativa {
+  position: absolute;
+  right: 0;
+  width: 2.2rem;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+}
+
+.fecha-abrir {
+  position: absolute;
+  right: 0.15rem;
+  z-index: 1;
+  margin: 0;
+  padding: 0.15rem;
+  background: transparent;
+  color: #163a5f;
+}
+
+.fecha-abrir svg {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
 input {
   font: inherit;
   padding: 0.55rem 0.7rem;

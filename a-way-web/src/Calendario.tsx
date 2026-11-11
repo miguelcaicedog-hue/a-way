@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from './api'
+import { FechaCampo } from './Fecha'
 
 type Profile = {
   master: boolean
@@ -129,11 +130,11 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
                 <h2>{jornada.nombre}</h2>
                 <label>
                   Fecha
-                  <input
-                    type="date"
-                    value={jornada.fecha ?? ''}
+                  <FechaCampo
+                    value={jornada.fecha}
                     disabled={!writable}
-                    onChange={(event) => ejecutar(`/api/calendario/jornada/${jornada.id}`, 'PUT', { fecha: event.target.value || null })}
+                    ariaLabel={`Fecha de ${jornada.nombre}`}
+                    onChange={(fecha) => ejecutar(`/api/calendario/jornada/${jornada.id}`, 'PUT', { fecha })}
                   />
                 </label>
               </header>
@@ -151,12 +152,11 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
                       <td>{partido.textoLocal}</td>
                       <td>{partido.textoVisita}</td>
                       <td>
-                        <input
-                          type="date"
-                          aria-label={`Fecha de ${partido.textoLocal} contra ${partido.textoVisita}`}
-                          value={partido.fecha ?? jornada.fecha ?? ''}
+                        <FechaCampo
+                          ariaLabel={`Fecha de ${partido.textoLocal} contra ${partido.textoVisita}`}
+                          value={partido.fecha ?? jornada.fecha}
                           disabled={!writable}
-                          onChange={(event) => ejecutar(`/api/calendario/partido/${partido.id}`, 'PUT', { fecha: event.target.value || null })}
+                          onChange={(fecha) => ejecutar(`/api/calendario/partido/${partido.id}`, 'PUT', { fecha })}
                         />
                       </td>
                     </tr>

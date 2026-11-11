@@ -106,3 +106,11 @@ interface PartidoRepository extends JpaRepository<Partido, UUID> {
 
     List<Partido> findByIdJornadaAndEstadoOrderByOrdenAsc(UUID idJornada, String estado);
 }
+
+interface CanchaRepository extends JpaRepository<Cancha, UUID> {
+    @Query("select c from Cancha c where c.idLiga = :liga and c.estado <> 'ELIMINADO' "
+            + "and (:estado = '' or c.estado = :estado) "
+            + "and (:descripcion = '' or lower(c.descripcion) like :descripcion) "
+            + "order by c.descripcion")
+    List<Cancha> buscar(@Param("liga") UUID liga, @Param("descripcion") String descripcion, @Param("estado") String estado);
+}

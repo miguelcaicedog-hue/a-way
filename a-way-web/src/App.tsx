@@ -3,6 +3,7 @@ import './App.css'
 import { api } from './api'
 import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
 import { CalendarioScreen } from './Calendario'
+import { CanchasScreen } from './Canchas'
 import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
 import { InscripcionScreen } from './Inscripciones'
@@ -44,7 +45,7 @@ const sections = [
   { id: 'tarjetas', label: 'Tarjetas', summary: 'Amarillas y rojas de cada jugador por jornada.' },
   { id: 'tabla', label: 'Tabla', summary: 'Posiciones con diferencia de goles, goles convertidos y fair play.' },
   { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la categoría y árbitro por defecto de cada cancha.' },
-  { id: 'canchas', label: 'Canchas', summary: 'Canchas de la categoría y asignación a cada partido.' },
+  { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
   { id: 'suspensiones', label: 'Suspensiones', summary: 'Reglas por tarjetas y jornada en que empieza la sanción.' },
   { id: 'pagos', label: 'Pagos', summary: 'Arbitraje por jornada y cancelación de multas por tarjeta.' },
   { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
@@ -402,6 +403,7 @@ function App() {
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
+        {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
       </main>
       </div>
     </div>

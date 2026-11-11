@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api'
+import { aDia, FechaCampo } from './Fecha'
 
 type Profile = {
   master: boolean
@@ -243,8 +244,8 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
           {ligas.map((row) => (
             <tr key={row.id}>
               <td>{row.name}</td>
-              <td>{row.validFrom}</td>
-              <td>{row.validUntil}</td>
+              <td>{aDia(row.validFrom)}</td>
+              <td>{aDia(row.validUntil)}</td>
               <td>{row.active ? 'Activa' : 'Inactiva'}</td>
               <td>
                 {row.hasLogo && (
@@ -275,11 +276,11 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
           </label>
           <label>
             Vigencia desde
-            <input type="date" value={validFrom} onChange={(event) => setValidFrom(event.target.value)} required />
+            <FechaCampo value={validFrom || null} required onChange={(fecha) => setValidFrom(fecha ?? '')} />
           </label>
           <label>
             Vigencia hasta
-            <input type="date" value={validUntil} onChange={(event) => setValidUntil(event.target.value)} required />
+            <FechaCampo value={validUntil || null} required onChange={(fecha) => setValidUntil(fecha ?? '')} />
           </label>
           <label className="check">
             <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
@@ -381,8 +382,8 @@ export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: P
           {rows.map((row) => (
             <tr key={row.id}>
               <td>{row.name}</td>
-              <td>{row.startsOn}</td>
-              <td>{row.endsOn}</td>
+              <td>{aDia(row.startsOn)}</td>
+              <td>{aDia(row.endsOn)}</td>
               {writable && (
                 <td className="actions">
                   <button type="button" onClick={() => { setEditing(row); setName(row.name); setStartsOn(row.startsOn); setEndsOn(row.endsOn) }}>Editar</button>
@@ -398,8 +399,8 @@ export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: P
         <form onSubmit={onSubmit}>
           <h2>{editing ? 'Editar edición' : 'Nueva edición'}</h2>
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
-          <label>Inicio<input type="date" value={startsOn} onChange={(event) => setStartsOn(event.target.value)} required /></label>
-          <label>Fin<input type="date" value={endsOn} onChange={(event) => setEndsOn(event.target.value)} required /></label>
+          <label>Inicio<FechaCampo value={startsOn || null} required onChange={(fecha) => setStartsOn(fecha ?? '')} /></label>
+          <label>Fin<FechaCampo value={endsOn || null} required onChange={(fecha) => setEndsOn(fecha ?? '')} /></label>
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
