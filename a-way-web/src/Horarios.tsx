@@ -57,6 +57,14 @@ function horaVisible(hora: string) {
   return hora.replace(/^0(\d:)/, '$1')
 }
 
+function horaEnLaManana(hora: string) {
+  const horas = Number(hora.slice(0, 2))
+  if (!Number.isInteger(horas) || horas < 0 || horas > 11 || hora.length < 5) {
+    return '09:00'
+  }
+  return hora.slice(0, 5)
+}
+
 export function HorariosScreen({ profile, editionId }: { profile: Profile; editionId: string }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
@@ -343,6 +351,7 @@ export function HorariosScreen({ profile, editionId }: { profile: Profile; editi
             <tbody>
               {pendientes.map((partido) => {
                 const actual = borrador[partido.id] ?? { canchaId: '', hora: '' }
+                const hora = actual.hora || horaEnLaManana(horaInicio)
                 return (
                   <tr key={partido.id}>
                     <td>{partido.fecha ? titulo(partido.fecha).split(' ').slice(1).join(' ') : 'Sin fecha'}</td>
@@ -367,15 +376,15 @@ export function HorariosScreen({ profile, editionId }: { profile: Profile; editi
                           <input
                             type="time"
                             step={60}
-                            value={actual.hora}
-                            onChange={(event) => setBorrador({ ...borrador, [partido.id]: { ...actual, hora: event.target.value } })}
+                            value={hora}
+                            onChange={(event) => setBorrador({ ...borrador, [partido.id]: { ...actual, hora: event.target.value || horaEnLaManana(horaInicio) } })}
                           />
                         </td>
                         <td>
                           <button
                             type="button"
-                            disabled={ocupado || !actual.canchaId || !actual.hora}
-                            onClick={() => guardar(partido, actual.canchaId, actual.hora)}
+                            disabled={ocupado || !actual.canchaId || !hora}
+                            onClick={() => guardar(partido, actual.canchaId, hora)}
                           >
                             Guardar
                           </button>
