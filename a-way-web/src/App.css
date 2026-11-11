@@ -406,6 +406,64 @@ button.ghost {
   height: 70%;
 }
 
+.grupos-tablero {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.grupo-columna {
+  flex: 0 0 16rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 16rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: #f4f7fb;
+}
+
+.grupo-columna.sobre {
+  border-color: #1d4e89;
+  background: #e7f0fa;
+}
+
+.grupo-columna header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grupo-columna h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.grupo-columna header span {
+  margin-left: auto;
+  color: #5c6b7a;
+}
+
+.equipo-ficha {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  cursor: grab;
+}
+
+.equipo-ficha:active {
+  cursor: grabbing;
+}
+
+.grupo-columna .vacio {
+  margin: 0.4rem 0 0;
+  color: #5c6b7a;
+}
+
 .league-logo {
   height: 36px;
   max-width: 72px;

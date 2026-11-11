@@ -76,3 +76,13 @@ interface PlayerRepository extends JpaRepository<Player, UUID> {
             + "group by player.teamEntry.team.id")
     List<Object[]> contarPorEquipo(@Param("editionId") UUID editionId, @Param("teamIds") Collection<UUID> teamIds);
 }
+
+interface GrupoRepository extends JpaRepository<Grupo, UUID> {
+    List<Grupo> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
+}
+
+interface GrupoEquipoRepository extends JpaRepository<GrupoEquipo, UUID> {
+    List<GrupoEquipo> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
+
+    List<GrupoEquipo> findByIdGrupoAndEstado(UUID idGrupo, String estado);
+}

@@ -354,9 +354,9 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
               <tr>
                 {writable && <th></th>}
                 <th className="numero">Nº</th>
-                <th>Categoría</th>
                 <th>Logo</th>
                 <th>Equipo</th>
+                <th>Categoría</th>
                 <th>Representante</th>
                 <th>Teléfono</th>
                 <th>Resultado</th>
@@ -377,11 +377,11 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                     </td>
                   )}
                   <td className="numero">{index + 1}</td>
-                  <td>{equipo.categoria}</td>
                   <td><LogoInscripcion key={equipo.id} url={logoUrl(equipo.urlLogo)} /></td>
                   <td>
                     <button type="button" className="ghost" onClick={() => verJugadores(equipo)}>{equipo.nombreEquipo}</button>
                   </td>
+                  <td>{equipo.categoria}</td>
                   <td>{equipo.nombreRepresentante}</td>
                   <td>{equipo.numeroTelefono}</td>
                   <td>{equipo.resultado}</td>

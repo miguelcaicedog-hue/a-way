@@ -26,6 +26,12 @@ public class Category {
     @Column(name = "max_players", nullable = false)
     private int maxPlayers;
 
+    @Column(name = "cantidad_grupos", nullable = false)
+    private int cantidadGrupos;
+
+    @Column(name = "equipos_por_grupo")
+    private Integer equiposPorGrupo;
+
     public UUID getId() {
         return id;
     }
@@ -56,5 +62,21 @@ public class Category {
 
     public void setMaxPlayers(int maxPlayers) {
         this.maxPlayers = maxPlayers;
+    }
+
+    public int getCantidadGrupos() {
+        return cantidadGrupos;
+    }
+
+    public void setCantidadGrupos(int cantidadGrupos) {
+        this.cantidadGrupos = cantidadGrupos;
+    }
+
+    public Integer getEquiposPorGrupo() {
+        return equiposPorGrupo;
+    }
+
+    public void setEquiposPorGrupo(Integer equiposPorGrupo) {
+        this.equiposPorGrupo = equiposPorGrupo;
     }
 }

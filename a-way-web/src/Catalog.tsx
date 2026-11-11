@@ -32,6 +32,8 @@ type Category = {
   leagueName: string
   name: string
   maxPlayers: number
+  cantidadGrupos: number
+  equiposPorGrupo: number | null
 }
 
 type Team = {
@@ -412,6 +414,8 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
   const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState('')
   const [maxPlayers, setMaxPlayers] = useState('25')
+  const [cantidadGrupos, setCantidadGrupos] = useState('1')
+  const [equiposPorGrupo, setEquiposPorGrupo] = useState('')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
@@ -429,6 +433,8 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
     setEditing(null)
     setName('')
     setMaxPlayers('25')
+    setCantidadGrupos('1')
+    setEquiposPorGrupo('')
   }
 
   async function reload() {
@@ -438,7 +444,14 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    const body = { editionId, name, maxPlayers: Number(maxPlayers) }
+    const equipos = equiposPorGrupo.trim()
+    const body = {
+      editionId,
+      name,
+      maxPlayers: Number(maxPlayers),
+      cantidadGrupos: Number(cantidadGrupos),
+      equiposPorGrupo: equipos === '' ? null : Number(equipos),
+    }
     try {
       if (editing) {
         await api(`/api/categories/${editing.id}`, { method: 'PUT', body: JSON.stringify(body) })
@@ -471,6 +484,8 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
           <tr>
             <th>Nombre</th>
             <th>Jugadores</th>
+            <th>Grupos</th>
+            <th>Equipos por grupo</th>
             {writable && <th></th>}
           </tr>
         </thead>
@@ -479,15 +494,17 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
             <tr key={row.id}>
               <td>{row.name}</td>
               <td>{row.maxPlayers}</td>
+              <td>{row.cantidadGrupos}</td>
+              <td>{row.equiposPorGrupo ?? 'Todos'}</td>
               {writable && (
                 <td className="actions">
-                  <button type="button" onClick={() => { setEditing(row); setName(row.name); setMaxPlayers(String(row.maxPlayers)) }}>Editar</button>
+                  <button type="button" onClick={() => { setEditing(row); setName(row.name); setMaxPlayers(String(row.maxPlayers)); setCantidadGrupos(String(row.cantidadGrupos)); setEquiposPorGrupo(row.equiposPorGrupo == null ? '' : String(row.equiposPorGrupo)) }}>Editar</button>
                   <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>
                 </td>
               )}
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={3}>No hay categorías.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 5 : 4}>No hay categorías.</td></tr>}
         </tbody>
       </table>
       {writable && editionId && (
@@ -495,6 +512,8 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
           <h2>{editing ? 'Editar categoría' : 'Nueva categoría'}</h2>
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Máximo de jugadores<input type="number" min={1} value={maxPlayers} onChange={(event) => setMaxPlayers(event.target.value)} required /></label>
+          <label>Grupos<input type="number" min={1} value={cantidadGrupos} onChange={(event) => setCantidadGrupos(event.target.value)} required /></label>
+          <label>Equipos por grupo<input type="number" min={1} value={equiposPorGrupo} onChange={(event) => setEquiposPorGrupo(event.target.value)} placeholder="Todos" /></label>
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
@@ -541,12 +560,11 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
     setFiltroRepresentante('')
     setFiltroEstado('ACTIVO')
     setFiltroCategoria('')
-    if (!leagueId) {
+    if (!leagueId || !editionId) {
       setRows([])
       return
     }
-    const params = new URLSearchParams({ leagueId, estado: 'ACTIVO' })
-    if (editionId) params.set('editionId', editionId)
+    const params = new URLSearchParams({ leagueId, estado: 'ACTIVO', editionId })
     api<Team[]>(`/api/teams?${params.toString()}`)
       .then((items) => {
         setRows(items)
@@ -672,6 +690,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
   return (
     <section className="catalog">
       {error && <p className="down">{error}</p>}
+      {!editionId && <p>Selecciona una edición.</p>}
       <form className="filtros" onSubmit={consultar}>
         <label>Nombre<input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} /></label>
         <label>Representante<input value={filtroRepresentante} onChange={(event) => setFiltroRepresentante(event.target.value)} /></label>
@@ -859,18 +878,30 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const category = categories.find((item) => item.id === categoryId)
 
   useEffect(() => {
-    if (!leagueId) {
+    if (!leagueId || !editionId || !categoryId) {
       setTeams([])
       setTeamId('')
       return
     }
-    api<Team[]>(`/api/teams?leagueId=${leagueId}&estado=ACTIVO`)
+    let vigente = true
+    setTeamId('')
+    api<Team[]>(`/api/teams?leagueId=${leagueId}&estado=ACTIVO&editionId=${editionId}&categoryId=${categoryId}`)
       .then((items) => {
+        if (!vigente) {
+          return
+        }
         setTeams(items)
         setTeamId(items[0]?.id ?? '')
       })
-      .catch((reason: Error) => setError(reason.message))
-  }, [leagueId])
+      .catch((reason: Error) => {
+        if (vigente) {
+          setError(reason.message)
+        }
+      })
+    return () => {
+      vigente = false
+    }
+  }, [leagueId, editionId, categoryId])
 
   useEffect(() => {
     if (!editionId) {

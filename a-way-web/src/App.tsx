@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 import { api } from './api'
 import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
+import { GruposScreen } from './Grupos'
 import { InscripcionScreen } from './Inscripciones'
 
 type Health = {
@@ -33,7 +34,7 @@ const sections = [
   { id: 'equipos', label: 'Equipos', summary: 'Clubes de la liga e inscripción a una categoría.' },
   { id: 'jugadores', label: 'Jugadores', summary: 'Ficha del plantel: cédula, nombre, alias, número de camisa, foto y rotación.' },
   { id: 'inscripciones', label: 'Inscripciones', summary: 'Carga del archivo de inscripciones y alta de equipos y jugadores por categoría.' },
-  { id: 'grupos', label: 'Grupos', summary: 'De uno a n grupos, cargados a mano, al azar o por sorteo.' },
+  { id: 'grupos', label: 'Grupos', summary: 'Grupos de cada categoría y asignación de equipos, a mano o automática.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
   { id: 'calendario', label: 'Calendario', summary: 'Jornadas, fechas, horarios, cancha y árbitro de cada partido.' },
   { id: 'resultados', label: 'Resultados', summary: 'Marcador de los partidos de una jornada.' },
@@ -396,6 +397,7 @@ function App() {
         {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'inscripciones' && <InscripcionScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
+        {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
       </main>
       </div>
     </div>

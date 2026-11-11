@@ -158,6 +158,8 @@ public class CompetitionService {
         category.setEdition(edition);
         category.setName(request.getName().trim());
         category.setMaxPlayers(request.getMaxPlayers());
+        category.setCantidadGrupos(request.getCantidadGrupos());
+        category.setEquiposPorGrupo(request.getEquiposPorGrupo());
         return categoryView(categories.save(category));
     }
 
@@ -169,6 +171,8 @@ public class CompetitionService {
         category.setEdition(edition);
         category.setName(request.getName().trim());
         category.setMaxPlayers(request.getMaxPlayers());
+        category.setCantidadGrupos(request.getCantidadGrupos());
+        category.setEquiposPorGrupo(request.getEquiposPorGrupo());
         return categoryView(category);
     }
 
@@ -203,6 +207,22 @@ public class CompetitionService {
             encontrados = encontrados.stream()
                     .filter(team -> inscritos.contains(team.getId()))
                     .collect(Collectors.toList());
+        }
+        if (editionId != null) {
+            Edition edition = editions.findById(editionId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La edición no existe"));
+            if (!leagueId.equals(edition.getLeague().getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La edición no pertenece a la liga");
+            }
+            if (!encontrados.isEmpty()) {
+                java.util.Set<UUID> inscritos = entries.findByEquiposEnEdicion(
+                        encontrados.stream().map(Team::getId).collect(Collectors.toList()), editionId).stream()
+                        .map(entry -> entry.getTeam().getId())
+                        .collect(Collectors.toSet());
+                encontrados = encontrados.stream()
+                        .filter(team -> inscritos.contains(team.getId()))
+                        .collect(Collectors.toList());
+            }
         }
         Map<UUID, Long> jugadores = totalesJugadores(leagueId, editionId, encontrados);
         Map<UUID, List<CategoriaResumen>> categorias = categoriasPorEquipo(editionId, encontrados);
@@ -666,7 +686,7 @@ public class CompetitionService {
         Edition edition = category.getEdition();
         return new CategoryView(category.getId(), edition.getId(), edition.getName(),
                 edition.getLeague().getId(), edition.getLeague().getName(),
-                category.getName(), category.getMaxPlayers());
+                category.getName(), category.getMaxPlayers(), category.getCantidadGrupos(), category.getEquiposPorGrupo());
     }
 
     private TeamView teamView(Team team) {
