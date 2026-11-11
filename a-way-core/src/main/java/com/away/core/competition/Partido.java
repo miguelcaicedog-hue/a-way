@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -53,6 +54,11 @@ public class Partido {
     private int orden;
 
     private LocalDate fecha;
+
+    private LocalTime hora;
+
+    @Column(name = "id_cancha")
+    private UUID idCancha;
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
@@ -179,6 +185,22 @@ public class Partido {
 
     public void setFecha(LocalDate fecha) {
         this.fecha = fecha;
+    }
+
+    public LocalTime getHora() {
+        return hora;
+    }
+
+    public void setHora(LocalTime hora) {
+        this.hora = hora;
+    }
+
+    public UUID getIdCancha() {
+        return idCancha;
+    }
+
+    public void setIdCancha(UUID idCancha) {
+        this.idCancha = idCancha;
     }
 
     public OffsetDateTime getFechaCreacion() {

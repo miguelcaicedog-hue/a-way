@@ -6,6 +6,7 @@ import { CalendarioScreen } from './Calendario'
 import { CanchasScreen } from './Canchas'
 import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
+import { HorariosScreen } from './Horarios'
 import { InscripcionScreen } from './Inscripciones'
 
 type Health = {
@@ -40,6 +41,7 @@ const sections = [
   { id: 'grupos', label: 'Grupos', summary: 'Grupos de cada categoría y asignación de equipos, a mano o automática.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
   { id: 'calendario', label: 'Calendario', summary: 'Jornadas, fechas, horarios, cancha y árbitro de cada partido.' },
+  { id: 'horarios', label: 'Horarios', summary: 'Cancha y hora de los partidos. Filtra por categoría y fecha, y asigna turnos desde la hora y el intervalo que elijas.' },
   { id: 'resultados', label: 'Resultados', summary: 'Marcador de los partidos de una jornada.' },
   { id: 'goles', label: 'Goles', summary: 'Goles de cada jugador por partido.' },
   { id: 'tarjetas', label: 'Tarjetas', summary: 'Amarillas y rojas de cada jugador por jornada.' },
@@ -57,7 +59,7 @@ const sections = [
 const menuGroups = [
   { label: 'Inicio', ids: ['inicio'] },
   { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
-  { label: 'Fixture', ids: ['grupos', 'fases', 'calendario'] },
+  { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
   { label: 'Disciplina', ids: ['suspensiones', 'sanciones'] },
   { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
@@ -403,6 +405,7 @@ function App() {
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
+        {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} />}
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
       </main>
       </div>

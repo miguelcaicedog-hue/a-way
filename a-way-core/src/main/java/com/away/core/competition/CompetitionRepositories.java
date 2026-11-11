@@ -99,12 +99,16 @@ interface CruceRepository extends JpaRepository<Cruce, UUID> {
 
 interface JornadaRepository extends JpaRepository<Jornada, UUID> {
     List<Jornada> findByIdCategoriaAndEstadoOrderByNumeroAsc(UUID idCategoria, String estado);
+
+    List<Jornada> findByIdCategoriaInAndEstado(Collection<UUID> categorias, String estado);
 }
 
 interface PartidoRepository extends JpaRepository<Partido, UUID> {
     List<Partido> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
 
     List<Partido> findByIdJornadaAndEstadoOrderByOrdenAsc(UUID idJornada, String estado);
+
+    List<Partido> findByIdCategoriaInAndEstado(Collection<UUID> categorias, String estado);
 }
 
 interface CanchaRepository extends JpaRepository<Cancha, UUID> {

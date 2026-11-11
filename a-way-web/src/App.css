@@ -597,6 +597,110 @@ button.ghost {
   background: white;
 }
 
+.jornadas-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.jornadas-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.8rem;
+}
+
+.jornadas-encabezado > span:first-child {
+  font-weight: 650;
+}
+
+.jornadas-buscar {
+  width: 11rem;
+}
+
+.jornadas-resumen {
+  color: #5c6b7a;
+}
+
+.jornadas-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+}
+
+.jornadas-lista label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.horario-asignar {
+  max-width: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.9rem 1rem;
+  margin-top: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f4f7fb;
+}
+
+.horario-asignar > div {
+  flex: 1 1 16rem;
+}
+
+.horario-asignar h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.horario-asignar p {
+  margin: 0;
+  color: #5c6b7a;
+}
+
+.horario-asignar label {
+  flex: 0 0 11rem;
+}
+
+.horario-intervalo {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.horario-intervalo input {
+  width: 5rem;
+}
+
+.horario-dia {
+  margin-top: 1.5rem;
+}
+
+.horario-dia h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.horario-dia table {
+  width: 100%;
+  background: white;
+}
+
+.horario-cancha {
+  background: #f4f7fb;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.horario-cancha button {
+  display: block;
+  margin-top: 0.45rem;
+}
+
 .cruce {
   display: flex;
   flex-direction: column;
