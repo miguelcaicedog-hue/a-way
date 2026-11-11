@@ -160,6 +160,7 @@ public class CompetitionService {
         category.setMaxPlayers(request.getMaxPlayers());
         category.setCantidadGrupos(request.getCantidadGrupos());
         category.setEquiposPorGrupo(request.getEquiposPorGrupo());
+        category.setCantidadFases(request.getCantidadFases());
         return categoryView(categories.save(category));
     }
 
@@ -173,6 +174,7 @@ public class CompetitionService {
         category.setMaxPlayers(request.getMaxPlayers());
         category.setCantidadGrupos(request.getCantidadGrupos());
         category.setEquiposPorGrupo(request.getEquiposPorGrupo());
+        category.setCantidadFases(request.getCantidadFases());
         return categoryView(category);
     }
 
@@ -686,7 +688,7 @@ public class CompetitionService {
         Edition edition = category.getEdition();
         return new CategoryView(category.getId(), edition.getId(), edition.getName(),
                 edition.getLeague().getId(), edition.getLeague().getName(),
-                category.getName(), category.getMaxPlayers(), category.getCantidadGrupos(), category.getEquiposPorGrupo());
+                category.getName(), category.getMaxPlayers(), category.getCantidadGrupos(), category.getEquiposPorGrupo(), category.getCantidadFases());
     }
 
     private TeamView teamView(Team team) {

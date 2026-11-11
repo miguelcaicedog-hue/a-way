@@ -32,6 +32,9 @@ public class Category {
     @Column(name = "equipos_por_grupo")
     private Integer equiposPorGrupo;
 
+    @Column(name = "cantidad_fases", nullable = false)
+    private int cantidadFases;
+
     public UUID getId() {
         return id;
     }
@@ -78,5 +81,13 @@ public class Category {
 
     public void setEquiposPorGrupo(Integer equiposPorGrupo) {
         this.equiposPorGrupo = equiposPorGrupo;
+    }
+
+    public int getCantidadFases() {
+        return cantidadFases;
+    }
+
+    public void setCantidadFases(int cantidadFases) {
+        this.cantidadFases = cantidadFases;
     }
 }
