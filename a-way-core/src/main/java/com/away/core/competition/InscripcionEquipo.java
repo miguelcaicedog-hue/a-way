@@ -27,6 +27,9 @@ public class InscripcionEquipo {
     @Column(name = "nombre_equipo", nullable = false)
     private String nombreEquipo;
 
+    @Column(name = "url_logo")
+    private String urlLogo;
+
     @Column(name = "nombre_representante")
     private String nombreRepresentante;
 
@@ -93,6 +96,14 @@ public class InscripcionEquipo {
 
     public void setNombreEquipo(String nombreEquipo) {
         this.nombreEquipo = nombreEquipo;
+    }
+
+    public String getUrlLogo() {
+        return urlLogo;
+    }
+
+    public void setUrlLogo(String urlLogo) {
+        this.urlLogo = urlLogo;
     }
 
     public String getNombreRepresentante() {

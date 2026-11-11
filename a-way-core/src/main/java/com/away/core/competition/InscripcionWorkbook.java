@@ -9,6 +9,8 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.Normalizer;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,26 +33,73 @@ final class InscripcionWorkbook {
                 if (row == null) {
                     continue;
                 }
-                String nombre = texto(formatter, row, 3);
+                Columnas columnas = ubicar(formatter, header);
+                String nombre = texto(formatter, row, columnas.nombre);
                 if (nombre.isEmpty()) {
                     continue;
                 }
                 EquipoLeido equipo = new EquipoLeido();
                 equipo.fila = index + 1;
                 equipo.nombre = limitar(nombre, 160);
-                equipo.categoria = limitar(texto(formatter, row, 4), 160);
-                equipo.representante = vacio(limitar(texto(formatter, row, 5), 160));
-                equipo.telefono = vacio(limitar(texto(formatter, row, 6), 80));
-                equipo.jugadores = jugadores(formatter, header, row);
+                equipo.logo = vacio(urlImagen(texto(formatter, row, columnas.logo)));
+                equipo.categoria = limitar(texto(formatter, row, columnas.categoria), 160);
+                equipo.representante = vacio(limitar(texto(formatter, row, columnas.representante), 160));
+                equipo.telefono = vacio(limitar(texto(formatter, row, columnas.telefono), 80));
+                equipo.jugadores = jugadores(formatter, header, row, columnas.jugadores);
                 equipos.add(equipo);
             }
             return equipos;
         }
     }
 
-    private static List<JugadorLeido> jugadores(DataFormatter formatter, Row header, Row row) {
+    private static Columnas ubicar(DataFormatter formatter, Row header) {
+        int ultima = Math.max(header.getLastCellNum(), 0);
+        int nombre = -1;
+        int logo = -1;
+        int categoria = -1;
+        int representante = -1;
+        int telefono = -1;
+        int jugadores = -1;
+        for (int col = 0; col < ultima; col++) {
+            String titulo = plano(texto(formatter, header, col));
+            if (titulo.isEmpty()) {
+                continue;
+            }
+            if (nombre < 0 && titulo.contains("nombre de equipo")) {
+                nombre = col;
+            } else if (logo < 0 && titulo.contains("logo") && !titulo.contains("jugador")) {
+                logo = col;
+            } else if (categoria < 0 && titulo.contains("categoria")) {
+                categoria = col;
+            } else if (representante < 0 && (titulo.contains("representante") || titulo.contains("capitan"))) {
+                representante = col;
+            } else if (telefono < 0 && titulo.contains("telefono")) {
+                telefono = col;
+            } else if (jugadores < 0 && cedula(titulo)) {
+                jugadores = col;
+            }
+        }
+        if (nombre < 0) {
+            nombre = 3;
+        }
+        if (categoria < 0) {
+            categoria = logo >= 0 ? logo + 1 : 4;
+        }
+        if (representante < 0) {
+            representante = categoria + 1;
+        }
+        if (telefono < 0) {
+            telefono = representante + 1;
+        }
+        if (jugadores < 0) {
+            jugadores = telefono + 1;
+        }
+        return new Columnas(nombre, logo, categoria, representante, telefono, jugadores);
+    }
+
+    private static List<JugadorLeido> jugadores(DataFormatter formatter, Row header, Row row, int inicio) {
         List<JugadorLeido> jugadores = new ArrayList<>();
-        int col = 7;
+        int col = inicio;
         int last = Math.max(header.getLastCellNum(), row.getLastCellNum());
         int orden = 1;
         while (col < last) {
@@ -89,8 +138,11 @@ final class InscripcionWorkbook {
     }
 
     private static boolean cedula(String titulo) {
-        String plano = Normalizer.normalize(titulo, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return plano.toLowerCase().contains("cedula");
+        return plano(titulo).contains("cedula");
+    }
+
+    private static String plano(String titulo) {
+        return Normalizer.normalize(titulo, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase();
     }
 
     private static String texto(DataFormatter formatter, Row row, int column) {
@@ -108,6 +160,23 @@ final class InscripcionWorkbook {
         return value.substring(0, max);
     }
 
+    private static String urlImagen(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        int inicio = value.indexOf("imgurl=");
+        if (inicio < 0) {
+            return value;
+        }
+        String encoded = value.substring(inicio + "imgurl=".length());
+        int fin = encoded.indexOf('&');
+        if (fin >= 0) {
+            encoded = encoded.substring(0, fin);
+        }
+        String decoded = URLDecoder.decode(encoded, StandardCharsets.UTF_8);
+        return decoded.startsWith("http://") || decoded.startsWith("https://") ? decoded : value;
+    }
+
     private static String vacio(String value) {
         return value == null || value.isEmpty() ? null : value;
     }
@@ -116,9 +185,28 @@ final class InscripcionWorkbook {
         int fila;
         String categoria;
         String nombre;
+        String logo;
         String representante;
         String telefono;
         List<JugadorLeido> jugadores;
+    }
+
+    private static final class Columnas {
+        private final int nombre;
+        private final int logo;
+        private final int categoria;
+        private final int representante;
+        private final int telefono;
+        private final int jugadores;
+
+        private Columnas(int nombre, int logo, int categoria, int representante, int telefono, int jugadores) {
+            this.nombre = nombre;
+            this.logo = logo;
+            this.categoria = categoria;
+            this.representante = representante;
+            this.telefono = telefono;
+            this.jugadores = jugadores;
+        }
     }
 
     static final class JugadorLeido {

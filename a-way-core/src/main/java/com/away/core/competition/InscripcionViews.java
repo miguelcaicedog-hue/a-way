@@ -32,18 +32,20 @@ class InscripcionEquipoView {
     private final int numeroFila;
     private final String categoria;
     private final String nombreEquipo;
+    private final String urlLogo;
     private final String nombreRepresentante;
     private final String numeroTelefono;
     private final boolean seleccionado;
     private final String resultado;
     private final String detalle;
 
-    InscripcionEquipoView(UUID id, int numeroFila, String categoria, String nombreEquipo, String nombreRepresentante,
+    InscripcionEquipoView(UUID id, int numeroFila, String categoria, String nombreEquipo, String urlLogo, String nombreRepresentante,
                           String numeroTelefono, boolean seleccionado, String resultado, String detalle) {
         this.id = id;
         this.numeroFila = numeroFila;
         this.categoria = categoria;
         this.nombreEquipo = nombreEquipo;
+        this.urlLogo = urlLogo;
         this.nombreRepresentante = nombreRepresentante;
         this.numeroTelefono = numeroTelefono;
         this.seleccionado = seleccionado;
@@ -65,6 +67,10 @@ class InscripcionEquipoView {
 
     public String getNombreEquipo() {
         return nombreEquipo;
+    }
+
+    public String getUrlLogo() {
+        return urlLogo;
     }
 
     public String getNombreRepresentante() {

@@ -17,6 +17,7 @@ type Equipo = {
   numeroFila: number
   categoria: string
   nombreEquipo: string
+  urlLogo: string | null
   nombreRepresentante: string | null
   numeroTelefono: string | null
   seleccionado: boolean
@@ -40,6 +41,30 @@ type Jugador = {
   fotoCargada: boolean
   tieneFoto: boolean
   motivo: string | null
+}
+
+function logoUrl(value: string | null) {
+  if (!value) {
+    return null
+  }
+  const imgurl = value.match(/imgurl=([^&]+)/)
+  const source = imgurl ? decodeURIComponent(imgurl[1]) : value
+  const urls = source.split(',').map((part) => part.trim()).filter((part) => part.startsWith('http://') || part.startsWith('https://'))
+  return urls.length ? urls[urls.length - 1] : null
+}
+
+function LogoInscripcion({ url }: { url: string | null }) {
+  const [failed, setFailed] = useState(false)
+  if (url && !failed) {
+    return <img className="team-logo" alt="" src={url} onError={() => setFailed(true)} />
+  }
+  return (
+    <span className="team-logo vacio" aria-label="Sin logo">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 6l20 8v16c0 14-8 24-20 28C20 54 12 44 12 30V14z" fill="none" stroke="currentColor" strokeWidth="3" />
+      </svg>
+    </span>
+  )
 }
 
 function canWrite(profile: Profile) {
@@ -330,6 +355,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                 {writable && <th></th>}
                 <th className="numero">Nº</th>
                 <th>Categoría</th>
+                <th>Logo</th>
                 <th>Equipo</th>
                 <th>Representante</th>
                 <th>Teléfono</th>
@@ -352,6 +378,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                   )}
                   <td className="numero">{index + 1}</td>
                   <td>{equipo.categoria}</td>
+                  <td><LogoInscripcion key={equipo.id} url={logoUrl(equipo.urlLogo)} /></td>
                   <td>
                     <button type="button" className="ghost" onClick={() => verJugadores(equipo)}>{equipo.nombreEquipo}</button>
                   </td>

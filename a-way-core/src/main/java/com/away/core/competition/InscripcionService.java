@@ -117,6 +117,7 @@ public class InscripcionService {
             equipo.setNumeroFila(leido.fila);
             equipo.setCategoria(leido.categoria == null ? "" : leido.categoria);
             equipo.setNombreEquipo(leido.nombre);
+            equipo.setUrlLogo(leido.logo);
             equipo.setNombreRepresentante(leido.representante);
             equipo.setNumeroTelefono(leido.telefono);
             equipo.setSeleccionado(true);
@@ -249,6 +250,7 @@ public class InscripcionService {
         }
         team.setNombreRepresentante(equipo.getNombreRepresentante());
         team.setNumeroTelefono(telefono);
+        String avisoLogo = aplicarLogoEquipo(team, equipo.getUrlLogo());
         auditarEquipo(team, false);
         teams.save(team);
         TeamEntry entry = entries.findByTeam_IdAndCategory_Id(team.getId(), categoria.getId()).orElseGet(() -> {
@@ -349,11 +351,27 @@ public class InscripcionService {
         }
         String detalle = avisos.stream().filter(aviso -> aviso != null && !aviso.isBlank()).collect(Collectors.joining("\n"));
         if (!pendiente && detalle.isBlank()) {
-            cerrar(equipo, "OK", null, usuario);
+            cerrar(equipo, "OK", avisoLogo, usuario);
         } else {
+            if (avisoLogo != null) {
+                detalle = detalle.isBlank() ? avisoLogo : avisoLogo + "\n" + detalle;
+            }
             cerrar(equipo, "ERROR", detalle, usuario);
         }
         jugadores.saveAll(plantel);
+    }
+
+    private String aplicarLogoEquipo(Team team, String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        FotoInscripcion.Descarga descarga = FotoInscripcion.descargar(url);
+        if (descarga.error != null || descarga.bytes == null || descarga.bytes.length == 0 || descarga.bytes.length > 2_000_000) {
+            return "No se pudo cargar el logo del equipo.";
+        }
+        team.setLogo(descarga.bytes);
+        team.setLogoContentType(descarga.contentType == null ? "image/jpeg" : descarga.contentType);
+        return null;
     }
 
     private void aplicarFoto(InscripcionJugador jugador, Player player) {
@@ -717,7 +735,7 @@ public class InscripcionService {
 
     private InscripcionEquipoView equipoView(InscripcionEquipo equipo) {
         return new InscripcionEquipoView(equipo.getId(), equipo.getNumeroFila(), equipo.getCategoria(), equipo.getNombreEquipo(),
-                equipo.getNombreRepresentante(), equipo.getNumeroTelefono(), equipo.isSeleccionado(), equipo.getResultado(), equipo.getDetalle());
+                equipo.getUrlLogo(), equipo.getNombreRepresentante(), equipo.getNumeroTelefono(), equipo.isSeleccionado(), equipo.getResultado(), equipo.getDetalle());
     }
 
     private InscripcionJugadorView jugadorView(InscripcionJugador jugador) {
