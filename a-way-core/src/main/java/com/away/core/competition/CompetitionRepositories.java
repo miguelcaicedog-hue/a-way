@@ -56,6 +56,14 @@ interface TeamEntryRepository extends JpaRepository<TeamEntry, UUID> {
     List<TeamEntry> findByCategory_IdOrderByTeam_NameAsc(UUID categoryId);
 
     Optional<TeamEntry> findByTeam_IdAndCategory_Id(UUID teamId, UUID categoryId);
+
+    @Query("select entry from TeamEntry entry join fetch entry.category category "
+            + "where entry.team.id in :teamIds and category.edition.id = :editionId")
+    List<TeamEntry> findByEquiposEnEdicion(@Param("teamIds") Collection<UUID> teamIds, @Param("editionId") UUID editionId);
+
+    @Query("select entry from TeamEntry entry join fetch entry.category category "
+            + "where entry.team.id = :teamId and category.edition.id = :editionId")
+    List<TeamEntry> findByEquipoEnEdicion(@Param("teamId") UUID teamId, @Param("editionId") UUID editionId);
 }
 
 interface PlayerRepository extends JpaRepository<Player, UUID> {

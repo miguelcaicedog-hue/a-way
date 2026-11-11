@@ -44,6 +44,7 @@ type Team = {
   estado: string
   hasLogo: boolean
   totalJugadores: number
+  categorias?: { id: string; nombre: string }[]
 }
 
 function etiquetaEstado(estado: string) {
@@ -85,7 +86,7 @@ function canWrite(profile: Profile) {
 
 type ScopeChange = (next?: { leagueId?: string; editionId?: string }) => void
 
-export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Profile; leagueId: string; onScopeChange: ScopeChange }) {
+export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; leagueId: string; onScopeChange: ScopeChange }) {
   const [rows, setRows] = useState<League[]>([])
   const [editing, setEditing] = useState<League | null>(null)
   const [name, setName] = useState('')
@@ -96,8 +97,25 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
   const [logoType, setLogoType] = useState<string | null>(null)
   const [clearLogo, setClearLogo] = useState(false)
   const [logoStamp, setLogoStamp] = useState(0)
+  const [filtroNombre, setFiltroNombre] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [consultaNombre, setConsultaNombre] = useState('')
+  const [consultaEstado, setConsultaEstado] = useState('')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
+  const ligas = rows.filter((row) => {
+    const texto = consultaNombre.trim().toLowerCase()
+    if (texto && !row.name.toLowerCase().includes(texto)) {
+      return false
+    }
+    if (consultaEstado === 'ACTIVA') {
+      return row.active
+    }
+    if (consultaEstado === 'INACTIVA') {
+      return !row.active
+    }
+    return true
+  })
 
   async function load() {
     setRows(await api<League[]>('/api/leagues'))
@@ -183,9 +201,30 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
     }
   }
 
+  function consultar(event: FormEvent) {
+    event.preventDefault()
+    setConsultaNombre(filtroNombre)
+    setConsultaEstado(filtroEstado)
+  }
+
   return (
     <section className="catalog">
       {error && <p className="down">{error}</p>}
+      <form className="filtros" onSubmit={consultar}>
+        <label>
+          Nombre
+          <input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} />
+        </label>
+        <label>
+          Estado
+          <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)}>
+            <option value="ACTIVA">Activa</option>
+            <option value="INACTIVA">Inactiva</option>
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <button type="submit">Consultar</button>
+      </form>
       <table>
         <thead>
           <tr>
@@ -198,7 +237,7 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
           </tr>
         </thead>
         <tbody>
-          {rows.filter((row) => row.id === leagueId).map((row) => (
+          {ligas.map((row) => (
             <tr key={row.id}>
               <td>{row.name}</td>
               <td>{row.validFrom}</td>
@@ -217,9 +256,9 @@ export function LeagueScreen({ profile, leagueId, onScopeChange }: { profile: Pr
               )}
             </tr>
           ))}
-          {rows.filter((row) => row.id === leagueId).length === 0 && (
+          {ligas.length === 0 && (
             <tr>
-              <td colSpan={6}>No hay ligas.</td>
+              <td colSpan={writable ? 6 : 5}>No hay ligas.</td>
             </tr>
           )}
         </tbody>
@@ -480,14 +519,19 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
   const [filtroNombre, setFiltroNombre] = useState('')
   const [filtroRepresentante, setFiltroRepresentante] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
+  const [filtroCategoria, setFiltroCategoria] = useState('')
+  const [categorias, setCategorias] = useState<Category[]>([])
+  const [categoriaId, setCategoriaId] = useState('')
+  const [categoriaActual, setCategoriaActual] = useState('')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
-  function equiposUrl(nombre: string, representante: string, estadoEquipo: string) {
+  function equiposUrl(nombre: string, representante: string, estadoEquipo: string, categoria: string) {
     const params = new URLSearchParams({ leagueId })
     if (editionId) params.set('editionId', editionId)
     if (nombre.trim()) params.set('nombre', nombre.trim())
     if (representante.trim()) params.set('representante', representante.trim())
+    if (categoria) params.set('categoryId', categoria)
     params.set('estado', estadoEquipo)
     return `/api/teams?${params.toString()}`
   }
@@ -496,6 +540,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
     setFiltroNombre('')
     setFiltroRepresentante('')
     setFiltroEstado('ACTIVO')
+    setFiltroCategoria('')
     if (!leagueId) {
       setRows([])
       return
@@ -510,6 +555,16 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
       .catch((reason: Error) => setError(reason.message))
   }, [leagueId, editionId])
 
+  useEffect(() => {
+    if (!editionId) {
+      setCategorias([])
+      return
+    }
+    api<Category[]>(`/api/categories?editionId=${editionId}`)
+      .then(setCategorias)
+      .catch((reason: Error) => setError(reason.message))
+  }, [editionId])
+
   function reset() {
     setEditing(null)
     setName('')
@@ -519,6 +574,8 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
     setLogo(null)
     setLogoType(null)
     setClearLogo(false)
+    setCategoriaId('')
+    setCategoriaActual('')
   }
 
   function edit(row: Team) {
@@ -530,6 +587,9 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
     setLogo(null)
     setLogoType(null)
     setClearLogo(false)
+    const inscritas = row.categorias ?? []
+    setCategoriaActual(inscritas.length > 1 ? inscritas[0].id : '')
+    setCategoriaId(inscritas.length === 1 ? inscritas[0].id : '')
   }
 
   function onLogo(event: ChangeEvent<HTMLInputElement>) {
@@ -556,7 +616,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
   }
 
   async function reload() {
-    setRows(await api<Team[]>(equiposUrl(filtroNombre, filtroRepresentante, filtroEstado)))
+    setRows(await api<Team[]>(equiposUrl(filtroNombre, filtroRepresentante, filtroEstado, filtroCategoria)))
     setLogoStamp(Date.now())
   }
 
@@ -573,7 +633,19 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    const body = { leagueId, name, nombreRepresentante, numeroTelefono, estado, logoBase64: logo, logoContentType: logoType, clearLogo }
+    const varias = (editing?.categorias?.length ?? 0) > 1
+    const body = {
+      leagueId,
+      name,
+      nombreRepresentante,
+      numeroTelefono,
+      estado,
+      logoBase64: logo,
+      logoContentType: logoType,
+      clearLogo,
+      categoryId: varias ? (categoriaId || null) : (categoriaId || null),
+      categoryIdActual: varias ? categoriaActual : null,
+    }
     try {
       if (editing) {
         await api(`/api/teams/${editing.id}`, { method: 'PUT', body: JSON.stringify(body) })
@@ -604,6 +676,13 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
         <label>Nombre<input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} /></label>
         <label>Representante<input value={filtroRepresentante} onChange={(event) => setFiltroRepresentante(event.target.value)} /></label>
         <label>
+          Categoría
+          <select value={filtroCategoria} onChange={(event) => setFiltroCategoria(event.target.value)}>
+            <option value="">Todas</option>
+            {categorias.map((categoria) => <option key={categoria.id} value={categoria.id}>{categoria.name}</option>)}
+          </select>
+        </label>
+        <label>
           Estado
           <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)}>
             <option value="ACTIVO">Activo</option>
@@ -620,6 +699,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
             <th className="numero">Nº</th>
             <th>Logo</th>
             <th>Nombre</th>
+            <th>Categoría</th>
             <th>Representante</th>
             <th>Teléfono</th>
             <th className="numero" title="Jugadores inscritos">JI</th>
@@ -635,6 +715,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
               <td className="numero">{index + 1}</td>
               <td><LogoEquipo id={row.id} hasLogo={row.hasLogo} stamp={logoStamp} /></td>
               <td>{row.name}</td>
+              <td>{(row.categorias ?? []).map((categoria) => categoria.nombre).join(', ')}</td>
               <td>{row.nombreRepresentante}</td>
               <td className="telefono">
                 {row.numeroTelefono}
@@ -657,7 +738,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
             </tr>
             )
           })}
-          {rows.length === 0 && <tr><td colSpan={writable ? 8 : 7}>No hay equipos.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 9 : 8}>No hay equipos.</td></tr>}
         </tbody>
       </table>
       {writable && (
@@ -666,6 +747,31 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Nombre de representante<input value={nombreRepresentante} maxLength={160} onChange={(event) => setNombreRepresentante(event.target.value)} /></label>
           <label>Número de teléfono<input value={numeroTelefono} maxLength={30} onChange={(event) => setNumeroTelefono(event.target.value)} /></label>
+          {(editing?.categorias?.length ?? 0) > 1 ? (
+            <>
+              <label>
+                Categoría actual
+                <select value={categoriaActual} onChange={(event) => setCategoriaActual(event.target.value)}>
+                  {(editing?.categorias ?? []).map((categoria) => <option key={categoria.id} value={categoria.id}>{categoria.nombre}</option>)}
+                </select>
+              </label>
+              <label>
+                Nueva categoría
+                <select value={categoriaId} onChange={(event) => setCategoriaId(event.target.value)}>
+                  <option value="">Sin cambio</option>
+                  {categorias.map((categoria) => <option key={categoria.id} value={categoria.id}>{categoria.name}</option>)}
+                </select>
+              </label>
+            </>
+          ) : (
+            <label>
+              Categoría
+              <select value={categoriaId} onChange={(event) => setCategoriaId(event.target.value)}>
+                {(!editing || (editing.categorias?.length ?? 0) === 0) && <option value="">Sin categoría</option>}
+                {categorias.map((categoria) => <option key={categoria.id} value={categoria.id}>{categoria.name}</option>)}
+              </select>
+            </label>
+          )}
           <label>
             Estado
             <select value={estado} onChange={(event) => setEstado(event.target.value)}>

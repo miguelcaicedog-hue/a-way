@@ -113,8 +113,9 @@ public class CompetitionController {
                                 @RequestParam(required = false) String nombre,
                                 @RequestParam(required = false) String representante,
                                 @RequestParam(required = false) String estado,
-                                @RequestParam(required = false) UUID editionId) {
-        return competition.listTeams(leagueId, nombre, representante, estado, editionId);
+                                @RequestParam(required = false) UUID editionId,
+                                @RequestParam(required = false) UUID categoryId) {
+        return competition.listTeams(leagueId, nombre, representante, estado, editionId, categoryId);
     }
 
     @PostMapping("/teams")

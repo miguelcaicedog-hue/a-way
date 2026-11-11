@@ -83,7 +83,7 @@ function App() {
   const [health, setHealth] = useState<Health | null>(null)
   const [section, setSection] = useState<SectionId>('inicio')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
-  const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean }[]>([])
+  const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean; active: boolean }[]>([])
   const [editions, setEditions] = useState<{ id: string; name: string }[]>([])
   const [leagueId, setLeagueId] = useState('')
   const [editionId, setEditionId] = useState('')
@@ -156,20 +156,25 @@ function App() {
       return
     }
     let cancelled = false
-    api<{ id: string; name: string; hasLogo: boolean }[]>('/api/leagues')
+    api<{ id: string; name: string; hasLogo: boolean; active: boolean }[]>('/api/leagues')
       .then((items) => {
         if (cancelled) {
           return
         }
-        setLeagues(items)
+        const activas = items.filter((item) => item.active)
+        setLeagues(activas)
         setLeagueId((current) => {
+          const visible = (id: string) => activas.some((item) => item.id === id)
           if (!profile.master) {
-            return profile.memberships[0]?.leagueId || items[0]?.id || ''
+            const preferida = profile.memberships[0]?.leagueId ?? ''
+            if (preferida && visible(preferida)) {
+              return preferida
+            }
           }
-          if (current && items.some((item) => item.id === current)) {
+          if (current && visible(current)) {
             return current
           }
-          return items[0]?.id ?? ''
+          return activas[0]?.id ?? ''
         })
       })
       .catch(() => {

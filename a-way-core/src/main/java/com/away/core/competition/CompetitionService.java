@@ -12,8 +12,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -177,16 +179,35 @@ public class CompetitionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TeamView> listTeams(UUID leagueId, String nombre, String representante, String estado, UUID editionId) {
+    public List<TeamView> listTeams(UUID leagueId, String nombre, String representante, String estado, UUID editionId, UUID categoryId) {
         assertRead(leagueId);
         String filtroEstado = estado == null ? "ACTIVO" : estado.trim();
         if (!filtroEstado.isEmpty()) {
             filtroEstado = estadoEquipo(filtroEstado);
         }
         List<Team> encontrados = teams.buscar(leagueId, textoFiltro(nombre), textoFiltro(representante), filtroEstado);
+        if (categoryId != null) {
+            Category categoria = category(categoryId);
+            if (!leagueId.equals(categoria.getEdition().getLeague().getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no pertenece a la liga");
+            }
+            if (editionId != null && !editionId.equals(categoria.getEdition().getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no pertenece a la edición");
+            }
+            if (editionId == null) {
+                editionId = categoria.getEdition().getId();
+            }
+            java.util.Set<UUID> inscritos = entries.findByCategory_IdOrderByTeam_NameAsc(categoryId).stream()
+                    .map(entry -> entry.getTeam().getId())
+                    .collect(Collectors.toSet());
+            encontrados = encontrados.stream()
+                    .filter(team -> inscritos.contains(team.getId()))
+                    .collect(Collectors.toList());
+        }
         Map<UUID, Long> jugadores = totalesJugadores(leagueId, editionId, encontrados);
+        Map<UUID, List<CategoriaResumen>> categorias = categoriasPorEquipo(editionId, encontrados);
         return encontrados.stream()
-                .map(team -> teamView(team, jugadores.getOrDefault(team.getId(), 0L)))
+                .map(team -> teamView(team, jugadores.getOrDefault(team.getId(), 0L), categorias.getOrDefault(team.getId(), List.of())))
                 .collect(Collectors.toList());
     }
 
@@ -198,7 +219,9 @@ public class CompetitionService {
         team.setLeague(league);
         applyTeam(team, request);
         auditarEquipo(team, true);
-        return teamView(teams.save(team));
+        teams.save(team);
+        asignarCategoria(team, request.getCategoryId(), request.getCategoryIdActual());
+        return teamView(team);
     }
 
     public TeamView updateTeam(UUID id, TeamRequest request) {
@@ -209,6 +232,7 @@ public class CompetitionService {
         team.setLeague(league);
         applyTeam(team, request);
         auditarEquipo(team, false);
+        asignarCategoria(team, request.getCategoryId(), request.getCategoryIdActual());
         return teamView(team);
     }
 
@@ -349,6 +373,64 @@ public class CompetitionService {
             team.setLogo(logo);
             team.setLogoContentType(imageType(request.getLogoContentType(), request.getLogoBase64()));
         }
+    }
+
+    private void asignarCategoria(Team team, UUID categoryId, UUID categoryIdActual) {
+        if (categoryId == null) {
+            return;
+        }
+        Category destino = category(categoryId);
+        if (!team.getLeague().getId().equals(destino.getEdition().getLeague().getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no pertenece a la liga del equipo");
+        }
+        List<TeamEntry> enEdicion = entries.findByEquipoEnEdicion(team.getId(), destino.getEdition().getId());
+        if (categoryIdActual != null) {
+            TeamEntry actual = enEdicion.stream()
+                    .filter(entry -> categoryIdActual.equals(entry.getCategory().getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo no está en la categoría actual"));
+            if (destino.getId().equals(actual.getCategory().getId())) {
+                return;
+            }
+            if (enEdicion.stream().anyMatch(entry -> destino.getId().equals(entry.getCategory().getId()))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo ya está en esa categoría");
+            }
+            actual.setCategory(destino);
+            return;
+        }
+        if (enEdicion.isEmpty()) {
+            TeamEntry entry = new TeamEntry();
+            entry.setId(UUID.randomUUID());
+            entry.setTeam(team);
+            entry.setCategory(destino);
+            entries.save(entry);
+            return;
+        }
+        if (enEdicion.size() == 1) {
+            TeamEntry actual = enEdicion.get(0);
+            if (!destino.getId().equals(actual.getCategory().getId())) {
+                actual.setCategory(destino);
+            }
+            return;
+        }
+        if (enEdicion.stream().anyMatch(entry -> destino.getId().equals(entry.getCategory().getId()))) {
+            return;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo está en varias categorías. Elige la categoría actual");
+    }
+
+    private Map<UUID, List<CategoriaResumen>> categoriasPorEquipo(UUID editionId, List<Team> encontrados) {
+        Map<UUID, List<CategoriaResumen>> categorias = new HashMap<>();
+        if (editionId == null || encontrados.isEmpty()) {
+            return categorias;
+        }
+        List<UUID> ids = encontrados.stream().map(Team::getId).collect(Collectors.toList());
+        for (TeamEntry entry : entries.findByEquiposEnEdicion(ids, editionId)) {
+            categorias.computeIfAbsent(entry.getTeam().getId(), key -> new ArrayList<>())
+                    .add(new CategoriaResumen(entry.getCategory().getId(), entry.getCategory().getName()));
+        }
+        categorias.values().forEach(lista -> lista.sort(Comparator.comparing(CategoriaResumen::getNombre, String.CASE_INSENSITIVE_ORDER)));
+        return categorias;
     }
 
     private Map<UUID, Long> totalesJugadores(UUID leagueId, UUID editionId, List<Team> encontrados) {
@@ -588,14 +670,14 @@ public class CompetitionService {
     }
 
     private TeamView teamView(Team team) {
-        return teamView(team, 0);
+        return teamView(team, 0, List.of());
     }
 
-    private TeamView teamView(Team team, long totalJugadores) {
+    private TeamView teamView(Team team, long totalJugadores, List<CategoriaResumen> categorias) {
         byte[] logo = team.getLogo();
         return new TeamView(team.getId(), team.getLeague().getId(), team.getLeague().getName(), team.getName(),
                 team.getNombreRepresentante(), team.getNumeroTelefono(), team.getEstado(),
-                logo != null && logo.length > 0, totalJugadores);
+                logo != null && logo.length > 0, totalJugadores, categorias);
     }
 
     private TeamEntryView teamEntryView(TeamEntry entry) {

@@ -5,6 +5,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 class LeagueRequest {
@@ -166,6 +167,8 @@ class TeamRequest {
     private String logoBase64;
     private String logoContentType;
     private boolean clearLogo;
+    private UUID categoryId;
+    private UUID categoryIdActual;
 
     public UUID getLeagueId() {
         return leagueId;
@@ -229,6 +232,22 @@ class TeamRequest {
 
     public void setClearLogo(boolean clearLogo) {
         this.clearLogo = clearLogo;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public UUID getCategoryIdActual() {
+        return categoryIdActual;
+    }
+
+    public void setCategoryIdActual(UUID categoryIdActual) {
+        this.categoryIdActual = categoryIdActual;
     }
 }
 
@@ -364,6 +383,24 @@ class CategoryView {
     }
 }
 
+class CategoriaResumen {
+    private final UUID id;
+    private final String nombre;
+
+    CategoriaResumen(UUID id, String nombre) {
+        this.id = id;
+        this.nombre = nombre;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+}
+
 class TeamView {
     private final UUID id;
     private final UUID leagueId;
@@ -374,8 +411,9 @@ class TeamView {
     private final String estado;
     private final boolean hasLogo;
     private final long totalJugadores;
+    private final List<CategoriaResumen> categorias;
 
-    TeamView(UUID id, UUID leagueId, String leagueName, String name, String nombreRepresentante, String numeroTelefono, String estado, boolean hasLogo, long totalJugadores) {
+    TeamView(UUID id, UUID leagueId, String leagueName, String name, String nombreRepresentante, String numeroTelefono, String estado, boolean hasLogo, long totalJugadores, List<CategoriaResumen> categorias) {
         this.id = id;
         this.leagueId = leagueId;
         this.leagueName = leagueName;
@@ -385,6 +423,7 @@ class TeamView {
         this.estado = estado;
         this.hasLogo = hasLogo;
         this.totalJugadores = totalJugadores;
+        this.categorias = categorias;
     }
 
     public UUID getId() {
@@ -421,6 +460,10 @@ class TeamView {
 
     public long getTotalJugadores() {
         return totalJugadores;
+    }
+
+    public List<CategoriaResumen> getCategorias() {
+        return categorias;
     }
 }
 
