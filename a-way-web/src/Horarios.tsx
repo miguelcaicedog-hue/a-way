@@ -247,7 +247,7 @@ export function HorariosScreen({ profile, editionId }: { profile: Profile; editi
         <form className="horario-asignar" onSubmit={(event) => event.preventDefault()}>
           <div>
             <h2>Asignación del día</h2>
-            <p>El primer partido sale a la hora de inicio. Los siguientes, cada cierto número de minutos. Un equipo no juega el turno que sigue.</p>
+            <p>El primer partido sale a la hora de inicio. Los siguientes, cada cierto número de minutos. Un equipo no juega el turno que sigue. Las canchas quedan, en lo posible, con la misma cantidad de partidos.</p>
           </div>
           <label>
             Hora de inicio

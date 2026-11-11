@@ -370,41 +370,44 @@ public class HorarioService {
             return false;
         }
         Partido partido = pendientes.get(indice);
-        for (int turno = 0; turno < ritmo.maxTurnos; turno++) {
-            int minutos = ritmo.inicio + turno * ritmo.paso;
-            for (Cancha cancha : activas) {
-                if (!ocupacion.libre(cancha.getId(), partido.getIdEquipoLocal(), partido.getIdEquipoVisita(), minutos, ritmo.descanso)) {
-                    continue;
-                }
-                ocupacion.agregar(cancha.getId(), partido.getIdEquipoLocal(), partido.getIdEquipoVisita(), minutos);
-                Asignacion asignacion = new Asignacion();
-                asignacion.canchaId = cancha.getId();
-                asignacion.minutos = minutos;
-                plan.put(partido.getId(), asignacion);
-                if (buscar(pendientes, indice + 1, ocupacion, plan, activas, ritmo, visitas)) {
-                    return true;
-                }
-                plan.remove(partido.getId());
-                ocupacion.quitar(cancha.getId(), partido.getIdEquipoLocal(), partido.getIdEquipoVisita(), minutos);
+        for (Asignacion asignacion : huecos(partido, ocupacion, activas, ritmo)) {
+            ocupacion.agregar(asignacion.canchaId, partido.getIdEquipoLocal(), partido.getIdEquipoVisita(), asignacion.minutos);
+            plan.put(partido.getId(), asignacion);
+            if (buscar(pendientes, indice + 1, ocupacion, plan, activas, ritmo, visitas)) {
+                return true;
             }
+            plan.remove(partido.getId());
+            ocupacion.quitar(asignacion.canchaId, partido.getIdEquipoLocal(), partido.getIdEquipoVisita(), asignacion.minutos);
         }
         return false;
     }
 
     private Asignacion primerHueco(Partido partido, Ocupacion ocupacion, List<Cancha> activas, Ritmo ritmo) {
+        List<Asignacion> opciones = huecos(partido, ocupacion, activas, ritmo);
+        return opciones.isEmpty() ? null : opciones.get(0);
+    }
+
+    private List<Asignacion> huecos(Partido partido, Ocupacion ocupacion, List<Cancha> activas, Ritmo ritmo) {
+        List<Asignacion> opciones = new ArrayList<>();
         for (int turno = 0; turno < ritmo.maxTurnos; turno++) {
             int minutos = ritmo.inicio + turno * ritmo.paso;
-            for (Cancha cancha : activas) {
+            for (int indice = 0; indice < activas.size(); indice++) {
+                Cancha cancha = activas.get(indice);
                 if (!ocupacion.libre(cancha.getId(), partido.getIdEquipoLocal(), partido.getIdEquipoVisita(), minutos, ritmo.descanso)) {
                     continue;
                 }
                 Asignacion asignacion = new Asignacion();
                 asignacion.canchaId = cancha.getId();
                 asignacion.minutos = minutos;
-                return asignacion;
+                asignacion.carga = ocupacion.carga(cancha.getId());
+                asignacion.orden = indice;
+                opciones.add(asignacion);
             }
         }
-        return null;
+        opciones.sort(Comparator.comparingInt((Asignacion asignacion) -> asignacion.carga)
+                .thenComparingInt(asignacion -> asignacion.minutos)
+                .thenComparingInt(asignacion -> asignacion.orden));
+        return opciones;
     }
 
     private Cancha canchaActiva(UUID id, UUID leagueId) {
@@ -631,14 +634,18 @@ public class HorarioService {
     private static final class Asignacion {
         private UUID canchaId;
         private int minutos;
+        private int carga;
+        private int orden;
     }
 
     private static final class Ocupacion {
         private final Map<UUID, Set<Integer>> porCancha = new HashMap<>();
         private final Map<UUID, List<Integer>> porEquipo = new HashMap<>();
+        private final Map<UUID, Integer> carga = new HashMap<>();
 
         private void agregar(UUID canchaId, UUID local, UUID visita, int minutos) {
             porCancha.computeIfAbsent(canchaId, key -> new HashSet<>()).add(minutos);
+            carga.merge(canchaId, 1, Integer::sum);
             agregarEquipo(local, minutos);
             agregarEquipo(visita, minutos);
         }
@@ -648,8 +655,13 @@ public class HorarioService {
             if (horas != null) {
                 horas.remove(minutos);
             }
+            carga.merge(canchaId, -1, Integer::sum);
             quitarEquipo(local, minutos);
             quitarEquipo(visita, minutos);
+        }
+
+        private int carga(UUID canchaId) {
+            return carga.getOrDefault(canchaId, 0);
         }
 
         private boolean libre(UUID canchaId, UUID local, UUID visita, int minutos, int descanso) {
