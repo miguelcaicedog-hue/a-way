@@ -78,7 +78,7 @@ public class CobroPartidoService {
         UUID ligaId = categoria.getEdition().getLeague().getId();
         assertRead(ligaId);
         UUID equipo = equipo(partido, equipoId);
-        return armar(partido, categoria, ligaId, equipo, false);
+        return armar(partido, categoria, ligaId, equipo);
     }
 
     @Transactional
@@ -120,7 +120,7 @@ public class CobroPartidoService {
         cobro.setUsuarioModificacion(usuario);
         cobros.save(cobro);
         guardarDetalles(cobro, contexto, tarjetasPedidas, sancionesPedidas, usuario);
-        return armar(partido, categoria, ligaId, equipo, true);
+        return armar(partido, categoria, ligaId, equipo);
     }
 
     private void guardarDetalles(PartidoCobro cobro, Contexto contexto, Set<UUID> tarjetasPedidas,
@@ -170,7 +170,7 @@ public class CobroPartidoService {
         }
     }
 
-    private CobroViews.CobroView armar(Partido partido, Category categoria, UUID ligaId, UUID equipoId, boolean recargar) {
+    private CobroViews.CobroView armar(Partido partido, Category categoria, UUID ligaId, UUID equipoId) {
         Contexto contexto = contexto(partido, categoria, ligaId, equipoId);
         boolean hayCobro = contexto.cobro != null;
         List<CobroViews.CargoView> tarjetasVista = new ArrayList<>();
@@ -198,13 +198,6 @@ public class CobroPartidoService {
             arbitraje = arbitraje.add(arbitro.costo);
         }
         String observacion = contexto.cobro == null ? null : contexto.cobro.getObservacion();
-        if (recargar) {
-            observacion = cobros.findByIdPartido(partido.getId()).stream()
-                    .filter(cobro -> equipoId.equals(cobro.getIdEquipo()) && "ACTIVO".equals(cobro.getEstado()))
-                    .map(PartidoCobro::getObservacion)
-                    .findFirst()
-                    .orElse(observacion);
-        }
         return new CobroViews.CobroView(
                 nombre(partido.getIdEquipoLocal()),
                 nombre(partido.getIdEquipoVisita()),
