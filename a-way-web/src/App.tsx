@@ -9,6 +9,7 @@ import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
 import { HorariosScreen } from './Horarios'
 import { ResultadosScreen } from './Resultados'
+import { TablaScreen } from './Tabla'
 import { InscripcionScreen } from './Inscripciones'
 import { SancionesJugadorScreen } from './SancionesJugador'
 import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
@@ -49,7 +50,7 @@ const sections = [
   { id: 'resultados', label: 'Resultados', summary: 'Marcador de los partidos de una jornada.' },
   { id: 'goles', label: 'Goles', summary: 'Goles de cada jugador por partido.' },
   { id: 'tarjetas', label: 'Tarjetas', summary: 'Amarillas y rojas de cada jugador por jornada.' },
-  { id: 'tabla', label: 'Tabla', summary: 'Posiciones con diferencia de goles, goles convertidos y fair play.' },
+  { id: 'tabla', label: 'Tabla', summary: 'Posiciones de una categoría al cierre de la fecha elegida: puntos, diferencia y goles.' },
   { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la liga: cédula, nombre, teléfono, foto y contacto por WhatsApp.' },
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
   { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
@@ -413,6 +414,7 @@ function App() {
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
         {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} />}
         {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} />}
+        {section === 'tabla' && <TablaScreen key={editionId} editionId={editionId} />}
         {section === 'arbitros' && <ArbitrosScreen profile={profile} leagueId={leagueId} />}
         {section === 'catalogo-tarjetas' && <TarjetasCatalogoScreen profile={profile} leagueId={leagueId} />}
         {section === 'sanciones-jugador' && <SancionesJugadorScreen profile={profile} leagueId={leagueId} />}
