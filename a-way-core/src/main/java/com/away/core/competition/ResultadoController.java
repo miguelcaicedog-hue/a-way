@@ -18,9 +18,11 @@ import java.util.UUID;
 public class ResultadoController {
 
     private final ResultadoService resultados;
+    private final CobroPartidoService cobros;
 
-    public ResultadoController(ResultadoService resultados) {
+    public ResultadoController(ResultadoService resultados, CobroPartidoService cobros) {
         this.resultados = resultados;
+        this.cobros = cobros;
     }
 
     @GetMapping
@@ -73,5 +75,15 @@ public class ResultadoController {
     public ResultadoViews.DetalleView guardarDetalle(@PathVariable UUID id,
                                                       @RequestBody ResultadoViews.DetalleGuardarRequest request) {
         return resultados.guardarDetalle(id, request);
+    }
+
+    @GetMapping("/partido/{id}/cobro")
+    public CobroViews.CobroView cobro(@PathVariable UUID id, @RequestParam(required = false) UUID teamId) {
+        return cobros.ver(id, teamId);
+    }
+
+    @PutMapping("/partido/{id}/cobro")
+    public CobroViews.CobroView guardarCobro(@PathVariable UUID id, @RequestBody CobroViews.CobroGuardarRequest request) {
+        return cobros.guardar(id, request);
     }
 }

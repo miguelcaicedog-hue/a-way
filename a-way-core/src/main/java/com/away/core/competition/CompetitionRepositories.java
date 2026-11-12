@@ -155,14 +155,37 @@ interface GolJugadorRepository extends JpaRepository<GolJugador, UUID> {
 
 interface TarjetaJugadorRepository extends JpaRepository<TarjetaJugador, UUID> {
     List<TarjetaJugador> findByIdPartido(UUID idPartido);
+
+    @Query("select t from TarjetaJugador t where t.estado = 'ACTIVO' and t.idPartido in "
+            + "(select p.id from Partido p where p.idCategoria = :categoria and p.estado = 'ACTIVO')")
+    List<TarjetaJugador> activasDeCategoria(@Param("categoria") UUID categoria);
 }
 
 interface PartidoSancionRepository extends JpaRepository<PartidoSancion, UUID> {
     List<PartidoSancion> findByIdPartido(UUID idPartido);
+
+    @Query("select s from PartidoSancion s where s.estado = 'ACTIVO' and s.idPartido in "
+            + "(select p.id from Partido p where p.idCategoria = :categoria and p.estado = 'ACTIVO')")
+    List<PartidoSancion> activasDeCategoria(@Param("categoria") UUID categoria);
 }
 
 interface PartidoSancionDetalleRepository extends JpaRepository<PartidoSancionDetalle, UUID> {
     List<PartidoSancionDetalle> findByIdPartidoSancion(UUID idPartidoSancion);
+}
+
+interface PartidoCobroRepository extends JpaRepository<PartidoCobro, UUID> {
+    List<PartidoCobro> findByIdPartido(UUID idPartido);
+}
+
+interface PartidoCobroDetalleRepository extends JpaRepository<PartidoCobroDetalle, UUID> {
+    List<PartidoCobroDetalle> findByIdPartidoCobro(UUID idPartidoCobro);
+
+    List<PartidoCobroDetalle> findByIdTarjetaJugador(UUID idTarjetaJugador);
+
+    List<PartidoCobroDetalle> findByIdPartidoSancionDetalle(UUID idPartidoSancionDetalle);
+
+    @Query("select d from PartidoCobroDetalle d where d.estado = 'ACTIVO' and d.tipo in ('TARJETA', 'SANCION')")
+    List<PartidoCobroDetalle> cargosActivos();
 }
 
 interface CanchaRepository extends JpaRepository<Cancha, UUID> {
