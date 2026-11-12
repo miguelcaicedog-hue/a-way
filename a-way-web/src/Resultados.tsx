@@ -26,6 +26,7 @@ type Partido = {
   golesLocal: number | null
   golesVisita: number | null
   equiposDefinidos: boolean
+  valorCobrado: number
 }
 
 type Panel = {
@@ -60,6 +61,7 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
   const [error, setError] = useState<string | null>(null)
   const [partidoDetalle, setPartidoDetalle] = useState<string | null>(null)
   const [partidoCobro, setPartidoCobro] = useState<string | null>(null)
+  const [revisionCobro, setRevisionCobro] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const esperas = useRef<Record<string, number>>({})
   const puedeCualquierFecha = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
@@ -132,7 +134,7 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
     return () => {
       activo = false
     }
-  }, [editionId, categoryId, fecha])
+  }, [editionId, categoryId, fecha, revisionCobro])
 
   function puedeEditar(partido: Partido) {
     if (!partido.equiposDefinidos) return false
@@ -275,12 +277,24 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
                           <path d="M4 10h6l2-2h3a4 4 0 1 1 0 8h-1.2l-1.3 2.2a2 2 0 0 1-3.4 0L8 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2zm13 1.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6z" />
                         </svg>
                       </button>
-                      <button type="button" className="silbato" aria-label="Cobro del partido" onClick={() => setPartidoCobro(partido.id)}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path fillRule="evenodd" d="M5 4.6h14a2.2 2.2 0 0 1 2.2 2.2v10.4A2.2 2.2 0 0 1 19 19.4H5a2.2 2.2 0 0 1-2.2-2.2V6.8A2.2 2.2 0 0 1 5 4.6zm1.35 1.55v10.1h11.3V6.15H6.35z" />
-                          <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
-                        </svg>
-                      </button>
+                      {marcador.local !== '' && marcador.visita !== '' && Number(partido.valorCobrado) === 0 ? (
+                        <span className="aviso-sin-cobro">
+                          <button type="button" className="silbato sin-cobro" aria-label="No se ha cobrado ningún valor" onClick={() => setPartidoCobro(partido.id)}>
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path fillRule="evenodd" d="M5 4.6h14a2.2 2.2 0 0 1 2.2 2.2v10.4A2.2 2.2 0 0 1 19 19.4H5a2.2 2.2 0 0 1-2.2-2.2V6.8A2.2 2.2 0 0 1 5 4.6zm1.35 1.55v10.1h11.3V6.15H6.35z" />
+                              <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
+                            </svg>
+                          </button>
+                          <span role="tooltip">No se ha cobrado ningún valor</span>
+                        </span>
+                      ) : (
+                        <button type="button" className="silbato" aria-label="Cobro del partido" onClick={() => setPartidoCobro(partido.id)}>
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path fillRule="evenodd" d="M5 4.6h14a2.2 2.2 0 0 1 2.2 2.2v10.4A2.2 2.2 0 0 1 19 19.4H5a2.2 2.2 0 0 1-2.2-2.2V6.8A2.2 2.2 0 0 1 5 4.6zm1.35 1.55v10.1h11.3V6.15H6.35z" />
+                            <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
+                          </svg>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 )
@@ -290,7 +304,15 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
         </section>
       ))}
       {partidoDetalle && <PartidoModal partidoId={partidoDetalle} onClose={() => setPartidoDetalle(null)} />}
-      {partidoCobro && <CobroModal partidoId={partidoCobro} onClose={() => setPartidoCobro(null)} />}
+      {partidoCobro && (
+        <CobroModal
+          partidoId={partidoCobro}
+          onClose={() => {
+            setPartidoCobro(null)
+            setRevisionCobro((valor) => valor + 1)
+          }}
+        />
+      )}
     </section>
   )
 }

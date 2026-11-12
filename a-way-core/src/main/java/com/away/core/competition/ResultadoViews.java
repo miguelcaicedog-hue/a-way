@@ -56,10 +56,12 @@ public class ResultadoViews {
         private final Integer golesVisita;
         private final boolean equiposDefinidos;
         private final int orden;
+        private final BigDecimal valorCobrado;
 
         ResultadoPartidoView(UUID id, String categoryName, String jornadaNombre, String canchaNombre,
                              LocalDate fecha, String hora, String local, String visita,
-                             Integer golesLocal, Integer golesVisita, boolean equiposDefinidos, int orden) {
+                             Integer golesLocal, Integer golesVisita, boolean equiposDefinidos, int orden,
+                             BigDecimal valorCobrado) {
             this.id = id;
             this.categoryName = categoryName;
             this.jornadaNombre = jornadaNombre;
@@ -72,6 +74,7 @@ public class ResultadoViews {
             this.golesVisita = golesVisita;
             this.equiposDefinidos = equiposDefinidos;
             this.orden = orden;
+            this.valorCobrado = valorCobrado;
         }
 
         public UUID getId() {
@@ -120,6 +123,10 @@ public class ResultadoViews {
 
         public int getOrden() {
             return orden;
+        }
+
+        public BigDecimal getValorCobrado() {
+            return valorCobrado;
         }
     }
 

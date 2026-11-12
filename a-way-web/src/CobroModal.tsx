@@ -147,6 +147,7 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
   const valorTarjetas = suma(cobro?.tarjetas ?? [], tarjetas)
   const valorSanciones = suma(cobro?.sanciones ?? [], sanciones)
   const total = Number(cobro?.arbitraje ?? 0) + valorTarjetas + valorSanciones
+  const diferencia = (efectivo === '' ? 0 : Number(efectivo)) + (transferencia === '' ? 0 : Number(transferencia)) - total
 
   return (
     <div className="modal-fondo" role="presentation">
@@ -293,6 +294,10 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                   }}
                 />
               </label>
+              <span className={diferencia < 0 ? 'diferencia-cobro negativo' : 'diferencia-cobro positivo'}>
+                Diferencia
+                <strong>{dinero(diferencia)}</strong>
+              </span>
             </div>
             <label>
               Observación

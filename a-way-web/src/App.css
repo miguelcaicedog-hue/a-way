@@ -898,6 +898,40 @@ button.icono {
   align-items: center;
 }
 
+button.silbato.sin-cobro {
+  background: #c62828;
+}
+
+.aviso-sin-cobro {
+  position: relative;
+  display: inline-flex;
+}
+
+.aviso-sin-cobro span {
+  position: absolute;
+  right: calc(100% + 0.4rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  background: #1d2430;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 5;
+}
+
+.aviso-sin-cobro:hover span {
+  opacity: 1;
+  visibility: visible;
+}
+
 .lupa {
   width: 2.2rem;
   height: 2.2rem;
@@ -939,6 +973,28 @@ button.icono {
 
 .cobro-linea.total input {
   width: 8rem;
+}
+
+.diferencia-cobro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 6.5rem;
+  font-size: 0.95rem;
+}
+
+.diferencia-cobro strong {
+  font-size: 1.15rem;
+}
+
+.diferencia-cobro.negativo,
+.diferencia-cobro.negativo strong {
+  color: #c62828;
+}
+
+.diferencia-cobro.positivo,
+.diferencia-cobro.positivo strong {
+  color: #1b7a3a;
 }
 
 .lista-detalle.cobro-cargos > li {

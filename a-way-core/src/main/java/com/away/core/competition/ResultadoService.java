@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -40,6 +41,7 @@ public class ResultadoService {
     private final PartidoSancionDetalleRepository partidosSancionesDetalle;
     private final TeamEntryRepository entradas;
     private final PlayerRepository jugadores;
+    private final PartidoCobroRepository cobros;
 
     public ResultadoService(EditionRepository editions, CategoryRepository categories, JornadaRepository jornadas,
                             PartidoRepository partidos, CanchaRepository canchas, TeamRepository teams,
@@ -47,7 +49,7 @@ public class ResultadoService {
                             GolJugadorRepository golesJugadores, TarjetaJugadorRepository tarjetasJugadores,
                             SancionJugadorRepository sancionesJugador, PartidoSancionRepository partidosSanciones,
                             PartidoSancionDetalleRepository partidosSancionesDetalle,
-                            TeamEntryRepository entradas, PlayerRepository jugadores) {
+                            TeamEntryRepository entradas, PlayerRepository jugadores, PartidoCobroRepository cobros) {
         this.editions = editions;
         this.categories = categories;
         this.jornadas = jornadas;
@@ -64,6 +66,7 @@ public class ResultadoService {
         this.partidosSancionesDetalle = partidosSancionesDetalle;
         this.entradas = entradas;
         this.jugadores = jugadores;
+        this.cobros = cobros;
     }
 
     @Transactional(readOnly = true)
@@ -101,11 +104,15 @@ public class ResultadoService {
         Contexto contexto = contexto(edition, categoryId);
         List<ResultadoViews.ResultadoPartidoView> filas = new ArrayList<>();
         if (fecha != null) {
+            List<Partido> delDia = new ArrayList<>();
             for (Partido partido : contexto.partidos) {
                 LocalDate dia = fechaEfectiva(partido, contexto);
-                if (!fecha.equals(dia)) {
-                    continue;
+                if (fecha.equals(dia)) {
+                    delDia.add(partido);
                 }
+            }
+            cargarCobros(delDia, contexto);
+            for (Partido partido : delDia) {
                 filas.add(vista(partido, contexto));
             }
         }
@@ -185,7 +192,35 @@ public class ResultadoService {
                 partido.getGolesLocal(),
                 partido.getGolesVisita(),
                 partido.getIdEquipoLocal() != null && partido.getIdEquipoVisita() != null,
-                partido.getOrden());
+                partido.getOrden(),
+                cobrado(partido, contexto));
+    }
+
+    private void cargarCobros(List<Partido> delDia, Contexto contexto) {
+        List<UUID> ids = new ArrayList<>();
+        for (Partido partido : delDia) {
+            ids.add(partido.getId());
+            contexto.cobrado.put(partido.getId(), BigDecimal.ZERO.setScale(2));
+        }
+        if (ids.isEmpty()) {
+            return;
+        }
+        for (PartidoCobro cobro : cobros.activosDePartidos(ids)) {
+            BigDecimal suma = contexto.cobrado.get(cobro.getIdPartido());
+            suma = suma.add(monto(cobro.getValorCobroEfectivo())).add(monto(cobro.getValorCobroTransferencia()));
+            contexto.cobrado.put(cobro.getIdPartido(), suma);
+        }
+    }
+
+    private BigDecimal cobrado(Partido partido, Contexto contexto) {
+        if (!contexto.cobrado.containsKey(partido.getId())) {
+            cargarCobros(List.of(partido), contexto);
+        }
+        return contexto.cobrado.get(partido.getId());
+    }
+
+    private BigDecimal monto(BigDecimal valor) {
+        return valor == null ? BigDecimal.ZERO.setScale(2) : valor;
     }
 
     private String nombre(UUID equipoId, Contexto contexto) {
@@ -771,5 +806,6 @@ public class ResultadoService {
         private final Map<UUID, String> porCancha = new HashMap<>();
         private final Map<UUID, Team> porEquipo = new HashMap<>();
         private final List<Partido> partidos = new ArrayList<>();
+        private final Map<UUID, BigDecimal> cobrado = new HashMap<>();
     }
 }

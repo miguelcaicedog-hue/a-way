@@ -175,6 +175,9 @@ interface PartidoSancionDetalleRepository extends JpaRepository<PartidoSancionDe
 
 interface PartidoCobroRepository extends JpaRepository<PartidoCobro, UUID> {
     List<PartidoCobro> findByIdPartido(UUID idPartido);
+
+    @Query("select c from PartidoCobro c where c.estado = 'ACTIVO' and c.idPartido in :partidos")
+    List<PartidoCobro> activosDePartidos(@Param("partidos") Collection<UUID> partidos);
 }
 
 interface PartidoCobroDetalleRepository extends JpaRepository<PartidoCobroDetalle, UUID> {
