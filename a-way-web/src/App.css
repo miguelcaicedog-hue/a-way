@@ -89,6 +89,10 @@ textarea:disabled {
   opacity: 1;
 }
 
+input[type="checkbox"]:disabled {
+  accent-color: #9aa7b4;
+}
+
 button {
   font: inherit;
   margin-top: 0.4rem;

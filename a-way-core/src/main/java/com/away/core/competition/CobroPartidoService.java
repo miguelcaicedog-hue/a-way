@@ -45,6 +45,7 @@ public class CobroPartidoService {
     private final SancionJugadorRepository sancionesJugador;
     private final PartidoCobroRepository cobros;
     private final PartidoCobroDetalleRepository detalles;
+    private final CierreJornadaService cierres;
 
     public CobroPartidoService(PartidoRepository partidos, JornadaRepository jornadas, CategoryRepository categories,
                                TeamRepository teams, TeamEntryRepository entradas, PlayerRepository jugadores,
@@ -52,7 +53,7 @@ public class CobroPartidoService {
                                TarjetaRepository tarjetas, TarjetaJugadorRepository tarjetasJugadores,
                                PartidoSancionRepository partidosSanciones, PartidoSancionDetalleRepository partidosSancionesDetalle,
                                SancionJugadorRepository sancionesJugador, PartidoCobroRepository cobros,
-                               PartidoCobroDetalleRepository detalles) {
+                               PartidoCobroDetalleRepository detalles, CierreJornadaService cierres) {
         this.partidos = partidos;
         this.jornadas = jornadas;
         this.categories = categories;
@@ -69,6 +70,7 @@ public class CobroPartidoService {
         this.sancionesJugador = sancionesJugador;
         this.cobros = cobros;
         this.detalles = detalles;
+        this.cierres = cierres;
     }
 
     @Transactional(readOnly = true)
@@ -578,6 +580,9 @@ public class CobroPartidoService {
     }
 
     private boolean puedeEditar(UUID leagueId, Partido partido) {
+        if (cierres.jornadaCerrada(partido.getIdJornada())) {
+            return false;
+        }
         AppUser user = actual();
         if (user.isMaster()) {
             return true;
@@ -598,6 +603,9 @@ public class CobroPartidoService {
 
     private void assertWrite(UUID leagueId, Partido partido) {
         assertRead(leagueId);
+        if (cierres.jornadaCerrada(partido.getIdJornada())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La jornada está cerrada");
+        }
         if (!puedeEditar(leagueId, partido)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para modificar este marcador");
         }
