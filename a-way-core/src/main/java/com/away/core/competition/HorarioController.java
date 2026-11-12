@@ -32,6 +32,13 @@ public class HorarioController {
         return horarios.panel(editionId, categoryId, fecha, jornadas, null);
     }
 
+    @GetMapping("/proxima-fecha")
+    public HorarioViews.HorarioFechaView proximaFecha(@RequestParam UUID editionId,
+                                                       @RequestParam(required = false) UUID categoryId,
+                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde) {
+        return horarios.proximaFecha(editionId, categoryId, desde);
+    }
+
     @PutMapping("/partido/{id}")
     public HorarioViews.HorarioPanelView guardar(@PathVariable UUID id,
                                                   @RequestBody HorarioViews.HorarioGuardarRequest request) {

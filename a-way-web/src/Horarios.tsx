@@ -166,6 +166,23 @@ export function HorariosScreen({ profile, editionId }: { profile: Profile; editi
     }
   }
 
+  async function filtrarProximaFecha() {
+    if (!editionId) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId })
+      if (categoryId) params.set('categoryId', categoryId)
+      if (fecha) params.set('desde', fecha)
+      const respuesta = await api<{ fecha: string }>(`/api/horarios/proxima-fecha?${params.toString()}`)
+      setFecha(respuesta.fecha)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No hay otra fecha sin horario y cancha')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   async function asignarDia() {
     if (!fecha) return
     setOcupado(true)
@@ -241,6 +258,7 @@ export function HorariosScreen({ profile, editionId }: { profile: Profile; editi
             Fecha
             <FechaCampo value={fecha} onChange={setFecha} ariaLabel="Fecha" />
           </label>
+          <button type="button" disabled={ocupado} onClick={filtrarProximaFecha}>FILTRAR PROXIMA FECHA</button>
         </form>
       )}
       {editionId && writable && (

@@ -64,6 +64,43 @@ public class HorarioService {
         return vista(edition, categoryId, fecha, jornadas, aviso);
     }
 
+    @Transactional(readOnly = true)
+    public HorarioViews.HorarioFechaView proximaFecha(UUID editionId, UUID categoryId, LocalDate desde) {
+        Edition edition = edition(editionId);
+        assertRead(edition.getLeague().getId());
+        Contexto contexto = contexto(edition);
+        if (categoryId != null && !contexto.categoriasEdicion.contains(categoryId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no pertenece a esta edición");
+        }
+        LocalDate siguiente = null;
+        for (Partido partido : contexto.partidos) {
+            if (!contexto.categoriasEdicion.contains(partido.getIdCategoria())) {
+                continue;
+            }
+            if (categoryId != null && !categoryId.equals(partido.getIdCategoria())) {
+                continue;
+            }
+            Jornada jornada = contexto.porJornada.get(partido.getIdJornada());
+            if (jornada == null || !"ACTIVO".equals(jornada.getEstado())) {
+                continue;
+            }
+            if (partido.getHora() != null && partido.getIdCancha() != null) {
+                continue;
+            }
+            LocalDate dia = fechaEfectiva(partido, contexto);
+            if (dia == null || (desde != null && !dia.isAfter(desde))) {
+                continue;
+            }
+            if (siguiente == null || dia.isBefore(siguiente)) {
+                siguiente = dia;
+            }
+        }
+        if (siguiente == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay otra fecha sin horario y cancha");
+        }
+        return new HorarioViews.HorarioFechaView(siguiente);
+    }
+
     @Transactional
     public HorarioViews.HorarioPanelView guardar(UUID id, HorarioViews.HorarioGuardarRequest request) {
         if (request.getEditionId() == null) {

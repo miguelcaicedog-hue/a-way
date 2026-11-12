@@ -197,6 +197,18 @@ public class HorarioViews {
         }
     }
 
+    public static class HorarioFechaView {
+        private final LocalDate fecha;
+
+        public HorarioFechaView(LocalDate fecha) {
+            this.fecha = fecha;
+        }
+
+        public LocalDate getFecha() {
+            return fecha;
+        }
+    }
+
     public static class HorarioPanelView {
         private final List<HorarioCanchaView> canchas;
         private final List<Integer> jornadas;

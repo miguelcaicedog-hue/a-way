@@ -447,6 +447,43 @@ button.ghost {
   height: 70%;
 }
 
+.arbitro-foto {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  background: #e7eef5;
+  border-radius: 4px;
+}
+
+.arbitro-foto.preview {
+  width: 96px;
+  height: 96px;
+}
+
+.arbitro-foto.vacio {
+  display: inline-block;
+}
+
+.reloj {
+  margin: 0 0 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.marcador {
+  width: 4.5rem;
+}
+
+.tarjeta-color {
+  display: inline-block;
+  width: 28px;
+  height: 18px;
+  border: 1px solid #d5dde6;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
 .grupos-tablero {
   display: flex;
   gap: 1rem;
@@ -795,6 +832,115 @@ button.icono {
   justify-content: center;
   padding: 1rem;
   background: rgba(16, 32, 48, 0.45);
+}
+
+.silbato {
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0.3rem;
+}
+
+.silbato svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.modal.partido {
+  width: min(52rem, 100%);
+  max-height: min(84vh, 44rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.partido-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.partido-cabecera h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 1.05rem;
+}
+
+.equipo-local,
+.equipo-visita {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+}
+
+.equipo-local {
+  background: #163a5f;
+  color: white;
+}
+
+.vs {
+  color: #5c6b7a;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.equipo-visita {
+  background: #e7f0fa;
+  color: #163a5f;
+  border: 1px solid #163a5f;
+}
+
+.aviso-grabado {
+  margin: 0;
+  color: #1d7a3a;
+  align-self: center;
+}
+
+.partido-cuerpo {
+  min-height: 0;
+  overflow: auto;
+}
+
+.pestanas {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.8rem 0;
+}
+
+.pestanas button {
+  background: #e7eef5;
+  color: #163a5f;
+}
+
+.pestanas button.activa {
+  background: #163a5f;
+  color: white;
+}
+
+.lista-detalle {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+}
+
+.lista-detalle li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid #e4ebf2;
+}
+
+.pito {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
 }
 
 .modal {

@@ -60,6 +60,12 @@ public class Partido {
     @Column(name = "id_cancha")
     private UUID idCancha;
 
+    @Column(name = "goles_local")
+    private Integer golesLocal;
+
+    @Column(name = "goles_visita")
+    private Integer golesVisita;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -201,6 +207,22 @@ public class Partido {
 
     public void setIdCancha(UUID idCancha) {
         this.idCancha = idCancha;
+    }
+
+    public Integer getGolesLocal() {
+        return golesLocal;
+    }
+
+    public void setGolesLocal(Integer golesLocal) {
+        this.golesLocal = golesLocal;
+    }
+
+    public Integer getGolesVisita() {
+        return golesVisita;
+    }
+
+    public void setGolesVisita(Integer golesVisita) {
+        this.golesVisita = golesVisita;
     }
 
     public OffsetDateTime getFechaCreacion() {

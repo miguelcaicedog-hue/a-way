@@ -1,13 +1,16 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 import { api } from './api'
+import { ArbitrosScreen } from './Arbitros'
 import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
 import { CalendarioScreen } from './Calendario'
 import { CanchasScreen } from './Canchas'
 import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
 import { HorariosScreen } from './Horarios'
+import { ResultadosScreen } from './Resultados'
 import { InscripcionScreen } from './Inscripciones'
+import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 
 type Health = {
   service?: string
@@ -46,8 +49,9 @@ const sections = [
   { id: 'goles', label: 'Goles', summary: 'Goles de cada jugador por partido.' },
   { id: 'tarjetas', label: 'Tarjetas', summary: 'Amarillas y rojas de cada jugador por jornada.' },
   { id: 'tabla', label: 'Tabla', summary: 'Posiciones con diferencia de goles, goles convertidos y fair play.' },
-  { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la categoría y árbitro por defecto de cada cancha.' },
+  { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la liga: cédula, nombre, teléfono, foto y contacto por WhatsApp.' },
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
+  { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
   { id: 'suspensiones', label: 'Suspensiones', summary: 'Reglas por tarjetas y jornada en que empieza la sanción.' },
   { id: 'pagos', label: 'Pagos', summary: 'Arbitraje por jornada y cancelación de multas por tarjeta.' },
   { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
@@ -61,7 +65,7 @@ const menuGroups = [
   { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
-  { label: 'Disciplina', ids: ['suspensiones', 'sanciones'] },
+  { label: 'Disciplina', ids: ['catalogo-tarjetas', 'suspensiones', 'sanciones'] },
   { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
   { label: 'Administración', ids: ['importaciones', 'configuracion', 'usuarios'] },
 ] as const
@@ -406,6 +410,9 @@ function App() {
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
         {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} />}
+        {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} />}
+        {section === 'arbitros' && <ArbitrosScreen profile={profile} leagueId={leagueId} />}
+        {section === 'catalogo-tarjetas' && <TarjetasCatalogoScreen profile={profile} leagueId={leagueId} />}
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
       </main>
       </div>
