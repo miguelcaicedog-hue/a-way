@@ -109,6 +109,10 @@ interface JornadaRepository extends JpaRepository<Jornada, UUID> {
     List<Jornada> findByIdCategoriaInAndEstado(Collection<UUID> categorias, String estado);
 }
 
+interface SuspensionJugadorRepository extends JpaRepository<SuspensionJugador, UUID> {
+    List<SuspensionJugador> findByIdCategoriaAndEstado(UUID idCategoria, String estado);
+}
+
 interface PartidoRepository extends JpaRepository<Partido, UUID> {
     List<Partido> findByIdCategoriaAndEstadoOrderByOrdenAsc(UUID idCategoria, String estado);
 

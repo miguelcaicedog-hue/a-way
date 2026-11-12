@@ -57,11 +57,12 @@ public class ResultadoViews {
         private final boolean equiposDefinidos;
         private final int orden;
         private final BigDecimal valorCobrado;
+        private final boolean cerrada;
 
         ResultadoPartidoView(UUID id, String categoryName, String jornadaNombre, String canchaNombre,
                              LocalDate fecha, String hora, String local, String visita,
                              Integer golesLocal, Integer golesVisita, boolean equiposDefinidos, int orden,
-                             BigDecimal valorCobrado) {
+                             BigDecimal valorCobrado, boolean cerrada) {
             this.id = id;
             this.categoryName = categoryName;
             this.jornadaNombre = jornadaNombre;
@@ -75,6 +76,7 @@ public class ResultadoViews {
             this.equiposDefinidos = equiposDefinidos;
             this.orden = orden;
             this.valorCobrado = valorCobrado;
+            this.cerrada = cerrada;
         }
 
         public UUID getId() {
@@ -128,15 +130,21 @@ public class ResultadoViews {
         public BigDecimal getValorCobrado() {
             return valorCobrado;
         }
+
+        public boolean isCerrada() {
+            return cerrada;
+        }
     }
 
     public static class ResultadoPanelView {
         private final LocalDate hoy;
         private final List<ResultadoPartidoView> partidos;
+        private final boolean cerrada;
 
-        public ResultadoPanelView(LocalDate hoy, List<ResultadoPartidoView> partidos) {
+        public ResultadoPanelView(LocalDate hoy, List<ResultadoPartidoView> partidos, boolean cerrada) {
             this.hoy = hoy;
             this.partidos = partidos;
+            this.cerrada = cerrada;
         }
 
         public LocalDate getHoy() {
@@ -145,6 +153,22 @@ public class ResultadoViews {
 
         public List<ResultadoPartidoView> getPartidos() {
             return partidos;
+        }
+
+        public boolean isCerrada() {
+            return cerrada;
+        }
+    }
+
+    public static class CierreView {
+        private final boolean cerrada;
+
+        public CierreView(boolean cerrada) {
+            this.cerrada = cerrada;
+        }
+
+        public boolean isCerrada() {
+            return cerrada;
         }
     }
 
@@ -541,13 +565,15 @@ public class ResultadoViews {
         private final String alias;
         private final boolean hasFoto;
         private final int rotacion;
+        private final boolean suspendido;
 
-        public JugadorPartidoView(UUID id, int numero, String alias, boolean hasFoto, int rotacion) {
+        public JugadorPartidoView(UUID id, int numero, String alias, boolean hasFoto, int rotacion, boolean suspendido) {
             this.id = id;
             this.numero = numero;
             this.alias = alias;
             this.hasFoto = hasFoto;
             this.rotacion = rotacion;
+            this.suspendido = suspendido;
         }
 
         public UUID getId() {
@@ -568,6 +594,10 @@ public class ResultadoViews {
 
         public int getRotacion() {
             return rotacion;
+        }
+
+        public boolean isSuspendido() {
+            return suspendido;
         }
     }
 }

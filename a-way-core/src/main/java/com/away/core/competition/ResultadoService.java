@@ -42,6 +42,7 @@ public class ResultadoService {
     private final TeamEntryRepository entradas;
     private final PlayerRepository jugadores;
     private final PartidoCobroRepository cobros;
+    private final CierreJornadaService cierres;
 
     public ResultadoService(EditionRepository editions, CategoryRepository categories, JornadaRepository jornadas,
                             PartidoRepository partidos, CanchaRepository canchas, TeamRepository teams,
@@ -49,7 +50,8 @@ public class ResultadoService {
                             GolJugadorRepository golesJugadores, TarjetaJugadorRepository tarjetasJugadores,
                             SancionJugadorRepository sancionesJugador, PartidoSancionRepository partidosSanciones,
                             PartidoSancionDetalleRepository partidosSancionesDetalle,
-                            TeamEntryRepository entradas, PlayerRepository jugadores, PartidoCobroRepository cobros) {
+                            TeamEntryRepository entradas, PlayerRepository jugadores, PartidoCobroRepository cobros,
+                            CierreJornadaService cierres) {
         this.editions = editions;
         this.categories = categories;
         this.jornadas = jornadas;
@@ -67,6 +69,7 @@ public class ResultadoService {
         this.entradas = entradas;
         this.jugadores = jugadores;
         this.cobros = cobros;
+        this.cierres = cierres;
     }
 
     @Transactional(readOnly = true)
@@ -119,7 +122,18 @@ public class ResultadoService {
         filas.sort(Comparator.comparing((ResultadoViews.ResultadoPartidoView fila) -> fila.getHora() == null ? "" : fila.getHora())
                 .thenComparing(ResultadoViews.ResultadoPartidoView::getCategoryName)
                 .thenComparing(ResultadoViews.ResultadoPartidoView::getOrden));
-        return new ResultadoViews.ResultadoPanelView(LocalDate.now(), filas);
+        boolean cerrada = categoryId != null && fecha != null && cierres.fechaCerrada(categoryId, fecha);
+        return new ResultadoViews.ResultadoPanelView(LocalDate.now(), filas, cerrada);
+    }
+
+    @Transactional
+    public boolean cerrarJornada(UUID editionId, UUID categoryId, LocalDate fecha) {
+        return cierres.cerrar(editionId, categoryId, fecha);
+    }
+
+    @Transactional
+    public boolean abrirJornada(UUID editionId, UUID categoryId, LocalDate fecha) {
+        return cierres.abrir(editionId, categoryId, fecha);
     }
 
     @Transactional
@@ -193,7 +207,8 @@ public class ResultadoService {
                 partido.getGolesVisita(),
                 partido.getIdEquipoLocal() != null && partido.getIdEquipoVisita() != null,
                 partido.getOrden(),
-                cobrado(partido, contexto));
+                cobrado(partido, contexto),
+                jornada != null && "CERRADA".equals(jornada.getEstadoCierre()));
     }
 
     private void cargarCobros(List<Partido> delDia, Contexto contexto) {
@@ -327,7 +342,7 @@ public class ResultadoService {
                 nombreEquipo(partido.getIdEquipoVisita()),
                 opcionEquipo(partido.getIdEquipoLocal()),
                 opcionEquipo(partido.getIdEquipoVisita()),
-                puedeEditar(ligaId, partido),
+                !cierres.jornadaCerrada(partido.getIdJornada()) && puedeEditar(ligaId, partido),
                 opciones,
                 asignados,
                 goles,
@@ -366,10 +381,21 @@ public class ResultadoService {
                     jugador.getNumeroCamisa(),
                     alias,
                     jugador.getPhoto() != null,
-                    jugador.getRotationDegrees()));
+                    jugador.getRotationDegrees(),
+                    false));
         }
         filas.sort(Comparator.comparingInt(ResultadoViews.JugadorPartidoView::getNumero).thenComparing(ResultadoViews.JugadorPartidoView::getAlias));
-        return filas;
+        Set<UUID> ids = new HashSet<>();
+        for (ResultadoViews.JugadorPartidoView fila : filas) {
+            ids.add(fila.getId());
+        }
+        Set<UUID> suspendidos = cierres.suspendidos(partido.getIdCategoria(), partido.getIdJornada(), ids);
+        List<ResultadoViews.JugadorPartidoView> marcados = new ArrayList<>();
+        for (ResultadoViews.JugadorPartidoView fila : filas) {
+            marcados.add(new ResultadoViews.JugadorPartidoView(
+                    fila.getId(), fila.getNumero(), fila.getAlias(), fila.isHasFoto(), fila.getRotacion(), suspendidos.contains(fila.getId())));
+        }
+        return marcados;
     }
 
     @Transactional
@@ -461,6 +487,11 @@ public class ResultadoService {
                 if (!equipos.contains(equipo) || !partido.getIdCategoria().equals(jugador.getTeamEntry().getCategory().getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no pertenece a los equipos del partido");
                 }
+                GolJugador previo = existentes.get(jugador.getId());
+                int actual = previo != null && "ACTIVO".equals(previo.getEstado()) ? previo.getCantidad() : 0;
+                if (cantidad != actual) {
+                    cierres.assertPuedeRegistrar(partido.getIdCategoria(), partido.getIdJornada(), jugador.getId());
+                }
                 GolJugador gol = existentes.get(jugador.getId());
                 boolean nuevo = gol == null;
                 if (nuevo) {
@@ -482,6 +513,7 @@ public class ResultadoService {
             if (conservados.contains(gol.getIdJugador()) || "ELIMINADO".equals(gol.getEstado())) {
                 continue;
             }
+            cierres.assertPuedeRegistrar(partido.getIdCategoria(), partido.getIdJornada(), gol.getIdJugador());
             gol.setEstado("ELIMINADO");
             gol.setFechaModificacion(OffsetDateTime.now());
             gol.setUsuarioModificacion(usuario);
@@ -521,6 +553,15 @@ public class ResultadoService {
                 if (!equipos.contains(equipo) || !partido.getIdCategoria().equals(jugador.getTeamEntry().getCategory().getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no pertenece a los equipos del partido");
                 }
+                TarjetaJugador previa = existentes.get(jugador.getId());
+                boolean activa = previa != null && "ACTIVO".equals(previa.getEstado());
+                boolean igual = activa
+                        && java.util.Objects.equals(previa.getAmarillas(), amarillas)
+                        && java.util.Objects.equals(previa.getRojas(), rojas)
+                        && java.util.Objects.equals(previa.getObservacion(), observacion);
+                if (!igual) {
+                    cierres.assertPuedeRegistrar(partido.getIdCategoria(), partido.getIdJornada(), jugador.getId());
+                }
                 TarjetaJugador tarjeta = existentes.get(jugador.getId());
                 boolean nuevo = tarjeta == null;
                 if (nuevo) {
@@ -546,6 +587,7 @@ public class ResultadoService {
             if (conservados.contains(tarjeta.getIdJugador()) || "ELIMINADO".equals(tarjeta.getEstado())) {
                 continue;
             }
+            cierres.assertPuedeRegistrar(partido.getIdCategoria(), partido.getIdJornada(), tarjeta.getIdJugador());
             tarjeta.setEstado("ELIMINADO");
             tarjeta.setFechaModificacion(OffsetDateTime.now());
             tarjeta.setUsuarioModificacion(usuario);
@@ -621,6 +663,9 @@ public class ResultadoService {
                     }
                 }
                 PartidoSancion sancion = existentes.get(jugador.getId());
+                if (sancionCambio(sancion, unicas, observacion)) {
+                    cierres.assertPuedeRegistrar(partido.getIdCategoria(), partido.getIdJornada(), jugador.getId());
+                }
                 boolean nuevo = sancion == null;
                 if (nuevo) {
                     sancion = new PartidoSancion();
@@ -644,12 +689,29 @@ public class ResultadoService {
             if (conservados.contains(sancion.getIdJugador()) || "ELIMINADO".equals(sancion.getEstado())) {
                 continue;
             }
+            cierres.assertPuedeRegistrar(partido.getIdCategoria(), partido.getIdJornada(), sancion.getIdJugador());
             sancion.setEstado("ELIMINADO");
             sancion.setFechaModificacion(OffsetDateTime.now());
             sancion.setUsuarioModificacion(usuario);
             partidosSanciones.save(sancion);
             sincronizarDetalle(sancion, new HashSet<>(), usuario);
         }
+    }
+
+    private boolean sancionCambio(PartidoSancion sancion, Set<UUID> pedidas, String observacion) {
+        if (sancion == null || !"ACTIVO".equals(sancion.getEstado())) {
+            return true;
+        }
+        if (!java.util.Objects.equals(sancion.getObservacion(), observacion)) {
+            return true;
+        }
+        Set<UUID> actuales = new HashSet<>();
+        for (PartidoSancionDetalle detalle : partidosSancionesDetalle.findByIdPartidoSancion(sancion.getId())) {
+            if ("ACTIVO".equals(detalle.getEstado())) {
+                actuales.add(detalle.getIdSancionJugador());
+            }
+        }
+        return !actuales.equals(pedidas);
     }
 
     private void sincronizarDetalle(PartidoSancion sancion, Set<UUID> pedidas, String usuario) {
@@ -739,6 +801,9 @@ public class ResultadoService {
     }
 
     private void assertMarcador(UUID leagueId, Partido partido) {
+        if (cierres.jornadaCerrada(partido.getIdJornada())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La jornada está cerrada");
+        }
         if (!puedeEditar(leagueId, partido)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para modificar este marcador");
         }

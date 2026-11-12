@@ -24,12 +24,16 @@ public class SuspensionesViews {
         @NotNull
         @Min(0)
         private Integer amarillasJornadas;
+        @NotBlank
+        private String amarillasMomento;
         @NotNull
         @Min(1)
         private Integer rojasAcumuladas;
         @NotNull
         @Min(0)
         private Integer rojasJornadas;
+        @NotBlank
+        private String rojasMomento;
         @NotNull
         @Min(0)
         private Integer faltaMediaJornadas;
@@ -74,6 +78,14 @@ public class SuspensionesViews {
             this.amarillasJornadas = amarillasJornadas;
         }
 
+        public String getAmarillasMomento() {
+            return amarillasMomento;
+        }
+
+        public void setAmarillasMomento(String amarillasMomento) {
+            this.amarillasMomento = amarillasMomento;
+        }
+
         public Integer getRojasAcumuladas() {
             return rojasAcumuladas;
         }
@@ -88,6 +100,14 @@ public class SuspensionesViews {
 
         public void setRojasJornadas(Integer rojasJornadas) {
             this.rojasJornadas = rojasJornadas;
+        }
+
+        public String getRojasMomento() {
+            return rojasMomento;
+        }
+
+        public void setRojasMomento(String rojasMomento) {
+            this.rojasMomento = rojasMomento;
         }
 
         public Integer getFaltaMediaJornadas() {
@@ -105,20 +125,25 @@ public class SuspensionesViews {
         private final int rojaJornadas;
         private final int amarillasAcumuladas;
         private final int amarillasJornadas;
+        private final String amarillasMomento;
         private final int rojasAcumuladas;
         private final int rojasJornadas;
+        private final String rojasMomento;
         private final int faltaMediaJornadas;
         private final String faltaGrave;
 
         public ReglaView(UUID leagueId, String momento, int rojaJornadas, int amarillasAcumuladas, int amarillasJornadas,
-                         int rojasAcumuladas, int rojasJornadas, int faltaMediaJornadas) {
+                         String amarillasMomento, int rojasAcumuladas, int rojasJornadas, String rojasMomento,
+                         int faltaMediaJornadas) {
             this.leagueId = leagueId;
             this.momento = momento;
             this.rojaJornadas = rojaJornadas;
             this.amarillasAcumuladas = amarillasAcumuladas;
             this.amarillasJornadas = amarillasJornadas;
+            this.amarillasMomento = amarillasMomento;
             this.rojasAcumuladas = rojasAcumuladas;
             this.rojasJornadas = rojasJornadas;
+            this.rojasMomento = rojasMomento;
             this.faltaMediaJornadas = faltaMediaJornadas;
             this.faltaGrave = "ELIMINACION";
         }
@@ -143,12 +168,20 @@ public class SuspensionesViews {
             return amarillasJornadas;
         }
 
+        public String getAmarillasMomento() {
+            return amarillasMomento;
+        }
+
         public int getRojasAcumuladas() {
             return rojasAcumuladas;
         }
 
         public int getRojasJornadas() {
             return rojasJornadas;
+        }
+
+        public String getRojasMomento() {
+            return rojasMomento;
         }
 
         public int getFaltaMediaJornadas() {

@@ -52,6 +52,20 @@ public class ResultadoController {
         return resultados.proximaFecha(editionId, categoryId, desde);
     }
 
+    @PutMapping("/jornada/cerrar")
+    public ResultadoViews.CierreView cerrar(@RequestParam UUID editionId,
+                                             @RequestParam UUID categoryId,
+                                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        return new ResultadoViews.CierreView(resultados.cerrarJornada(editionId, categoryId, fecha));
+    }
+
+    @PutMapping("/jornada/abrir")
+    public ResultadoViews.CierreView abrir(@RequestParam UUID editionId,
+                                            @RequestParam UUID categoryId,
+                                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        return new ResultadoViews.CierreView(resultados.abrirJornada(editionId, categoryId, fecha));
+    }
+
     @PutMapping("/partido/{id}")
     public ResultadoViews.ResultadoPartidoView guardar(@PathVariable UUID id,
                                                         @RequestBody ResultadoViews.ResultadoGuardarRequest request) {

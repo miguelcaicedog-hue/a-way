@@ -43,6 +43,8 @@ public class SuspensionesService {
         League league = league(request.getLeagueId());
         assertWrite(league.getId());
         String momento = momento(request.getMomento());
+        String amarillasMomento = momento(request.getAmarillasMomento());
+        String rojasMomento = momento(request.getRojasMomento());
         ReglaSuspension regla = reglas.findByIdLigaAndEstado(league.getId(), "ACTIVO").orElse(null);
         boolean nueva = regla == null;
         if (nueva) {
@@ -54,8 +56,10 @@ public class SuspensionesService {
         regla.setRojaJornadas(request.getRojaJornadas());
         regla.setAmarillasAcumuladas(request.getAmarillasAcumuladas());
         regla.setAmarillasJornadas(request.getAmarillasJornadas());
+        regla.setAmarillasMomento(amarillasMomento);
         regla.setRojasAcumuladas(request.getRojasAcumuladas());
         regla.setRojasJornadas(request.getRojasJornadas());
+        regla.setRojasMomento(rojasMomento);
         regla.setFaltaMediaJornadas(request.getFaltaMediaJornadas());
         auditar(regla, usuario(), nueva);
         reglas.save(regla);
@@ -83,8 +87,10 @@ public class SuspensionesService {
         regla.setRojaJornadas(1);
         regla.setAmarillasAcumuladas(3);
         regla.setAmarillasJornadas(1);
+        regla.setAmarillasMomento(JORNADA_SIGUIENTE);
         regla.setRojasAcumuladas(2);
         regla.setRojasJornadas(2);
+        regla.setRojasMomento(JORNADA_SIGUIENTE);
         regla.setFaltaMediaJornadas(3);
         auditar(regla, usuario(), true);
         reglas.save(regla);
@@ -92,7 +98,7 @@ public class SuspensionesService {
 
     private SuspensionesViews.ReglaView vista(UUID leagueId, ReglaSuspension regla, String momento) {
         if (regla == null) {
-            return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, 2, 2, 3);
+            return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, JORNADA_SIGUIENTE, 2, 2, JORNADA_SIGUIENTE, 3);
         }
         return new SuspensionesViews.ReglaView(
                 leagueId,
@@ -100,8 +106,10 @@ public class SuspensionesService {
                 regla.getRojaJornadas(),
                 regla.getAmarillasAcumuladas(),
                 regla.getAmarillasJornadas(),
+                regla.getAmarillasMomento(),
                 regla.getRojasAcumuladas(),
                 regla.getRojasJornadas(),
+                regla.getRojasMomento(),
                 regla.getFaltaMediaJornadas());
     }
 

@@ -407,6 +407,7 @@ public class CalendarioService {
         jornada.setIdFase(faseId);
         jornada.setNumero(numero);
         jornada.setNombre(nombre);
+        jornada.setEstadoCierre("ABIERTA");
         auditar(jornada, usuario, true);
         return jornadas.save(jornada);
     }

@@ -12,8 +12,10 @@ type Regla = {
   rojaJornadas: number
   amarillasAcumuladas: number
   amarillasJornadas: number
+  amarillasMomento: string
   rojasAcumuladas: number
   rojasJornadas: number
+  rojasMomento: string
   faltaMediaJornadas: number
   faltaGrave: string
 }
@@ -27,8 +29,10 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
   const [rojaJornadas, setRojaJornadas] = useState('1')
   const [amarillasAcumuladas, setAmarillasAcumuladas] = useState('3')
   const [amarillasJornadas, setAmarillasJornadas] = useState('1')
+  const [amarillasMomento, setAmarillasMomento] = useState('NEXT_MATCHDAY')
   const [rojasAcumuladas, setRojasAcumuladas] = useState('2')
   const [rojasJornadas, setRojasJornadas] = useState('2')
+  const [rojasMomento, setRojasMomento] = useState('NEXT_MATCHDAY')
   const [faltaMediaJornadas, setFaltaMediaJornadas] = useState('3')
   const [error, setError] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -46,8 +50,10 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
         setRojaJornadas(String(regla.rojaJornadas))
         setAmarillasAcumuladas(String(regla.amarillasAcumuladas))
         setAmarillasJornadas(String(regla.amarillasJornadas))
+        setAmarillasMomento(regla.amarillasMomento)
         setRojasAcumuladas(String(regla.rojasAcumuladas))
         setRojasJornadas(String(regla.rojasJornadas))
+        setRojasMomento(regla.rojasMomento)
         setFaltaMediaJornadas(String(regla.faltaMediaJornadas))
       })
       .catch((reason: Error) => {
@@ -71,12 +77,16 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           rojaJornadas: Number(rojaJornadas),
           amarillasAcumuladas: Number(amarillasAcumuladas),
           amarillasJornadas: Number(amarillasJornadas),
+          amarillasMomento,
           rojasAcumuladas: Number(rojasAcumuladas),
           rojasJornadas: Number(rojasJornadas),
+          rojasMomento,
           faltaMediaJornadas: Number(faltaMediaJornadas),
         }),
       })
       setMomento(regla.momento)
+      setAmarillasMomento(regla.amarillasMomento)
+      setRojasMomento(regla.rojasMomento)
       setAviso('Reglas guardadas.')
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudieron guardar las reglas')
@@ -111,6 +121,13 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
             Jornadas de suspensión
             <input type="number" min={0} value={amarillasJornadas} disabled={!writable} onChange={(event) => setAmarillasJornadas(event.target.value)} required />
           </label>
+          <label>
+            Empieza en
+            <select value={amarillasMomento} disabled={!writable} onChange={(event) => setAmarillasMomento(event.target.value)}>
+              <option value="NEXT_MATCHDAY">Jornada siguiente</option>
+              <option value="FIRST_MATCHDAY_OF_DAY">Primera jornada de la siguiente fecha</option>
+            </select>
+          </label>
           <h2>Acumulación de rojas</h2>
           <label>
             Tarjetas acumuladas
@@ -119,6 +136,13 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           <label>
             Jornadas de suspensión
             <input type="number" min={0} value={rojasJornadas} disabled={!writable} onChange={(event) => setRojasJornadas(event.target.value)} required />
+          </label>
+          <label>
+            Empieza en
+            <select value={rojasMomento} disabled={!writable} onChange={(event) => setRojasMomento(event.target.value)}>
+              <option value="NEXT_MATCHDAY">Jornada siguiente</option>
+              <option value="FIRST_MATCHDAY_OF_DAY">Primera jornada de la siguiente fecha</option>
+            </select>
           </label>
           <h2>Faltas</h2>
           <label>

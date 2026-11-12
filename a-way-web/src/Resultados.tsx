@@ -27,11 +27,13 @@ type Partido = {
   golesVisita: number | null
   equiposDefinidos: boolean
   valorCobrado: number
+  cerrada: boolean
 }
 
 type Panel = {
   hoy: string
   partidos: Partido[]
+  cerrada: boolean
 }
 
 function reloj(ahora: Date) {
@@ -62,6 +64,7 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
   const [partidoDetalle, setPartidoDetalle] = useState<string | null>(null)
   const [partidoCobro, setPartidoCobro] = useState<string | null>(null)
   const [revisionCobro, setRevisionCobro] = useState(0)
+  const [revisionCierre, setRevisionCierre] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const esperas = useRef<Record<string, number>>({})
   const puedeCualquierFecha = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
@@ -134,12 +137,27 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
     return () => {
       activo = false
     }
-  }, [editionId, categoryId, fecha, revisionCobro])
+  }, [editionId, categoryId, fecha, revisionCobro, revisionCierre])
 
   function puedeEditar(partido: Partido) {
-    if (!partido.equiposDefinidos) return false
+    if (!partido.equiposDefinidos || partido.cerrada) return false
     if (puedeCualquierFecha) return true
     return esAsistente && partido.fecha != null && panel?.hoy === partido.fecha
+  }
+
+  async function cambiarCierre(cerrar: boolean) {
+    if (!editionId || !categoryId || !fecha) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, categoryId, fecha })
+      await api(`/api/resultados/jornada/${cerrar ? 'cerrar' : 'abrir'}?${params.toString()}`, { method: 'PUT' })
+      setRevisionCierre((valor) => valor + 1)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo cambiar el cierre de la jornada')
+    } finally {
+      setOcupado(false)
+    }
   }
 
   async function mover(anterior: boolean) {
@@ -199,6 +217,8 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
     lista.push(partido)
     porHora.set(hora, lista)
   }
+  const jornadaCerrada = Boolean(panel?.cerrada)
+    || ((panel?.partidos.length ?? 0) > 0 && (panel?.partidos.every((partido) => partido.cerrada) ?? false))
   const grupos = [...porHora.entries()].sort(([a], [b]) => {
     if (a === 'Sin hora') return 1
     if (b === 'Sin hora') return -1
@@ -208,6 +228,7 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
   return (
     <section className="catalog">
       <p className="reloj">{reloj(ahora)}</p>
+      {jornadaCerrada && <p className="jornada-cerrada">JORNADA CERRADA</p>}
       {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
       {editionId && (
@@ -304,6 +325,24 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
         </section>
       ))}
       {partidoDetalle && <PartidoModal partidoId={partidoDetalle} onClose={() => setPartidoDetalle(null)} />}
+      {editionId && (
+        <div className="cierre-jornada">
+          <button
+            type="button"
+            disabled={!puedeCualquierFecha || !categoryId || !fecha || ocupado || (panel?.partidos.length ?? 0) === 0 || Boolean(panel?.cerrada)}
+            onClick={() => cambiarCierre(true)}
+          >
+            Cerrar jornada
+          </button>
+          <button
+            type="button"
+            disabled={!puedeCualquierFecha || !categoryId || !fecha || ocupado || !panel?.cerrada}
+            onClick={() => cambiarCierre(false)}
+          >
+            Abrir jornada
+          </button>
+        </div>
+      )}
       {partidoCobro && (
         <CobroModal
           partidoId={partidoCobro}

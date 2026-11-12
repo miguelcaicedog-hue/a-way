@@ -27,11 +27,17 @@ public class ReglaSuspension {
     @Column(name = "amarillas_jornadas", nullable = false)
     private int amarillasJornadas;
 
+    @Column(name = "amarillas_momento", nullable = false)
+    private String amarillasMomento;
+
     @Column(name = "rojas_acumuladas", nullable = false)
     private int rojasAcumuladas;
 
     @Column(name = "rojas_jornadas", nullable = false)
     private int rojasJornadas;
+
+    @Column(name = "rojas_momento", nullable = false)
+    private String rojasMomento;
 
     @Column(name = "falta_media_jornadas", nullable = false)
     private int faltaMediaJornadas;
@@ -91,6 +97,14 @@ public class ReglaSuspension {
         this.amarillasJornadas = amarillasJornadas;
     }
 
+    public String getAmarillasMomento() {
+        return amarillasMomento;
+    }
+
+    public void setAmarillasMomento(String amarillasMomento) {
+        this.amarillasMomento = amarillasMomento;
+    }
+
     public int getRojasAcumuladas() {
         return rojasAcumuladas;
     }
@@ -105,6 +119,14 @@ public class ReglaSuspension {
 
     public void setRojasJornadas(int rojasJornadas) {
         this.rojasJornadas = rojasJornadas;
+    }
+
+    public String getRojasMomento() {
+        return rojasMomento;
+    }
+
+    public void setRojasMomento(String rojasMomento) {
+        this.rojasMomento = rojasMomento;
     }
 
     public int getFaltaMediaJornadas() {

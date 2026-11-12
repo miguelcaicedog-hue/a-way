@@ -48,6 +48,7 @@ type Jugador = {
   alias: string
   hasFoto: boolean
   rotacion: number
+  suspendido: boolean
 }
 
 function FotoArbitro({ id, hasFoto }: { id: string; hasFoto: boolean }) {
@@ -310,12 +311,13 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                   <FotoJugador jugador={jugador} />
                   <span>{jugador.numero}</span>
                   <span>{jugador.alias}</span>
+                  {jugador.suspendido && <span>Suspendido</span>}
                   <input
                     className="marcador"
                     inputMode="numeric"
                     aria-label="Goles"
                     value={goles[jugador.id] ?? ''}
-                    disabled={!detalle?.editable}
+                    disabled={!detalle?.editable || jugador.suspendido}
                     onChange={(event) => {
                       const valor = event.target.value
                       if (valor !== '' && !/^\d+$/.test(valor)) return
@@ -372,12 +374,13 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                     <FotoJugador jugador={jugador} />
                     <span>{jugador.numero}</span>
                     <span>{jugador.alias}</span>
+                    {jugador.suspendido && <span>Suspendido</span>}
                     <input
                       className="marcador"
                       inputMode="numeric"
                       aria-label="Tarjeta amarilla"
                       value={tarjeta.amarilla}
-                      disabled={!detalle?.editable}
+                      disabled={!detalle?.editable || jugador.suspendido}
                       onChange={(event) => {
                         const valor = event.target.value
                         if (valor !== '' && valor !== '1' && valor !== '2') return
@@ -389,7 +392,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                       inputMode="numeric"
                       aria-label="Tarjeta roja"
                       value={tarjeta.roja}
-                      disabled={!detalle?.editable}
+                      disabled={!detalle?.editable || jugador.suspendido}
                       onChange={(event) => {
                         const valor = event.target.value
                         if (valor !== '' && valor !== '1') return
@@ -400,7 +403,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                       aria-label="Observación"
                       maxLength={300}
                       value={tarjeta.observacion}
-                      disabled={!detalle?.editable}
+                      disabled={!detalle?.editable || jugador.suspendido}
                       onChange={(event) => cambiar({ observacion: event.target.value })}
                     />
                   </li>
@@ -441,8 +444,9 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                 <FotoJugador jugador={jugador} />
                 <span className="numero">{jugador.numero}</span>
                 <span>{jugador.alias}</span>
+                {jugador.suspendido && <span>Suspendido</span>}
                 <div className="sancion-jugador">
-                  {detalle?.editable && (
+                  {detalle?.editable && !jugador.suspendido && (
                     <div className="agregar-sancion">
                       <select
                         aria-label={`Sanción de ${jugador.alias}`}
@@ -475,7 +479,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                     {sancion.sancionIds.map((id) => (
                       <li key={id}>
                         <span>{nombreDe(id)}</span>
-                        {detalle?.editable && (
+                        {detalle?.editable && !jugador.suspendido && (
                           <button
                             type="button"
                             className="secundario"
@@ -498,7 +502,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                     placeholder="Observación"
                     maxLength={300}
                     value={sancion.observacion}
-                    disabled={!detalle?.editable}
+                    disabled={!detalle?.editable || jugador.suspendido}
                     onChange={(event) => {
                       const valor = event.target.value
                       setSanciones((anterior) => {

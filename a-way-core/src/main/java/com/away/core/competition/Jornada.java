@@ -45,6 +45,9 @@ public class Jornada {
     @Column(nullable = false)
     private String estado;
 
+    @Column(name = "estado_cierre", nullable = false)
+    private String estadoCierre;
+
     public UUID getId() {
         return id;
     }
@@ -131,5 +134,13 @@ public class Jornada {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public String getEstadoCierre() {
+        return estadoCierre;
+    }
+
+    public void setEstadoCierre(String estadoCierre) {
+        this.estadoCierre = estadoCierre;
     }
 }
