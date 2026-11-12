@@ -107,10 +107,13 @@ public class CobroViews {
         private final List<CargoView> sanciones;
         private final String observacion;
         private final BigDecimal total;
+        private final BigDecimal valorCobroEfectivo;
+        private final BigDecimal valorCobroTransferencia;
 
         public CobroView(String local, String visita, EquipoView equipoLocal, EquipoView equipoVisita, boolean editable,
                          UUID equipoId, String equipoNombre, BigDecimal arbitraje, List<CargoView> tarjetas,
-                         List<CargoView> sanciones, String observacion, BigDecimal total) {
+                         List<CargoView> sanciones, String observacion, BigDecimal total,
+                         BigDecimal valorCobroEfectivo, BigDecimal valorCobroTransferencia) {
             this.local = local;
             this.visita = visita;
             this.equipoLocal = equipoLocal;
@@ -123,6 +126,8 @@ public class CobroViews {
             this.sanciones = sanciones;
             this.observacion = observacion;
             this.total = total;
+            this.valorCobroEfectivo = valorCobroEfectivo;
+            this.valorCobroTransferencia = valorCobroTransferencia;
         }
 
         public String getLocal() {
@@ -172,6 +177,14 @@ public class CobroViews {
         public BigDecimal getTotal() {
             return total;
         }
+
+        public BigDecimal getValorCobroEfectivo() {
+            return valorCobroEfectivo;
+        }
+
+        public BigDecimal getValorCobroTransferencia() {
+            return valorCobroTransferencia;
+        }
     }
 
     public static class CobroGuardarRequest {
@@ -179,6 +192,8 @@ public class CobroViews {
         private List<UUID> tarjetaIds;
         private List<UUID> sancionIds;
         private String observacion;
+        private BigDecimal valorCobroEfectivo;
+        private BigDecimal valorCobroTransferencia;
 
         public UUID getEquipoId() {
             return equipoId;
@@ -210,6 +225,22 @@ public class CobroViews {
 
         public void setObservacion(String observacion) {
             this.observacion = observacion;
+        }
+
+        public BigDecimal getValorCobroEfectivo() {
+            return valorCobroEfectivo;
+        }
+
+        public void setValorCobroEfectivo(BigDecimal valorCobroEfectivo) {
+            this.valorCobroEfectivo = valorCobroEfectivo;
+        }
+
+        public BigDecimal getValorCobroTransferencia() {
+            return valorCobroTransferencia;
+        }
+
+        public void setValorCobroTransferencia(BigDecimal valorCobroTransferencia) {
+            this.valorCobroTransferencia = valorCobroTransferencia;
         }
     }
 }

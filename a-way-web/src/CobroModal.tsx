@@ -29,6 +29,8 @@ type Cobro = {
   sanciones: Cargo[]
   observacion: string | null
   total: number
+  valorCobroEfectivo: number
+  valorCobroTransferencia: number
 }
 
 function dinero(valor: number) {
@@ -63,6 +65,9 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
   const [tarjetas, setTarjetas] = useState<Set<string>>(new Set())
   const [sanciones, setSanciones] = useState<Set<string>>(new Set())
   const [observacion, setObservacion] = useState('')
+  const [efectivo, setEfectivo] = useState('0.00')
+  const [transferencia, setTransferencia] = useState('0.00')
+  const [efectivoManual, setEfectivoManual] = useState(false)
   const [verTarjetas, setVerTarjetas] = useState(false)
   const [verSanciones, setVerSanciones] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -75,6 +80,9 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
     setTarjetas(marcados(respuesta.tarjetas))
     setSanciones(marcados(respuesta.sanciones))
     setObservacion(respuesta.observacion ?? '')
+    setEfectivo(dinero(respuesta.valorCobroEfectivo))
+    setTransferencia(dinero(respuesta.valorCobroTransferencia))
+    setEfectivoManual(Math.abs(Number(respuesta.valorCobroEfectivo) - Number(respuesta.total)) > 0.001)
   }
 
   function cargar(equipo?: string) {
@@ -96,11 +104,16 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
     cargar(id).catch((reason: Error) => setError(reason.message))
   }
 
-  function alternar(ids: Set<string>, id: string, asignar: (valor: Set<string>) => void) {
+  function alternar(ids: Set<string>, id: string, asignar: (valor: Set<string>) => void, lado: 'tarjetas' | 'sanciones') {
     const siguiente = new Set(ids)
     if (siguiente.has(id)) siguiente.delete(id)
     else siguiente.add(id)
     asignar(siguiente)
+    if (!efectivoManual && cobro) {
+      const valorTarjetasSiguiente = lado === 'tarjetas' ? suma(cobro.tarjetas, siguiente) : suma(cobro.tarjetas, tarjetas)
+      const valorSancionesSiguiente = lado === 'sanciones' ? suma(cobro.sanciones, siguiente) : suma(cobro.sanciones, sanciones)
+      setEfectivo(dinero(Number(cobro.arbitraje) + valorTarjetasSiguiente + valorSancionesSiguiente))
+    }
     setGrabado(false)
   }
 
@@ -116,6 +129,8 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
           tarjetaIds: [...tarjetas],
           sancionIds: [...sanciones],
           observacion: observacion.trim() || null,
+          valorCobroEfectivo: efectivo === '' ? 0 : Number(efectivo),
+          valorCobroTransferencia: transferencia === '' ? 0 : Number(transferencia),
         }),
       })
       aplicar(respuesta)
@@ -193,7 +208,7 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                         type="checkbox"
                         checked={tarjetas.has(cargo.id)}
                         disabled={!cobro?.editable}
-                        onChange={() => alternar(tarjetas, cargo.id, setTarjetas)}
+                        onChange={() => alternar(tarjetas, cargo.id, setTarjetas, 'tarjetas')}
                       />
                     </label>
                     <Foto cargo={cargo} />
@@ -229,7 +244,7 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                         type="checkbox"
                         checked={sanciones.has(cargo.id)}
                         disabled={!cobro?.editable}
-                        onChange={() => alternar(sanciones, cargo.id, setSanciones)}
+                        onChange={() => alternar(sanciones, cargo.id, setSanciones, 'sanciones')}
                       />
                     </label>
                     <Foto cargo={cargo} />
@@ -246,10 +261,39 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
           </section>
           <section className="cobro-bloque">
             <h3>Valor a cobrar</h3>
-            <p className="cobro-linea total">
+            <div className="cobro-linea total">
               <span>Total</span>
               <strong>{dinero(total)}</strong>
-            </p>
+              <label>
+                Valor cobro efectivo
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={efectivo}
+                  disabled={!cobro?.editable}
+                  onChange={(event) => {
+                    setEfectivo(event.target.value)
+                    setEfectivoManual(Number(event.target.value) !== Number(total.toFixed(2)))
+                    setGrabado(false)
+                  }}
+                />
+              </label>
+              <label>
+                Valor cobro transferencia
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={transferencia}
+                  disabled={!cobro?.editable}
+                  onChange={(event) => {
+                    setTransferencia(event.target.value)
+                    setGrabado(false)
+                  }}
+                />
+              </label>
+            </div>
             <label>
               Observación
               <input

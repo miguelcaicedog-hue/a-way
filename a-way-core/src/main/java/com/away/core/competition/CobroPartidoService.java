@@ -115,6 +115,10 @@ public class CobroPartidoService {
         cobro.setIdJornada(partido.getIdJornada());
         cobro.setFecha(contexto.fechaActual);
         cobro.setObservacion(observacion(request == null ? null : request.getObservacion()));
+        BigDecimal total = totalDe(contexto, tarjetasPedidas, sancionesPedidas);
+        cobro.setValorCobroEfectivo(monto(request == null ? null : request.getValorCobroEfectivo(), total, "El valor cobro efectivo"));
+        cobro.setValorCobroTransferencia(monto(request == null ? null : request.getValorCobroTransferencia(),
+                BigDecimal.ZERO.setScale(2), "El valor cobro transferencia"));
         cobro.setEstado("ACTIVO");
         cobro.setFechaModificacion(OffsetDateTime.now());
         cobro.setUsuarioModificacion(usuario);
@@ -198,6 +202,11 @@ public class CobroPartidoService {
             arbitraje = arbitraje.add(arbitro.costo);
         }
         String observacion = contexto.cobro == null ? null : contexto.cobro.getObservacion();
+        BigDecimal total = arbitraje.add(tarjetas).add(sanciones).setScale(2);
+        BigDecimal efectivo = contexto.cobro == null || contexto.cobro.getValorCobroEfectivo() == null
+                ? total : contexto.cobro.getValorCobroEfectivo().setScale(2);
+        BigDecimal transferencia = contexto.cobro == null || contexto.cobro.getValorCobroTransferencia() == null
+                ? BigDecimal.ZERO.setScale(2) : contexto.cobro.getValorCobroTransferencia().setScale(2);
         return new CobroViews.CobroView(
                 nombre(partido.getIdEquipoLocal()),
                 nombre(partido.getIdEquipoVisita()),
@@ -210,7 +219,9 @@ public class CobroPartidoService {
                 tarjetasVista,
                 sancionesVista,
                 observacion,
-                arbitraje.add(tarjetas).add(sanciones));
+                total,
+                efectivo,
+                transferencia);
     }
 
     private Contexto contexto(Partido partido, Category categoria, UUID ligaId, UUID equipoId) {
@@ -462,6 +473,30 @@ public class CobroPartidoService {
             return "Cargo";
         }
         return valor.length() <= maximo ? valor : valor.substring(0, maximo);
+    }
+
+    private BigDecimal totalDe(Contexto contexto, Set<UUID> tarjetasPedidas, Set<UUID> sancionesPedidas) {
+        BigDecimal total = BigDecimal.ZERO.setScale(2);
+        for (ArbitroCargo arbitro : contexto.arbitros) {
+            total = total.add(arbitro.costo);
+        }
+        for (UUID id : tarjetasPedidas) {
+            total = total.add(contexto.tarjetas.get(id).costo);
+        }
+        for (UUID id : sancionesPedidas) {
+            total = total.add(contexto.sanciones.get(id).costo);
+        }
+        return total.setScale(2);
+    }
+
+    private BigDecimal monto(BigDecimal valor, BigDecimal siNulo, String etiqueta) {
+        if (valor == null) {
+            return siNulo.setScale(2);
+        }
+        if (valor.signum() < 0 || valor.scale() > 2 && valor.stripTrailingZeros().scale() > 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, etiqueta + " debe ser cero o mayor, con hasta dos decimales");
+        }
+        return valor.setScale(2);
     }
 
     private String observacion(String valor) {

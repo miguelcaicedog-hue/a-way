@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -29,6 +30,12 @@ public class PartidoCobro {
 
     @Column(length = 300)
     private String observacion;
+
+    @Column(name = "valor_cobro_efectivo", nullable = false)
+    private BigDecimal valorCobroEfectivo = BigDecimal.ZERO.setScale(2);
+
+    @Column(name = "valor_cobro_transferencia", nullable = false)
+    private BigDecimal valorCobroTransferencia = BigDecimal.ZERO.setScale(2);
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
@@ -91,6 +98,22 @@ public class PartidoCobro {
 
     public void setObservacion(String observacion) {
         this.observacion = observacion;
+    }
+
+    public BigDecimal getValorCobroEfectivo() {
+        return valorCobroEfectivo;
+    }
+
+    public void setValorCobroEfectivo(BigDecimal valorCobroEfectivo) {
+        this.valorCobroEfectivo = valorCobroEfectivo;
+    }
+
+    public BigDecimal getValorCobroTransferencia() {
+        return valorCobroTransferencia;
+    }
+
+    public void setValorCobroTransferencia(BigDecimal valorCobroTransferencia) {
+        this.valorCobroTransferencia = valorCobroTransferencia;
     }
 
     public OffsetDateTime getFechaCreacion() {
