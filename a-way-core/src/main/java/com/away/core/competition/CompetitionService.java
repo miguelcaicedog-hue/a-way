@@ -35,6 +35,7 @@ public class CompetitionService {
     private final TeamRepository teams;
     private final TeamEntryRepository entries;
     private final PlayerRepository players;
+    private final SuspensionesService suspensiones;
 
     public CompetitionService(AppUserRepository users,
                               LeagueRepository leagues,
@@ -43,7 +44,8 @@ public class CompetitionService {
                               CategoryRepository categories,
                               TeamRepository teams,
                               TeamEntryRepository entries,
-                              PlayerRepository players) {
+                              PlayerRepository players,
+                              SuspensionesService suspensiones) {
         this.users = users;
         this.leagues = leagues;
         this.settings = settings;
@@ -52,6 +54,7 @@ public class CompetitionService {
         this.teams = teams;
         this.entries = entries;
         this.players = players;
+        this.suspensiones = suspensiones;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +84,7 @@ public class CompetitionService {
         defaults.setFairPlayYellowPoints(1);
         defaults.setFairPlayRedPoints(3);
         settings.save(defaults);
+        suspensiones.crearDefecto(league.getId());
         return leagueView(league);
     }
 
@@ -142,10 +146,10 @@ public class CompetitionService {
     }
 
     @Transactional(readOnly = true)
-    public List<CategoryView> listCategories(UUID editionId) {
+    public List<CategoryView> listCategories(UUID editionId, String estado) {
         Edition edition = edition(editionId);
         assertRead(edition.getLeague().getId());
-        return categories.findByEdition_IdOrderByNameAsc(editionId).stream()
+        return categoriasDe(editionId, estado).stream()
                 .map(this::categoryView)
                 .collect(Collectors.toList());
     }
@@ -161,6 +165,7 @@ public class CompetitionService {
         category.setCantidadGrupos(request.getCantidadGrupos());
         category.setEquiposPorGrupo(request.getEquiposPorGrupo());
         category.setCantidadFases(request.getCantidadFases());
+        category.setEstado(estadoCategoria(request.getEstado(), "ACTIVO"));
         return categoryView(categories.save(category));
     }
 
@@ -175,13 +180,17 @@ public class CompetitionService {
         category.setCantidadGrupos(request.getCantidadGrupos());
         category.setEquiposPorGrupo(request.getEquiposPorGrupo());
         category.setCantidadFases(request.getCantidadFases());
+        if (request.getEstado() != null && !request.getEstado().isBlank()) {
+            category.setEstado(estadoCategoria(request.getEstado(), category.getEstado()));
+        }
         return categoryView(category);
     }
 
     public void deleteCategory(UUID id) {
         Category category = category(id);
         assertWrite(category.getEdition().getLeague().getId());
-        categories.delete(category);
+        category.setEstado("INACTIVO");
+        categories.save(category);
     }
 
     @Transactional(readOnly = true)
@@ -402,6 +411,9 @@ public class CompetitionService {
             return;
         }
         Category destino = category(categoryId);
+        if (!"ACTIVO".equals(destino.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no está activa");
+        }
         if (!team.getLeague().getId().equals(destino.getEdition().getLeague().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no pertenece a la liga del equipo");
         }
@@ -448,6 +460,9 @@ public class CompetitionService {
         }
         List<UUID> ids = encontrados.stream().map(Team::getId).collect(Collectors.toList());
         for (TeamEntry entry : entries.findByEquiposEnEdicion(ids, editionId)) {
+            if (!"ACTIVO".equals(entry.getCategory().getEstado())) {
+                continue;
+            }
             categorias.computeIfAbsent(entry.getTeam().getId(), key -> new ArrayList<>())
                     .add(new CategoriaResumen(entry.getCategory().getId(), entry.getCategory().getName()));
         }
@@ -684,11 +699,34 @@ public class CompetitionService {
                 edition.getName(), edition.getStartsOn(), edition.getEndsOn());
     }
 
+    private List<Category> categoriasDe(UUID editionId, String estado) {
+        String filtro = estado == null || estado.isBlank() ? "ACTIVO" : estado.trim().toUpperCase(Locale.ROOT);
+        if ("TODOS".equals(filtro)) {
+            return categories.findByEdition_IdOrderByNameAsc(editionId);
+        }
+        if (!"ACTIVO".equals(filtro) && !"INACTIVO".equals(filtro)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El estado de la categoría no es válido");
+        }
+        return categories.findByEdition_IdAndEstadoOrderByNameAsc(editionId, filtro);
+    }
+
+    private String estadoCategoria(String estado, String omision) {
+        if (estado == null || estado.isBlank()) {
+            return omision;
+        }
+        String filtro = estado.trim().toUpperCase(Locale.ROOT);
+        if (!"ACTIVO".equals(filtro) && !"INACTIVO".equals(filtro)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El estado de la categoría no es válido");
+        }
+        return filtro;
+    }
+
     private CategoryView categoryView(Category category) {
         Edition edition = category.getEdition();
         return new CategoryView(category.getId(), edition.getId(), edition.getName(),
                 edition.getLeague().getId(), edition.getLeague().getName(),
-                category.getName(), category.getMaxPlayers(), category.getCantidadGrupos(), category.getEquiposPorGrupo(), category.getCantidadFases());
+                category.getName(), category.getMaxPlayers(), category.getCantidadGrupos(), category.getEquiposPorGrupo(),
+                category.getCantidadFases(), category.getEstado());
     }
 
     private TeamView teamView(Team team) {

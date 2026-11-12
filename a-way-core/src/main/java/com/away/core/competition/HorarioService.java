@@ -486,11 +486,11 @@ public class HorarioService {
     private Contexto contexto(Edition edition) {
         Contexto contexto = new Contexto();
         List<UUID> categorias = new ArrayList<>();
-        for (Category categoria : categories.findByEdition_IdOrderByNameAsc(edition.getId())) {
+        for (Category categoria : categories.findByEdition_IdAndEstadoOrderByNameAsc(edition.getId(), "ACTIVO")) {
             contexto.categoriasEdicion.add(categoria.getId());
         }
         for (Edition item : editions.findByLeague_IdOrderByStartsOnDesc(edition.getLeague().getId())) {
-            for (Category categoria : categories.findByEdition_IdOrderByNameAsc(item.getId())) {
+            for (Category categoria : categories.findByEdition_IdAndEstadoOrderByNameAsc(item.getId(), "ACTIVO")) {
                 contexto.porCategoria.put(categoria.getId(), categoria);
                 categorias.add(categoria.getId());
             }

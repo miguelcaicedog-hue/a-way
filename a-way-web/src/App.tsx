@@ -9,9 +9,11 @@ import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
 import { HorariosScreen } from './Horarios'
 import { ResultadosScreen } from './Resultados'
+import { GoleadoresScreen } from './Goleadores'
 import { TablaScreen } from './Tabla'
 import { InscripcionScreen } from './Inscripciones'
 import { SancionesJugadorScreen } from './SancionesJugador'
+import { SuspensionesScreen } from './Suspensiones'
 import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 
 type Health = {
@@ -48,14 +50,14 @@ const sections = [
   { id: 'calendario', label: 'Calendario', summary: 'Jornadas, fechas, horarios, cancha y árbitro de cada partido.' },
   { id: 'horarios', label: 'Horarios', summary: 'Cancha y hora de los partidos. Filtra por categoría y fecha, y asigna turnos desde la hora y el intervalo que elijas.' },
   { id: 'resultados', label: 'Resultados', summary: 'Marcador de los partidos de una jornada.' },
-  { id: 'goles', label: 'Goles', summary: 'Goles de cada jugador por partido.' },
+  { id: 'goles', label: 'Goleadores', summary: 'Goleadores de una categoría al cierre de la fecha elegida, con el detalle por jornada.' },
   { id: 'tarjetas', label: 'Tarjetas', summary: 'Amarillas y rojas de cada jugador por jornada.' },
   { id: 'tabla', label: 'Tabla', summary: 'Posiciones de una categoría al cierre de la fecha elegida: puntos, diferencia y goles.' },
   { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la liga: cédula, nombre, teléfono, foto y contacto por WhatsApp.' },
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
   { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
   { id: 'sanciones-jugador', label: 'Sanciones jugador', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
-  { id: 'suspensiones', label: 'Suspensiones', summary: 'Reglas por tarjetas y jornada en que empieza la sanción.' },
+  { id: 'suspensiones', label: 'Suspensiones', summary: 'Jornadas de suspensión por tarjeta roja, acumulación de amarillas o rojas, y faltas media o grave.' },
   { id: 'pagos', label: 'Pagos', summary: 'Arbitraje por jornada y cancelación de multas por tarjeta.' },
   { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
   { id: 'importaciones', label: 'Importaciones', summary: 'Planteles desde Excel y equipos desde el formulario de Google.' },
@@ -359,6 +361,10 @@ function App() {
             )
           })}
         </nav>
+        <p className="sidebar-credito">
+          Created by Miguel Caicedo
+          <span>© All rights reserved</span>
+        </p>
       </aside>
       <div className="content">
         <header className="topbar">
@@ -414,10 +420,12 @@ function App() {
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
         {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} />}
         {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} />}
+        {section === 'goles' && <GoleadoresScreen key={editionId} editionId={editionId} />}
         {section === 'tabla' && <TablaScreen key={editionId} editionId={editionId} />}
         {section === 'arbitros' && <ArbitrosScreen profile={profile} leagueId={leagueId} />}
         {section === 'catalogo-tarjetas' && <TarjetasCatalogoScreen profile={profile} leagueId={leagueId} />}
         {section === 'sanciones-jugador' && <SancionesJugadorScreen profile={profile} leagueId={leagueId} />}
+        {section === 'suspensiones' && <SuspensionesScreen key={leagueId} profile={profile} leagueId={leagueId} />}
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
       </main>
       </div>

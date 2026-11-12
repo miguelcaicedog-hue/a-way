@@ -87,8 +87,9 @@ public class CompetitionController {
     }
 
     @GetMapping("/categories")
-    public List<CategoryView> categories(@RequestParam UUID editionId) {
-        return competition.listCategories(editionId);
+    public List<CategoryView> categories(@RequestParam UUID editionId,
+                                         @RequestParam(required = false) String estado) {
+        return competition.listCategories(editionId, estado);
     }
 
     @PostMapping("/categories")

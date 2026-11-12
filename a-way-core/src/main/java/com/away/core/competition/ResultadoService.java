@@ -747,7 +747,7 @@ public class ResultadoService {
     private Contexto contexto(Edition edition, UUID categoryId) {
         Contexto contexto = new Contexto();
         List<UUID> categorias = new ArrayList<>();
-        for (Category categoria : categories.findByEdition_IdOrderByNameAsc(edition.getId())) {
+        for (Category categoria : categories.findByEdition_IdAndEstadoOrderByNameAsc(edition.getId(), "ACTIVO")) {
             contexto.porCategoria.put(categoria.getId(), categoria);
             contexto.categoriasEdicion.add(categoria.getId());
             categorias.add(categoria.getId());

@@ -229,7 +229,7 @@ public class InscripcionService {
             cerrar(equipo, "SIN CARGA", "El equipo no tiene jugadores para cargar.", usuario);
             return;
         }
-        Category categoria = categorias.findByEdition_IdOrderByNameAsc(archivo.getIdEdicion()).stream()
+        Category categoria = categorias.findByEdition_IdAndEstadoOrderByNameAsc(archivo.getIdEdicion(), "ACTIVO").stream()
                 .filter(item -> item.getName() != null && item.getName().trim().equalsIgnoreCase(equipo.getCategoria().trim()))
                 .findFirst()
                 .orElse(null);
@@ -480,7 +480,7 @@ public class InscripcionService {
             jugador.setMotivo(etiqueta(jugador) + "la fila no tiene categoría.");
             return;
         }
-        Category categoria = categorias.findByEdition_IdOrderByNameAsc(archivo.getIdEdicion()).stream()
+        Category categoria = categorias.findByEdition_IdAndEstadoOrderByNameAsc(archivo.getIdEdicion(), "ACTIVO").stream()
                 .filter(item -> item.getName() != null && item.getName().trim().equalsIgnoreCase(equipo.getCategoria().trim()))
                 .findFirst()
                 .orElse(null);
@@ -576,7 +576,7 @@ public class InscripcionService {
         if (equipo.getCategoria() == null || equipo.getCategoria().isBlank() || equipo.getNombreEquipo() == null) {
             return null;
         }
-        Category categoria = categorias.findByEdition_IdOrderByNameAsc(archivo.getIdEdicion()).stream()
+        Category categoria = categorias.findByEdition_IdAndEstadoOrderByNameAsc(archivo.getIdEdicion(), "ACTIVO").stream()
                 .filter(item -> item.getName() != null && item.getName().trim().equalsIgnoreCase(equipo.getCategoria().trim()))
                 .findFirst()
                 .orElse(null);

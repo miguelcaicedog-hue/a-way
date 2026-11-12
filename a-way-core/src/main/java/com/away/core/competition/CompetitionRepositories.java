@@ -17,12 +17,18 @@ interface LeagueRepository extends JpaRepository<League, UUID> {
 interface LeagueSettingsRepository extends JpaRepository<LeagueSettings, UUID> {
 }
 
+interface ReglaSuspensionRepository extends JpaRepository<ReglaSuspension, UUID> {
+    Optional<ReglaSuspension> findByIdLigaAndEstado(UUID idLiga, String estado);
+}
+
 interface EditionRepository extends JpaRepository<Edition, UUID> {
     List<Edition> findByLeague_IdOrderByStartsOnDesc(UUID leagueId);
 }
 
 interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findByEdition_IdOrderByNameAsc(UUID editionId);
+
+    List<Category> findByEdition_IdAndEstadoOrderByNameAsc(UUID editionId, String estado);
 }
 
 interface TeamRepository extends JpaRepository<Team, UUID> {
@@ -151,6 +157,10 @@ interface PartidoArbitroRepository extends JpaRepository<PartidoArbitro, UUID> {
 
 interface GolJugadorRepository extends JpaRepository<GolJugador, UUID> {
     List<GolJugador> findByIdPartido(UUID idPartido);
+
+    @Query("select g from GolJugador g where g.estado = 'ACTIVO' and g.idPartido in "
+            + "(select p.id from Partido p where p.idCategoria = :categoria and p.estado = 'ACTIVO')")
+    List<GolJugador> activosDeCategoria(@Param("categoria") UUID categoria);
 }
 
 interface TarjetaJugadorRepository extends JpaRepository<TarjetaJugador, UUID> {

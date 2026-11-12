@@ -35,6 +35,9 @@ public class Category {
     @Column(name = "cantidad_fases", nullable = false)
     private int cantidadFases;
 
+    @Column(nullable = false, length = 20)
+    private String estado;
+
     public UUID getId() {
         return id;
     }
@@ -89,5 +92,13 @@ public class Category {
 
     public void setCantidadFases(int cantidadFases) {
         this.cantidadFases = cantidadFases;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

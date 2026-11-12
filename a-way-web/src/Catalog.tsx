@@ -36,6 +36,7 @@ type Category = {
   cantidadGrupos: number
   equiposPorGrupo: number | null
   cantidadFases: number
+  estado: string
 }
 
 type Team = {
@@ -419,6 +420,8 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
   const [cantidadGrupos, setCantidadGrupos] = useState('1')
   const [equiposPorGrupo, setEquiposPorGrupo] = useState('')
   const [cantidadFases, setCantidadFases] = useState('1')
+  const [estado, setEstado] = useState('ACTIVO')
+  const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
@@ -427,7 +430,8 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
       setRows([])
       return
     }
-    api<Category[]>(`/api/categories?editionId=${editionId}`)
+    setFiltroEstado('ACTIVO')
+    api<Category[]>(`/api/categories?editionId=${editionId}&estado=ACTIVO`)
       .then(setRows)
       .catch((reason: Error) => setError(reason.message))
   }, [editionId])
@@ -439,10 +443,14 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
     setCantidadGrupos('1')
     setEquiposPorGrupo('')
     setCantidadFases('1')
+    setEstado('ACTIVO')
   }
 
-  async function reload() {
-    setRows(await api<Category[]>(`/api/categories?editionId=${editionId}`))
+  async function reload(estadoFiltro = filtroEstado) {
+    const params = new URLSearchParams({ editionId })
+    if (estadoFiltro) params.set('estado', estadoFiltro)
+    else params.set('estado', 'TODOS')
+    setRows(await api<Category[]>(`/api/categories?${params.toString()}`))
   }
 
   async function onSubmit(event: FormEvent) {
@@ -456,6 +464,7 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
       cantidadGrupos: Number(cantidadGrupos),
       equiposPorGrupo: equipos === '' ? null : Number(equipos),
       cantidadFases: Number(cantidadFases),
+      estado,
     }
     try {
       if (editing) {
@@ -484,6 +493,18 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
     <section className="catalog">
       {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
+      {editionId && (
+        <form className="filtros" onSubmit={(event) => event.preventDefault()}>
+          <label>
+            Estado
+            <select value={filtroEstado} onChange={(event) => { setFiltroEstado(event.target.value); reload(event.target.value).catch((reason: Error) => setError(reason.message)) }}>
+              <option value="ACTIVO">Activa</option>
+              <option value="INACTIVO">Inactiva</option>
+              <option value="">Todos</option>
+            </select>
+          </label>
+        </form>
+      )}
       <table>
         <thead>
           <tr>
@@ -492,6 +513,7 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
             <th>Grupos</th>
             <th>Equipos por grupo</th>
             <th>Fases</th>
+            <th>Estado</th>
             {writable && <th></th>}
           </tr>
         </thead>
@@ -503,15 +525,16 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
               <td>{row.cantidadGrupos}</td>
               <td>{row.equiposPorGrupo ?? 'Todos'}</td>
               <td>{row.cantidadFases}</td>
+              <td>{row.estado === 'INACTIVO' ? 'Inactiva' : 'Activa'}</td>
               {writable && (
                 <td className="actions">
-                  <button type="button" onClick={() => { setEditing(row); setName(row.name); setMaxPlayers(String(row.maxPlayers)); setCantidadGrupos(String(row.cantidadGrupos)); setEquiposPorGrupo(row.equiposPorGrupo == null ? '' : String(row.equiposPorGrupo)); setCantidadFases(String(row.cantidadFases)) }}>Editar</button>
-                  <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>
+                  <button type="button" onClick={() => { setEditing(row); setName(row.name); setMaxPlayers(String(row.maxPlayers)); setCantidadGrupos(String(row.cantidadGrupos)); setEquiposPorGrupo(row.equiposPorGrupo == null ? '' : String(row.equiposPorGrupo)); setCantidadFases(String(row.cantidadFases)); setEstado(row.estado === 'INACTIVO' ? 'INACTIVO' : 'ACTIVO') }}>Editar</button>
+                  {row.estado !== 'INACTIVO' && <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>}
                 </td>
               )}
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={writable ? 6 : 5}>No hay categorías.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 7 : 6}>No hay categorías.</td></tr>}
         </tbody>
       </table>
       {writable && editionId && (
@@ -522,6 +545,13 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
           <label>Grupos<input type="number" min={1} value={cantidadGrupos} onChange={(event) => setCantidadGrupos(event.target.value)} required /></label>
           <label>Equipos por grupo<input type="number" min={1} value={equiposPorGrupo} onChange={(event) => setEquiposPorGrupo(event.target.value)} placeholder="Todos" /></label>
           <label>Fases<input type="number" min={1} value={cantidadFases} onChange={(event) => setCantidadFases(event.target.value)} required /></label>
+          <label>
+            Estado
+            <select value={estado} onChange={(event) => setEstado(event.target.value)}>
+              <option value="ACTIVO">Activa</option>
+              <option value="INACTIVO">Inactiva</option>
+            </select>
+          </label>
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}

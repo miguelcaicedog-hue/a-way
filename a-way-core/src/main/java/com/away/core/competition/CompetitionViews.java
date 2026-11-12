@@ -133,6 +133,7 @@ class CategoryRequest {
     private Integer equiposPorGrupo;
     @Min(1)
     private int cantidadFases;
+    private String estado;
 
     public UUID getEditionId() {
         return editionId;
@@ -180,6 +181,14 @@ class CategoryRequest {
 
     public void setCantidadFases(int cantidadFases) {
         this.cantidadFases = cantidadFases;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }
 
@@ -376,9 +385,10 @@ class CategoryView {
     private final int cantidadGrupos;
     private final Integer equiposPorGrupo;
     private final int cantidadFases;
+    private final String estado;
 
     CategoryView(UUID id, UUID editionId, String editionName, UUID leagueId, String leagueName, String name, int maxPlayers,
-                 int cantidadGrupos, Integer equiposPorGrupo, int cantidadFases) {
+                 int cantidadGrupos, Integer equiposPorGrupo, int cantidadFases, String estado) {
         this.id = id;
         this.editionId = editionId;
         this.editionName = editionName;
@@ -389,6 +399,7 @@ class CategoryView {
         this.cantidadGrupos = cantidadGrupos;
         this.equiposPorGrupo = equiposPorGrupo;
         this.cantidadFases = cantidadFases;
+        this.estado = estado;
     }
 
     public UUID getId() {
@@ -429,6 +440,10 @@ class CategoryView {
 
     public int getCantidadFases() {
         return cantidadFases;
+    }
+
+    public String getEstado() {
+        return estado;
     }
 }
 
