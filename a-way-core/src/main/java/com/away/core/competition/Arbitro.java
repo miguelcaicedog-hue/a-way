@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -24,6 +25,15 @@ public class Arbitro {
     private String nombre;
 
     private String telefono;
+
+    @Column(name = "valor_pago_partido", nullable = false)
+    private BigDecimal valorPagoPartido;
+
+    @Column(name = "valor_cobro_equipo", nullable = false)
+    private BigDecimal valorCobroEquipo;
+
+    @Column(name = "valor_pago_sin_pito", nullable = false)
+    private BigDecimal valorPagoSinPito;
 
     private byte[] foto;
 
@@ -83,6 +93,30 @@ public class Arbitro {
 
     public void setTelefono(String telefono) {
         this.telefono = telefono;
+    }
+
+    public BigDecimal getValorPagoPartido() {
+        return valorPagoPartido;
+    }
+
+    public void setValorPagoPartido(BigDecimal valorPagoPartido) {
+        this.valorPagoPartido = valorPagoPartido;
+    }
+
+    public BigDecimal getValorCobroEquipo() {
+        return valorCobroEquipo;
+    }
+
+    public void setValorCobroEquipo(BigDecimal valorCobroEquipo) {
+        this.valorCobroEquipo = valorCobroEquipo;
+    }
+
+    public BigDecimal getValorPagoSinPito() {
+        return valorPagoSinPito;
+    }
+
+    public void setValorPagoSinPito(BigDecimal valorPagoSinPito) {
+        this.valorPagoSinPito = valorPagoSinPito;
     }
 
     public byte[] getFoto() {

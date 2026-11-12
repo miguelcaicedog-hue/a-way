@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Base64;
@@ -87,6 +88,9 @@ public class ArbitroService {
         arbitro.setCedula(cedula);
         arbitro.setNombre(nombre(request.getNombre()));
         arbitro.setTelefono(opcional(request.getTelefono(), 30));
+        arbitro.setValorPagoPartido(valor(request.getValorPagoPartido(), "El valor de pago por partido"));
+        arbitro.setValorCobroEquipo(valor(request.getValorCobroEquipo(), "El valor de cobro al equipo"));
+        arbitro.setValorPagoSinPito(valor(request.getValorPagoSinPito(), "El valor de pago si no pita"));
         arbitro.setEstado(estado(request.getEstado()));
         if (request.isClearFoto()) {
             arbitro.getFoto();
@@ -126,6 +130,16 @@ public class ArbitroService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre es demasiado largo");
         }
         return texto;
+    }
+
+    private BigDecimal valor(BigDecimal monto, String etiqueta) {
+        if (monto == null) {
+            return BigDecimal.ZERO.setScale(2);
+        }
+        if (monto.signum() < 0 || monto.scale() > 2 && monto.stripTrailingZeros().scale() > 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, etiqueta + " debe ser cero o mayor, con hasta dos decimales");
+        }
+        return monto.setScale(2);
     }
 
     private String opcional(String valor, int maximo) {
@@ -190,6 +204,9 @@ public class ArbitroService {
                 arbitro.getCedula(),
                 arbitro.getNombre(),
                 arbitro.getTelefono(),
+                arbitro.getValorPagoPartido(),
+                arbitro.getValorCobroEquipo(),
+                arbitro.getValorPagoSinPito(),
                 arbitro.getFoto() != null,
                 arbitro.getEstado());
     }

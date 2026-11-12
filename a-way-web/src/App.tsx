@@ -10,6 +10,7 @@ import { GruposScreen } from './Grupos'
 import { HorariosScreen } from './Horarios'
 import { ResultadosScreen } from './Resultados'
 import { InscripcionScreen } from './Inscripciones'
+import { SancionesJugadorScreen } from './SancionesJugador'
 import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 
 type Health = {
@@ -52,6 +53,7 @@ const sections = [
   { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la liga: cédula, nombre, teléfono, foto y contacto por WhatsApp.' },
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
   { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
+  { id: 'sanciones-jugador', label: 'Sanciones jugador', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
   { id: 'suspensiones', label: 'Suspensiones', summary: 'Reglas por tarjetas y jornada en que empieza la sanción.' },
   { id: 'pagos', label: 'Pagos', summary: 'Arbitraje por jornada y cancelación de multas por tarjeta.' },
   { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
@@ -65,7 +67,7 @@ const menuGroups = [
   { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
-  { label: 'Disciplina', ids: ['catalogo-tarjetas', 'suspensiones', 'sanciones'] },
+  { label: 'Disciplina', ids: ['catalogo-tarjetas', 'sanciones-jugador', 'suspensiones', 'sanciones'] },
   { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
   { label: 'Administración', ids: ['importaciones', 'configuracion', 'usuarios'] },
 ] as const
@@ -413,6 +415,7 @@ function App() {
         {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} />}
         {section === 'arbitros' && <ArbitrosScreen profile={profile} leagueId={leagueId} />}
         {section === 'catalogo-tarjetas' && <TarjetasCatalogoScreen profile={profile} leagueId={leagueId} />}
+        {section === 'sanciones-jugador' && <SancionesJugadorScreen profile={profile} leagueId={leagueId} />}
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
       </main>
       </div>

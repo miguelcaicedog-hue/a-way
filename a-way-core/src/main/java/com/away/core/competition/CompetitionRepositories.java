@@ -125,6 +125,16 @@ interface ArbitroRepository extends JpaRepository<Arbitro, UUID> {
                          @Param("estado") String estado);
 }
 
+interface SancionJugadorRepository extends JpaRepository<SancionJugador, UUID> {
+    @Query("select s from SancionJugador s where s.idLiga = :liga "
+            + "and (:estado = '' or s.estado = :estado) "
+            + "and (:descripcion = '' or lower(s.descripcion) like lower(concat('%', :descripcion, '%'))) "
+            + "order by s.descripcion")
+    List<SancionJugador> buscar(@Param("liga") UUID liga,
+                                @Param("descripcion") String descripcion,
+                                @Param("estado") String estado);
+}
+
 interface TarjetaRepository extends JpaRepository<Tarjeta, UUID> {
     @Query("select t from Tarjeta t where t.idLiga = :liga "
             + "and (:estado = '' or t.estado = :estado) "
@@ -141,6 +151,18 @@ interface PartidoArbitroRepository extends JpaRepository<PartidoArbitro, UUID> {
 
 interface GolJugadorRepository extends JpaRepository<GolJugador, UUID> {
     List<GolJugador> findByIdPartido(UUID idPartido);
+}
+
+interface TarjetaJugadorRepository extends JpaRepository<TarjetaJugador, UUID> {
+    List<TarjetaJugador> findByIdPartido(UUID idPartido);
+}
+
+interface PartidoSancionRepository extends JpaRepository<PartidoSancion, UUID> {
+    List<PartidoSancion> findByIdPartido(UUID idPartido);
+}
+
+interface PartidoSancionDetalleRepository extends JpaRepository<PartidoSancionDetalle, UUID> {
+    List<PartidoSancionDetalle> findByIdPartidoSancion(UUID idPartidoSancion);
 }
 
 interface CanchaRepository extends JpaRepository<Cancha, UUID> {

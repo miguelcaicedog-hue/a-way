@@ -12,12 +12,19 @@ type Arbitro = {
   cedula: string | null
   nombre: string
   telefono: string | null
+  valorPagoPartido: number
+  valorCobroEquipo: number
+  valorPagoSinPito: number
   hasFoto: boolean
   estado: string
 }
 
 function canWrite(profile: Profile) {
   return profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
+}
+
+function dinero(valor: number) {
+  return Number(valor ?? 0).toFixed(2)
 }
 
 function etiqueta(estado: string) {
@@ -52,6 +59,9 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
   const [cedula, setCedula] = useState('')
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [valorPagoPartido, setValorPagoPartido] = useState('0.00')
+  const [valorCobroEquipo, setValorCobroEquipo] = useState('0.00')
+  const [valorPagoSinPito, setValorPagoSinPito] = useState('0.00')
   const [estado, setEstado] = useState('ACTIVO')
   const [foto, setFoto] = useState<string | null>(null)
   const [fotoTipo, setFotoTipo] = useState<string | null>(null)
@@ -92,6 +102,9 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
     setCedula('')
     setNombre('')
     setTelefono('')
+    setValorPagoPartido('0.00')
+    setValorCobroEquipo('0.00')
+    setValorPagoSinPito('0.00')
     setEstado('ACTIVO')
     setFoto(null)
     setFotoTipo(null)
@@ -103,6 +116,9 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
     setCedula(row.cedula ?? '')
     setNombre(row.nombre)
     setTelefono(row.telefono ?? '')
+    setValorPagoPartido(dinero(row.valorPagoPartido))
+    setValorCobroEquipo(dinero(row.valorCobroEquipo))
+    setValorPagoSinPito(dinero(row.valorPagoSinPito))
     setEstado(row.estado === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO')
     setFoto(null)
     setFotoTipo(null)
@@ -141,6 +157,9 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
       cedula: cedula.trim() || null,
       nombre: nombre.trim(),
       telefono: telefono.trim() || null,
+      valorPagoPartido: Number(valorPagoPartido),
+      valorCobroEquipo: Number(valorCobroEquipo),
+      valorPagoSinPito: Number(valorPagoSinPito),
       estado,
       fotoBase64: foto,
       fotoContentType: fotoTipo,
@@ -203,6 +222,9 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
             <th>Cédula</th>
             <th>Nombre</th>
             <th>Teléfono</th>
+            <th>Pago por partido</th>
+            <th>Cobro equipo</th>
+            <th>Pago si no pita</th>
             <th>Estado</th>
             {writable && <th></th>}
           </tr>
@@ -225,6 +247,9 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
                     </a>
                   )}
                 </td>
+                <td>{dinero(row.valorPagoPartido)}</td>
+                <td>{dinero(row.valorCobroEquipo)}</td>
+                <td>{dinero(row.valorPagoSinPito)}</td>
                 <td>{etiqueta(row.estado)}</td>
                 {writable && (
                   <td className="actions">
@@ -235,7 +260,7 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
               </tr>
             )
           })}
-          {rows.length === 0 && <tr><td colSpan={writable ? 6 : 5}>No hay árbitros.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 9 : 8}>No hay árbitros.</td></tr>}
         </tbody>
       </table>
       {writable && leagueId && (
@@ -252,6 +277,18 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
           <label>
             Teléfono
             <input value={telefono} maxLength={30} onChange={(event) => setTelefono(event.target.value)} />
+          </label>
+          <label>
+            Valor pago por partido
+            <input type="number" min={0} step="0.01" required value={valorPagoPartido} onChange={(event) => setValorPagoPartido(event.target.value)} />
+          </label>
+          <label>
+            Valor cobro equipo
+            <input type="number" min={0} step="0.01" required value={valorCobroEquipo} onChange={(event) => setValorCobroEquipo(event.target.value)} />
+          </label>
+          <label>
+            Valor pago si no pita
+            <input type="number" min={0} step="0.01" required value={valorPagoSinPito} onChange={(event) => setValorPagoSinPito(event.target.value)} />
           </label>
           <label>
             Estado

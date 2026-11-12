@@ -928,6 +928,83 @@ button.icono {
   padding: 0;
 }
 
+.lista-tarjetas-encabezado,
+.lista-detalle.tarjetas li {
+  display: grid;
+  grid-template-columns: 42px 2.2rem minmax(6rem, 1fr) 2.6rem 2.6rem minmax(8rem, 1.2fr);
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.lista-tarjetas-encabezado {
+  margin-top: 0.8rem;
+  color: #5c6b7a;
+  font-size: 0.85rem;
+}
+
+.lista-detalle.tarjetas li.vacio {
+  display: block;
+}
+
+.icono-tarjeta {
+  width: 0.85rem;
+  height: 1.15rem;
+  border-radius: 2px;
+  justify-self: center;
+}
+
+.icono-tarjeta.amarilla {
+  background: #f5c518;
+  border: 1px solid #c9a20f;
+}
+
+.icono-tarjeta.roja {
+  background: #c62828;
+}
+
+.lista-detalle.sanciones > li {
+  display: grid;
+  grid-template-columns: 42px 2.2rem minmax(6rem, 0.7fr) minmax(14rem, 1.6fr);
+  align-items: start;
+  gap: 0.7rem;
+}
+
+.sancion-jugador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.agregar-sancion,
+.sanciones-elegidas > li {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.sanciones-elegidas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sanciones-elegidas > li span {
+  flex: 1;
+  min-width: 0;
+}
+
+.sanciones-elegidas button,
+.agregar-sancion button {
+  flex: 0 0 auto;
+  margin-top: 0;
+  white-space: nowrap;
+  padding: 0.35rem 0.7rem;
+}
+
 .lista-detalle li {
   display: flex;
   align-items: center;

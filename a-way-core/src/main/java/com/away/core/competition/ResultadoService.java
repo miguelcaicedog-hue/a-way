@@ -34,13 +34,20 @@ public class ResultadoService {
     private final ArbitroRepository arbitros;
     private final PartidoArbitroRepository partidosArbitros;
     private final GolJugadorRepository golesJugadores;
+    private final TarjetaJugadorRepository tarjetasJugadores;
+    private final SancionJugadorRepository sancionesJugador;
+    private final PartidoSancionRepository partidosSanciones;
+    private final PartidoSancionDetalleRepository partidosSancionesDetalle;
     private final TeamEntryRepository entradas;
     private final PlayerRepository jugadores;
 
     public ResultadoService(EditionRepository editions, CategoryRepository categories, JornadaRepository jornadas,
                             PartidoRepository partidos, CanchaRepository canchas, TeamRepository teams,
                             AppUserRepository users, ArbitroRepository arbitros, PartidoArbitroRepository partidosArbitros,
-                            GolJugadorRepository golesJugadores, TeamEntryRepository entradas, PlayerRepository jugadores) {
+                            GolJugadorRepository golesJugadores, TarjetaJugadorRepository tarjetasJugadores,
+                            SancionJugadorRepository sancionesJugador, PartidoSancionRepository partidosSanciones,
+                            PartidoSancionDetalleRepository partidosSancionesDetalle,
+                            TeamEntryRepository entradas, PlayerRepository jugadores) {
         this.editions = editions;
         this.categories = categories;
         this.jornadas = jornadas;
@@ -51,6 +58,10 @@ public class ResultadoService {
         this.arbitros = arbitros;
         this.partidosArbitros = partidosArbitros;
         this.golesJugadores = golesJugadores;
+        this.tarjetasJugadores = tarjetasJugadores;
+        this.sancionesJugador = sancionesJugador;
+        this.partidosSanciones = partidosSanciones;
+        this.partidosSancionesDetalle = partidosSancionesDetalle;
         this.entradas = entradas;
         this.jugadores = jugadores;
     }
@@ -237,15 +248,57 @@ public class ResultadoService {
             }
             goles.add(new ResultadoViews.GolCargadoView(gol.getIdJugador(), gol.getCantidad()));
         }
+        List<ResultadoViews.TarjetaCargadaView> tarjetas = new ArrayList<>();
+        for (TarjetaJugador tarjeta : tarjetasJugadores.findByIdPartido(partido.getId())) {
+            if (!"ACTIVO".equals(tarjeta.getEstado())) {
+                continue;
+            }
+            tarjetas.add(new ResultadoViews.TarjetaCargadaView(
+                    tarjeta.getIdJugador(), tarjeta.getAmarillas(), tarjeta.getRojas(), tarjeta.getObservacion()));
+        }
+        UUID ligaId = categoria.getEdition().getLeague().getId();
+        List<ResultadoViews.SancionOpcionView> disponibles = new ArrayList<>();
+        for (SancionJugador sancion : sancionesJugador.buscar(ligaId, "", "ACTIVO")) {
+            disponibles.add(new ResultadoViews.SancionOpcionView(sancion.getId(), sancion.getDescripcion(), sancion.getCosto(), sancion.getEstado()));
+        }
+        List<ResultadoViews.SancionCargadaView> sanciones = new ArrayList<>();
+        for (PartidoSancion cargada : partidosSanciones.findByIdPartido(partido.getId())) {
+            if (!"ACTIVO".equals(cargada.getEstado())) {
+                continue;
+            }
+            List<UUID> ids = new ArrayList<>();
+            for (PartidoSancionDetalle detalleSancion : partidosSancionesDetalle.findByIdPartidoSancion(cargada.getId())) {
+                if ("ACTIVO".equals(detalleSancion.getEstado())) {
+                    ids.add(detalleSancion.getIdSancionJugador());
+                }
+            }
+            sanciones.add(new ResultadoViews.SancionCargadaView(cargada.getIdJugador(), cargada.getObservacion(), ids));
+        }
+        Set<UUID> conocidas = new HashSet<>();
+        for (ResultadoViews.SancionOpcionView opcion : disponibles) {
+            conocidas.add(opcion.getId());
+        }
+        for (ResultadoViews.SancionCargadaView cargada : sanciones) {
+            for (UUID sancionId : cargada.getSancionIds()) {
+                if (!conocidas.add(sancionId)) {
+                    continue;
+                }
+                sancionesJugador.findById(sancionId).ifPresent(sancion -> disponibles.add(
+                        new ResultadoViews.SancionOpcionView(sancion.getId(), sancion.getDescripcion(), sancion.getCosto(), sancion.getEstado())));
+            }
+        }
         return new ResultadoViews.DetalleView(
                 nombreEquipo(partido.getIdEquipoLocal()),
                 nombreEquipo(partido.getIdEquipoVisita()),
                 opcionEquipo(partido.getIdEquipoLocal()),
                 opcionEquipo(partido.getIdEquipoVisita()),
-                puedeEditar(categoria.getEdition().getLeague().getId(), partido),
+                puedeEditar(ligaId, partido),
                 opciones,
                 asignados,
-                goles);
+                goles,
+                tarjetas,
+                disponibles,
+                sanciones);
     }
 
     @Transactional(readOnly = true)
@@ -291,6 +344,8 @@ public class ResultadoService {
         assertMarcador(categoria.getEdition().getLeague().getId(), partido);
         guardarArbitros(partido, categoria.getEdition().getLeague().getId(), request.getArbitros());
         guardarGoles(partido, request.getGoles());
+        guardarTarjetas(partido, request.getTarjetas());
+        guardarSanciones(partido, categoria.getEdition().getLeague().getId(), request.getSanciones());
         return detalle(partidoId);
     }
 
@@ -397,6 +452,208 @@ public class ResultadoService {
             gol.setUsuarioModificacion(usuario);
             golesJugadores.save(gol);
         }
+    }
+
+    private void guardarTarjetas(Partido partido, List<ResultadoViews.TarjetaJugadorRequest> pedidos) {
+        Map<UUID, TarjetaJugador> existentes = new HashMap<>();
+        for (TarjetaJugador tarjeta : tarjetasJugadores.findByIdPartido(partido.getId())) {
+            existentes.put(tarjeta.getIdJugador(), tarjeta);
+        }
+        Set<UUID> equipos = new HashSet<>();
+        if (partido.getIdEquipoLocal() != null) {
+            equipos.add(partido.getIdEquipoLocal());
+        }
+        if (partido.getIdEquipoVisita() != null) {
+            equipos.add(partido.getIdEquipoVisita());
+        }
+        LocalDate fecha = fechaDelPartido(partido);
+        Set<UUID> conservados = new HashSet<>();
+        String usuario = usuario();
+        if (pedidos != null) {
+            for (ResultadoViews.TarjetaJugadorRequest pedido : pedidos) {
+                Integer amarillas = cantidadTarjeta(pedido.getAmarillas(), true);
+                Integer rojas = cantidadTarjeta(pedido.getRojas(), false);
+                String observacion = observacion(pedido.getObservacion());
+                if (pedido.getJugadorId() == null || (amarillas == null && rojas == null && observacion == null)) {
+                    continue;
+                }
+                if (!conservados.add(pedido.getJugadorId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador está repetido");
+                }
+                Player jugador = jugadores.findById(pedido.getJugadorId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no existe"));
+                UUID equipo = jugador.getTeamEntry().getTeam().getId();
+                if (!equipos.contains(equipo) || !partido.getIdCategoria().equals(jugador.getTeamEntry().getCategory().getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no pertenece a los equipos del partido");
+                }
+                TarjetaJugador tarjeta = existentes.get(jugador.getId());
+                boolean nuevo = tarjeta == null;
+                if (nuevo) {
+                    tarjeta = new TarjetaJugador();
+                    tarjeta.setId(UUID.randomUUID());
+                    tarjeta.setIdPartido(partido.getId());
+                    tarjeta.setIdJugador(jugador.getId());
+                    tarjeta.setFechaCreacion(OffsetDateTime.now());
+                    tarjeta.setUsuarioCreacion(usuario);
+                }
+                tarjeta.setIdJornada(partido.getIdJornada());
+                tarjeta.setFecha(fecha);
+                tarjeta.setAmarillas(amarillas);
+                tarjeta.setRojas(rojas);
+                tarjeta.setObservacion(observacion);
+                tarjeta.setEstado("ACTIVO");
+                tarjeta.setFechaModificacion(OffsetDateTime.now());
+                tarjeta.setUsuarioModificacion(usuario);
+                tarjetasJugadores.save(tarjeta);
+            }
+        }
+        for (TarjetaJugador tarjeta : existentes.values()) {
+            if (conservados.contains(tarjeta.getIdJugador()) || "ELIMINADO".equals(tarjeta.getEstado())) {
+                continue;
+            }
+            tarjeta.setEstado("ELIMINADO");
+            tarjeta.setFechaModificacion(OffsetDateTime.now());
+            tarjeta.setUsuarioModificacion(usuario);
+            tarjetasJugadores.save(tarjeta);
+        }
+    }
+
+    private Integer cantidadTarjeta(Integer valor, boolean amarilla) {
+        if (valor == null || valor == 0) {
+            return null;
+        }
+        if (amarilla && (valor == 1 || valor == 2)) {
+            return valor;
+        }
+        if (!amarilla && valor == 1) {
+            return valor;
+        }
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                amarilla ? "La tarjeta amarilla solo acepta 1 o 2" : "La tarjeta roja solo acepta 1");
+    }
+
+    private String observacion(String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return null;
+        }
+        String texto = valor.trim();
+        if (texto.length() > 300) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La observación es demasiado larga");
+        }
+        return texto;
+    }
+
+    private void guardarSanciones(Partido partido, UUID leagueId, List<ResultadoViews.SancionPartidoRequest> pedidos) {
+        Map<UUID, PartidoSancion> existentes = new HashMap<>();
+        for (PartidoSancion sancion : partidosSanciones.findByIdPartido(partido.getId())) {
+            existentes.put(sancion.getIdJugador(), sancion);
+        }
+        Set<UUID> equipos = new HashSet<>();
+        if (partido.getIdEquipoLocal() != null) {
+            equipos.add(partido.getIdEquipoLocal());
+        }
+        if (partido.getIdEquipoVisita() != null) {
+            equipos.add(partido.getIdEquipoVisita());
+        }
+        LocalDate fecha = fechaDelPartido(partido);
+        Set<UUID> conservados = new HashSet<>();
+        String usuario = usuario();
+        if (pedidos != null) {
+            for (ResultadoViews.SancionPartidoRequest pedido : pedidos) {
+                String observacion = observacion(pedido.getObservacion());
+                List<UUID> pedidas = pedido.getSancionIds() == null ? new ArrayList<>() : pedido.getSancionIds();
+                if (pedido.getJugadorId() == null || (pedidas.isEmpty() && observacion == null)) {
+                    continue;
+                }
+                if (!conservados.add(pedido.getJugadorId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador está repetido");
+                }
+                Player jugador = jugadores.findById(pedido.getJugadorId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no existe"));
+                UUID equipo = jugador.getTeamEntry().getTeam().getId();
+                if (!equipos.contains(equipo) || !partido.getIdCategoria().equals(jugador.getTeamEntry().getCategory().getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no pertenece a los equipos del partido");
+                }
+                Set<UUID> unicas = new HashSet<>();
+                for (UUID sancionId : pedidas) {
+                    if (sancionId == null || !unicas.add(sancionId)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La sanción está repetida");
+                    }
+                    SancionJugador catalogo = sancionesJugador.findById(sancionId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La sanción no existe"));
+                    if (!leagueId.equals(catalogo.getIdLiga()) || !"ACTIVO".equals(catalogo.getEstado())) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La sanción debe estar activa en la liga");
+                    }
+                }
+                PartidoSancion sancion = existentes.get(jugador.getId());
+                boolean nuevo = sancion == null;
+                if (nuevo) {
+                    sancion = new PartidoSancion();
+                    sancion.setId(UUID.randomUUID());
+                    sancion.setIdPartido(partido.getId());
+                    sancion.setIdJugador(jugador.getId());
+                    sancion.setFechaCreacion(OffsetDateTime.now());
+                    sancion.setUsuarioCreacion(usuario);
+                }
+                sancion.setIdJornada(partido.getIdJornada());
+                sancion.setFecha(fecha);
+                sancion.setObservacion(observacion);
+                sancion.setEstado("ACTIVO");
+                sancion.setFechaModificacion(OffsetDateTime.now());
+                sancion.setUsuarioModificacion(usuario);
+                partidosSanciones.save(sancion);
+                sincronizarDetalle(sancion, unicas, usuario);
+            }
+        }
+        for (PartidoSancion sancion : existentes.values()) {
+            if (conservados.contains(sancion.getIdJugador()) || "ELIMINADO".equals(sancion.getEstado())) {
+                continue;
+            }
+            sancion.setEstado("ELIMINADO");
+            sancion.setFechaModificacion(OffsetDateTime.now());
+            sancion.setUsuarioModificacion(usuario);
+            partidosSanciones.save(sancion);
+            sincronizarDetalle(sancion, new HashSet<>(), usuario);
+        }
+    }
+
+    private void sincronizarDetalle(PartidoSancion sancion, Set<UUID> pedidas, String usuario) {
+        Map<UUID, PartidoSancionDetalle> existentes = new HashMap<>();
+        for (PartidoSancionDetalle detalle : partidosSancionesDetalle.findByIdPartidoSancion(sancion.getId())) {
+            existentes.put(detalle.getIdSancionJugador(), detalle);
+        }
+        for (UUID sancionId : pedidas) {
+            PartidoSancionDetalle detalle = existentes.get(sancionId);
+            boolean nuevo = detalle == null;
+            if (nuevo) {
+                detalle = new PartidoSancionDetalle();
+                detalle.setId(UUID.randomUUID());
+                detalle.setIdPartidoSancion(sancion.getId());
+                detalle.setIdSancionJugador(sancionId);
+                detalle.setFechaCreacion(OffsetDateTime.now());
+                detalle.setUsuarioCreacion(usuario);
+            }
+            detalle.setEstado("ACTIVO");
+            detalle.setFechaModificacion(OffsetDateTime.now());
+            detalle.setUsuarioModificacion(usuario);
+            partidosSancionesDetalle.save(detalle);
+        }
+        for (PartidoSancionDetalle detalle : existentes.values()) {
+            if (pedidas.contains(detalle.getIdSancionJugador()) || "ELIMINADO".equals(detalle.getEstado())) {
+                continue;
+            }
+            detalle.setEstado("ELIMINADO");
+            detalle.setFechaModificacion(OffsetDateTime.now());
+            detalle.setUsuarioModificacion(usuario);
+            partidosSancionesDetalle.save(detalle);
+        }
+    }
+
+    private LocalDate fechaDelPartido(Partido partido) {
+        if (partido.getFecha() != null) {
+            return partido.getFecha();
+        }
+        return jornadas.findById(partido.getIdJornada()).map(Jornada::getFecha).orElse(null);
     }
 
     private Partido partidoActivo(UUID id) {

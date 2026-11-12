@@ -2,6 +2,7 @@ package com.away.core.competition;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class ArbitroViews {
@@ -18,6 +19,9 @@ public class ArbitroViews {
         private String nombre;
         @Size(max = 30)
         private String telefono;
+        private BigDecimal valorPagoPartido;
+        private BigDecimal valorCobroEquipo;
+        private BigDecimal valorPagoSinPito;
         private String estado;
         private String fotoBase64;
         private String fotoContentType;
@@ -53,6 +57,30 @@ public class ArbitroViews {
 
         public void setTelefono(String telefono) {
             this.telefono = telefono;
+        }
+
+        public BigDecimal getValorPagoPartido() {
+            return valorPagoPartido;
+        }
+
+        public void setValorPagoPartido(BigDecimal valorPagoPartido) {
+            this.valorPagoPartido = valorPagoPartido;
+        }
+
+        public BigDecimal getValorCobroEquipo() {
+            return valorCobroEquipo;
+        }
+
+        public void setValorCobroEquipo(BigDecimal valorCobroEquipo) {
+            this.valorCobroEquipo = valorCobroEquipo;
+        }
+
+        public BigDecimal getValorPagoSinPito() {
+            return valorPagoSinPito;
+        }
+
+        public void setValorPagoSinPito(BigDecimal valorPagoSinPito) {
+            this.valorPagoSinPito = valorPagoSinPito;
         }
 
         public String getEstado() {
@@ -94,15 +122,23 @@ public class ArbitroViews {
         private final String cedula;
         private final String nombre;
         private final String telefono;
+        private final BigDecimal valorPagoPartido;
+        private final BigDecimal valorCobroEquipo;
+        private final BigDecimal valorPagoSinPito;
         private final boolean hasFoto;
         private final String estado;
 
-        ArbitroView(UUID id, UUID leagueId, String cedula, String nombre, String telefono, boolean hasFoto, String estado) {
+        ArbitroView(UUID id, UUID leagueId, String cedula, String nombre, String telefono,
+                    BigDecimal valorPagoPartido, BigDecimal valorCobroEquipo, BigDecimal valorPagoSinPito,
+                    boolean hasFoto, String estado) {
             this.id = id;
             this.leagueId = leagueId;
             this.cedula = cedula;
             this.nombre = nombre;
             this.telefono = telefono;
+            this.valorPagoPartido = valorPagoPartido;
+            this.valorCobroEquipo = valorCobroEquipo;
+            this.valorPagoSinPito = valorPagoSinPito;
             this.hasFoto = hasFoto;
             this.estado = estado;
         }
@@ -125,6 +161,18 @@ public class ArbitroViews {
 
         public String getTelefono() {
             return telefono;
+        }
+
+        public BigDecimal getValorPagoPartido() {
+            return valorPagoPartido;
+        }
+
+        public BigDecimal getValorCobroEquipo() {
+            return valorCobroEquipo;
+        }
+
+        public BigDecimal getValorPagoSinPito() {
+            return valorPagoSinPito;
         }
 
         public boolean isHasFoto() {

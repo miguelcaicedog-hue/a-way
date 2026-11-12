@@ -1,5 +1,6 @@
 package com.away.core.competition;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -182,9 +183,50 @@ public class ResultadoViews {
         }
     }
 
+    public static class TarjetaJugadorRequest {
+        private UUID jugadorId;
+        private Integer amarillas;
+        private Integer rojas;
+        private String observacion;
+
+        public UUID getJugadorId() {
+            return jugadorId;
+        }
+
+        public void setJugadorId(UUID jugadorId) {
+            this.jugadorId = jugadorId;
+        }
+
+        public Integer getAmarillas() {
+            return amarillas;
+        }
+
+        public void setAmarillas(Integer amarillas) {
+            this.amarillas = amarillas;
+        }
+
+        public Integer getRojas() {
+            return rojas;
+        }
+
+        public void setRojas(Integer rojas) {
+            this.rojas = rojas;
+        }
+
+        public String getObservacion() {
+            return observacion;
+        }
+
+        public void setObservacion(String observacion) {
+            this.observacion = observacion;
+        }
+    }
+
     public static class DetalleGuardarRequest {
         private List<ArbitroAsignadoRequest> arbitros;
         private List<GolJugadorRequest> goles;
+        private List<TarjetaJugadorRequest> tarjetas;
+        private List<SancionPartidoRequest> sanciones;
 
         public List<ArbitroAsignadoRequest> getArbitros() {
             return arbitros;
@@ -200,6 +242,106 @@ public class ResultadoViews {
 
         public void setGoles(List<GolJugadorRequest> goles) {
             this.goles = goles;
+        }
+
+        public List<TarjetaJugadorRequest> getTarjetas() {
+            return tarjetas;
+        }
+
+        public void setTarjetas(List<TarjetaJugadorRequest> tarjetas) {
+            this.tarjetas = tarjetas;
+        }
+
+        public List<SancionPartidoRequest> getSanciones() {
+            return sanciones;
+        }
+
+        public void setSanciones(List<SancionPartidoRequest> sanciones) {
+            this.sanciones = sanciones;
+        }
+    }
+
+    public static class SancionPartidoRequest {
+        private UUID jugadorId;
+        private String observacion;
+        private List<UUID> sancionIds;
+
+        public UUID getJugadorId() {
+            return jugadorId;
+        }
+
+        public void setJugadorId(UUID jugadorId) {
+            this.jugadorId = jugadorId;
+        }
+
+        public String getObservacion() {
+            return observacion;
+        }
+
+        public void setObservacion(String observacion) {
+            this.observacion = observacion;
+        }
+
+        public List<UUID> getSancionIds() {
+            return sancionIds;
+        }
+
+        public void setSancionIds(List<UUID> sancionIds) {
+            this.sancionIds = sancionIds;
+        }
+    }
+
+    public static class SancionOpcionView {
+        private final UUID id;
+        private final String descripcion;
+        private final BigDecimal costo;
+        private final String estado;
+
+        public SancionOpcionView(UUID id, String descripcion, BigDecimal costo, String estado) {
+            this.id = id;
+            this.descripcion = descripcion;
+            this.costo = costo;
+            this.estado = estado;
+        }
+
+        public UUID getId() {
+            return id;
+        }
+
+        public String getDescripcion() {
+            return descripcion;
+        }
+
+        public BigDecimal getCosto() {
+            return costo;
+        }
+
+        public String getEstado() {
+            return estado;
+        }
+    }
+
+    public static class SancionCargadaView {
+        private final UUID jugadorId;
+        private final String observacion;
+        private final List<UUID> sancionIds;
+
+        public SancionCargadaView(UUID jugadorId, String observacion, List<UUID> sancionIds) {
+            this.jugadorId = jugadorId;
+            this.observacion = observacion;
+            this.sancionIds = sancionIds;
+        }
+
+        public UUID getJugadorId() {
+            return jugadorId;
+        }
+
+        public String getObservacion() {
+            return observacion;
+        }
+
+        public List<UUID> getSancionIds() {
+            return sancionIds;
         }
     }
 
@@ -263,6 +405,36 @@ public class ResultadoViews {
         }
     }
 
+    public static class TarjetaCargadaView {
+        private final UUID jugadorId;
+        private final Integer amarillas;
+        private final Integer rojas;
+        private final String observacion;
+
+        public TarjetaCargadaView(UUID jugadorId, Integer amarillas, Integer rojas, String observacion) {
+            this.jugadorId = jugadorId;
+            this.amarillas = amarillas;
+            this.rojas = rojas;
+            this.observacion = observacion;
+        }
+
+        public UUID getJugadorId() {
+            return jugadorId;
+        }
+
+        public Integer getAmarillas() {
+            return amarillas;
+        }
+
+        public Integer getRojas() {
+            return rojas;
+        }
+
+        public String getObservacion() {
+            return observacion;
+        }
+    }
+
     public static class EquipoOpcionView {
         private final UUID id;
         private final String nombre;
@@ -290,10 +462,14 @@ public class ResultadoViews {
         private final List<ArbitroOpcionView> arbitros;
         private final List<ArbitroAsignadoView> asignados;
         private final List<GolCargadoView> goles;
+        private final List<TarjetaCargadaView> tarjetas;
+        private final List<SancionOpcionView> sancionesDisponibles;
+        private final List<SancionCargadaView> sanciones;
 
         public DetalleView(String local, String visita, EquipoOpcionView equipoLocal, EquipoOpcionView equipoVisita,
                            boolean editable, List<ArbitroOpcionView> arbitros, List<ArbitroAsignadoView> asignados,
-                           List<GolCargadoView> goles) {
+                           List<GolCargadoView> goles, List<TarjetaCargadaView> tarjetas,
+                           List<SancionOpcionView> sancionesDisponibles, List<SancionCargadaView> sanciones) {
             this.local = local;
             this.visita = visita;
             this.equipoLocal = equipoLocal;
@@ -302,6 +478,9 @@ public class ResultadoViews {
             this.arbitros = arbitros;
             this.asignados = asignados;
             this.goles = goles;
+            this.tarjetas = tarjetas;
+            this.sancionesDisponibles = sancionesDisponibles;
+            this.sanciones = sanciones;
         }
 
         public String getLocal() {
@@ -334,6 +513,18 @@ public class ResultadoViews {
 
         public List<GolCargadoView> getGoles() {
             return goles;
+        }
+
+        public List<TarjetaCargadaView> getTarjetas() {
+            return tarjetas;
+        }
+
+        public List<SancionOpcionView> getSancionesDisponibles() {
+            return sancionesDisponibles;
+        }
+
+        public List<SancionCargadaView> getSanciones() {
+            return sanciones;
         }
     }
 

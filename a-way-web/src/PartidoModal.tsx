@@ -26,6 +26,20 @@ type Detalle = {
   arbitros: Arbitro[]
   asignados: Asignado[]
   goles: { jugadorId: string; cantidad: number }[]
+  tarjetas: { jugadorId: string; amarillas: number | null; rojas: number | null; observacion: string | null }[]
+  sancionesDisponibles: { id: string; descripcion: string; costo: number; estado: string }[]
+  sanciones: { jugadorId: string; observacion: string | null; sancionIds: string[] }[]
+}
+
+type Tarjeta = {
+  amarilla: string
+  roja: string
+  observacion: string
+}
+
+type SancionJugador = {
+  sancionIds: string[]
+  observacion: string
 }
 
 type Jugador = {
@@ -67,6 +81,9 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
   const [nombreJugador, setNombreJugador] = useState('')
   const [jugadores, setJugadores] = useState<Jugador[]>([])
   const [goles, setGoles] = useState<Record<string, string>>({})
+  const [tarjetas, setTarjetas] = useState<Record<string, Tarjeta>>({})
+  const [sanciones, setSanciones] = useState<Record<string, SancionJugador>>({})
+  const [sancionElegida, setSancionElegida] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
   const [grabado, setGrabado] = useState(false)
@@ -77,6 +94,29 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
     return cargados
   }
 
+  function tarjetasDe(respuesta: Detalle) {
+    const cargadas: Record<string, Tarjeta> = {}
+    for (const tarjeta of respuesta.tarjetas) {
+      cargadas[tarjeta.jugadorId] = {
+        amarilla: tarjeta.amarillas == null ? '' : String(tarjeta.amarillas),
+        roja: tarjeta.rojas == null ? '' : String(tarjeta.rojas),
+        observacion: tarjeta.observacion ?? '',
+      }
+    }
+    return cargadas
+  }
+
+  function sancionesDe(respuesta: Detalle) {
+    const cargadas: Record<string, SancionJugador> = {}
+    for (const sancion of respuesta.sanciones) {
+      cargadas[sancion.jugadorId] = {
+        sancionIds: sancion.sancionIds,
+        observacion: sancion.observacion ?? '',
+      }
+    }
+    return cargadas
+  }
+
   useEffect(() => {
     let activo = true
     api<Detalle>(`/api/resultados/partido/${partidoId}/detalle`)
@@ -85,6 +125,8 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
         setDetalle(respuesta)
         setAsignados(respuesta.asignados)
         setGoles(golesDe(respuesta))
+        setTarjetas(tarjetasDe(respuesta))
+        setSanciones(sancionesDe(respuesta))
         setEquipoId(respuesta.equipoLocal?.id ?? respuesta.equipoVisita?.id ?? '')
       })
       .catch((caught: Error) => {
@@ -144,11 +186,28 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
           goles: Object.entries(goles)
             .filter(([, cantidad]) => cantidad !== '' && Number(cantidad) > 0)
             .map(([jugadorId, cantidad]) => ({ jugadorId, cantidad: Number(cantidad) })),
+          tarjetas: Object.entries(tarjetas)
+            .filter(([, tarjeta]) => tarjeta.amarilla !== '' || tarjeta.roja !== '' || tarjeta.observacion.trim() !== '')
+            .map(([jugadorId, tarjeta]) => ({
+              jugadorId,
+              amarillas: tarjeta.amarilla === '' ? null : Number(tarjeta.amarilla),
+              rojas: tarjeta.roja === '' ? null : Number(tarjeta.roja),
+              observacion: tarjeta.observacion.trim() || null,
+            })),
+          sanciones: Object.entries(sanciones)
+            .filter(([, sancion]) => sancion.sancionIds.length > 0 || sancion.observacion.trim() !== '')
+            .map(([jugadorId, sancion]) => ({
+              jugadorId,
+              observacion: sancion.observacion.trim() || null,
+              sancionIds: sancion.sancionIds,
+            })),
         }),
       })
       setDetalle(respuesta)
       setAsignados(respuesta.asignados)
       setGoles(golesDe(respuesta))
+      setTarjetas(tarjetasDe(respuesta))
+      setSanciones(sancionesDe(respuesta))
       setGrabado(true)
     } catch (caught) {
       setGrabado(false)
@@ -270,8 +329,193 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
             </ul>
           </div>
         )}
-        {pestana === 'tarjetas' && <p>Por definir.</p>}
-        {pestana === 'sanciones' && <p>Por definir.</p>}
+        {pestana === 'tarjetas' && (
+          <div>
+            <form className="filtros" onSubmit={(event) => event.preventDefault()}>
+              <label>
+                Equipo
+                <select value={equipoId} onChange={(event) => setEquipoId(event.target.value)}>
+                  {equipos.map((equipo) => (
+                    <option key={equipo.id} value={equipo.id}>{equipo.nombre}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Número de camisa
+                <input value={numero} onChange={(event) => setNumero(event.target.value)} />
+              </label>
+              <label>
+                Nombre
+                <input value={nombreJugador} onChange={(event) => setNombreJugador(event.target.value)} />
+              </label>
+            </form>
+            <div className="lista-tarjetas-encabezado">
+              <span />
+              <span />
+              <span />
+              <span className="icono-tarjeta amarilla" role="img" aria-label="Tarjeta amarilla" />
+              <span className="icono-tarjeta roja" role="img" aria-label="Tarjeta roja" />
+              <span>Observación</span>
+            </div>
+            <ul className="lista-detalle tarjetas">
+              {jugadores.map((jugador) => {
+                const tarjeta = tarjetas[jugador.id] ?? { amarilla: '', roja: '', observacion: '' }
+                function cambiar(parcial: Partial<Tarjeta>) {
+                  setGrabado(false)
+                  setTarjetas((anterior) => {
+                    const actual = anterior[jugador.id] ?? { amarilla: '', roja: '', observacion: '' }
+                    return { ...anterior, [jugador.id]: { ...actual, ...parcial } }
+                  })
+                }
+                return (
+                  <li key={jugador.id}>
+                    <FotoJugador jugador={jugador} />
+                    <span>{jugador.numero}</span>
+                    <span>{jugador.alias}</span>
+                    <input
+                      className="marcador"
+                      inputMode="numeric"
+                      aria-label="Tarjeta amarilla"
+                      value={tarjeta.amarilla}
+                      disabled={!detalle?.editable}
+                      onChange={(event) => {
+                        const valor = event.target.value
+                        if (valor !== '' && valor !== '1' && valor !== '2') return
+                        cambiar({ amarilla: valor })
+                      }}
+                    />
+                    <input
+                      className="marcador"
+                      inputMode="numeric"
+                      aria-label="Tarjeta roja"
+                      value={tarjeta.roja}
+                      disabled={!detalle?.editable}
+                      onChange={(event) => {
+                        const valor = event.target.value
+                        if (valor !== '' && valor !== '1') return
+                        cambiar({ roja: valor })
+                      }}
+                    />
+                    <input
+                      aria-label="Observación"
+                      maxLength={300}
+                      value={tarjeta.observacion}
+                      disabled={!detalle?.editable}
+                      onChange={(event) => cambiar({ observacion: event.target.value })}
+                    />
+                  </li>
+                )
+              })}
+              {jugadores.length === 0 && <li className="vacio">No hay jugadores.</li>}
+            </ul>
+          </div>
+        )}
+        {pestana === 'sanciones' && (
+          <div>
+            <form className="filtros" onSubmit={(event) => event.preventDefault()}>
+              <label>
+                Equipo
+                <select value={equipoId} onChange={(event) => setEquipoId(event.target.value)}>
+                  {equipos.map((equipo) => (
+                    <option key={equipo.id} value={equipo.id}>{equipo.nombre}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Número de camisa
+                <input value={numero} onChange={(event) => setNumero(event.target.value)} />
+              </label>
+              <label>
+                Nombre
+                <input value={nombreJugador} onChange={(event) => setNombreJugador(event.target.value)} />
+              </label>
+            </form>
+            <ul className="lista-detalle sanciones">
+          {jugadores.map((jugador) => {
+            const sancion = sanciones[jugador.id] ?? { sancionIds: [], observacion: '' }
+            const disponibles = (detalle?.sancionesDisponibles ?? []).filter((opcion) =>
+              opcion.estado === 'ACTIVO' && !sancion.sancionIds.includes(opcion.id))
+            const nombreDe = (id: string) => detalle?.sancionesDisponibles.find((opcion) => opcion.id === id)?.descripcion ?? 'Sanción'
+            return (
+              <li key={jugador.id}>
+                <FotoJugador jugador={jugador} />
+                <span className="numero">{jugador.numero}</span>
+                <span>{jugador.alias}</span>
+                <div className="sancion-jugador">
+                  {detalle?.editable && (
+                    <div className="agregar-sancion">
+                      <select
+                        aria-label={`Sanción de ${jugador.alias}`}
+                        value={sancionElegida[jugador.id] ?? ''}
+                        onChange={(event) => setSancionElegida((anterior) => ({ ...anterior, [jugador.id]: event.target.value }))}
+                      >
+                        <option value="">Sanción</option>
+                        {disponibles.map((opcion) => <option key={opcion.id} value={opcion.id}>{opcion.descripcion}</option>)}
+                      </select>
+                      <button
+                        type="button"
+                        className="secundario"
+                        disabled={!sancionElegida[jugador.id]}
+                        onClick={() => {
+                          const elegida = sancionElegida[jugador.id]
+                          if (!elegida) return
+                          setSanciones((anterior) => {
+                            const actual = anterior[jugador.id] ?? { sancionIds: [], observacion: '' }
+                            return { ...anterior, [jugador.id]: { ...actual, sancionIds: [...actual.sancionIds, elegida] } }
+                          })
+                          setSancionElegida((anterior) => ({ ...anterior, [jugador.id]: '' }))
+                          setGrabado(false)
+                        }}
+                      >
+                        Agregar
+                      </button>
+                    </div>
+                  )}
+                  <ul className="sanciones-elegidas">
+                    {sancion.sancionIds.map((id) => (
+                      <li key={id}>
+                        <span>{nombreDe(id)}</span>
+                        {detalle?.editable && (
+                          <button
+                            type="button"
+                            className="secundario"
+                            onClick={() => {
+                              setSanciones((anterior) => {
+                                const actual = anterior[jugador.id] ?? { sancionIds: [], observacion: '' }
+                                return { ...anterior, [jugador.id]: { ...actual, sancionIds: actual.sancionIds.filter((item) => item !== id) } }
+                              })
+                              setGrabado(false)
+                            }}
+                          >
+                            Quitar
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <input
+                    aria-label={`Observación de ${jugador.alias}`}
+                    placeholder="Observación"
+                    maxLength={300}
+                    value={sancion.observacion}
+                    disabled={!detalle?.editable}
+                    onChange={(event) => {
+                      const valor = event.target.value
+                      setSanciones((anterior) => {
+                        const actual = anterior[jugador.id] ?? { sancionIds: [], observacion: '' }
+                        return { ...anterior, [jugador.id]: { ...actual, observacion: valor } }
+                      })
+                      setGrabado(false)
+                    }}
+                  />
+                </div>
+              </li>
+            )
+          })}
+          {jugadores.length === 0 && <li className="vacio">No hay jugadores.</li>}
+        </ul>
+          </div>
+        )}
         </div>
       </section>
     </div>
