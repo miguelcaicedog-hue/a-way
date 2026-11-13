@@ -61,7 +61,7 @@ public class Player {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = Mayusculas.de(name);
     }
 
     public String getAlias() {
@@ -69,7 +69,7 @@ public class Player {
     }
 
     public void setAlias(String alias) {
-        this.alias = alias;
+        this.alias = Mayusculas.de(alias);
     }
 
     public String getCedula() {

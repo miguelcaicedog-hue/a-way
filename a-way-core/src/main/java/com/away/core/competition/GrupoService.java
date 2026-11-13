@@ -119,6 +119,10 @@ public class GrupoService {
         List<Team> libres = libres(category.getId());
         Map<UUID, Integer> conteo = conteo(category.getId(), actuales);
         Integer limite = category.getEquiposPorGrupo();
+        if (limite != null && !libres.isEmpty()
+                && actuales.stream().noneMatch(grupo -> conteo.get(grupo.getId()) < limite)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay cupo disponible en los grupos.");
+        }
         String usuario = usuario();
         while (!libres.isEmpty()) {
             Grupo destino = actuales.stream()
@@ -153,6 +157,15 @@ public class GrupoService {
         GrupoEquipo actual = asignacionActiva(category.getId(), teamId);
         if (actual != null && destino != null && destino.getId().equals(actual.getIdGrupo())) {
             return vista(category);
+        }
+        Integer limite = category.getEquiposPorGrupo();
+        if (destino != null && limite != null) {
+            long ocupados = asignaciones.findByIdGrupoAndEstado(destino.getId(), "ACTIVO").stream()
+                    .filter(item -> "ACTIVO".equals(item.getEstado()))
+                    .count();
+            if (ocupados >= limite) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El grupo no tiene cupo disponible.");
+            }
         }
         if (actual != null) {
             actual.setEstado("ELIMINADO");

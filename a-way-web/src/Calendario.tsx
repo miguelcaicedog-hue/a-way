@@ -49,13 +49,14 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
   const [groupId, setGroupId] = useState('')
+  const [verTodos, setVerTodos] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [equiposSinMatch, setEquiposSinMatch] = useState<string[]>([])
   const solicitud = useRef(0)
   const archivoRef = useRef<HTMLInputElement>(null)
   const writable = canWrite(profile)
-  const grupoActual = groupId || panel?.groupId || ''
+  const grupoActual = verTodos ? '' : (groupId || panel?.groupId || '')
 
   function publicar(promesa: Promise<Panel>) {
     const marca = ++solicitud.current
@@ -68,10 +69,14 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
   }
 
   function conGrupo(path: string) {
+    const separador = path.includes('?') ? '&' : '?'
+    if (verTodos) {
+      return `${path}${separador}todos=true`
+    }
     if (!grupoActual) {
       return path
     }
-    return `${path}${path.includes('?') ? '&' : '?'}groupId=${grupoActual}`
+    return `${path}${separador}groupId=${grupoActual}`
   }
 
   useEffect(() => {
@@ -79,6 +84,7 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
       setCategories([])
       setCategoryId('')
       setGroupId('')
+      setVerTodos(false)
       return
     }
     api<Category[]>(`/api/categories?editionId=${editionId}`)
@@ -86,6 +92,7 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
         setCategories(items)
         setCategoryId(items[0]?.id ?? '')
         setGroupId('')
+        setVerTodos(false)
       })
       .catch((reason: Error) => setError(reason.message))
   }, [editionId])
@@ -96,7 +103,7 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
       return
     }
     const marca = ++solicitud.current
-    const query = groupId ? `&groupId=${groupId}` : ''
+    const query = verTodos ? '&todos=true' : (groupId ? `&groupId=${groupId}` : '')
     api<Panel>(`/api/calendario?categoryId=${categoryId}${query}`)
       .then((siguiente) => {
         if (marca === solicitud.current) {
@@ -104,7 +111,7 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
         }
       })
       .catch((reason: Error) => setError(reason.message))
-  }, [categoryId, groupId])
+  }, [categoryId, groupId, verTodos])
 
   async function ejecutar(path: string, method: string, body?: unknown) {
     setError(null)
@@ -168,6 +175,7 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
               onChange={(event) => {
                 setCategoryId(event.target.value)
                 setGroupId('')
+                setVerTodos(false)
                 setEquiposSinMatch([])
                 setError(null)
               }}
@@ -178,13 +186,16 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
           <label>
             Grupo
             <select
-              value={grupoActual}
+              value={verTodos ? '' : grupoActual}
               onChange={(event) => {
-                setGroupId(event.target.value)
+                const value = event.target.value
+                setVerTodos(value === '')
+                setGroupId(value)
                 setEquiposSinMatch([])
                 setError(null)
               }}
             >
+              <option value="">Todos</option>
               {(panel?.grupos ?? []).map((item) => (
                 <option key={item.id} value={item.id}>{item.nombre}</option>
               ))}
@@ -213,7 +224,10 @@ export function CalendarioScreen({ profile, editionId }: { profile: Profile; edi
         </form>
       )}
       {panel && !hayGrupos && <p>Crea los grupos de la categoría antes de armar el calendario.</p>}
-      {panel && hayGrupos && !hayCalendario && (
+      {panel && hayGrupos && !hayCalendario && verTodos && (
+        <p>No hay calendario para esta categoría.</p>
+      )}
+      {panel && hayGrupos && !hayCalendario && !verTodos && (
         <p>No hay calendario para este grupo. Carga el archivo predefinido o genera el calendario de la categoría.</p>
       )}
       {panel && hayCalendario && (

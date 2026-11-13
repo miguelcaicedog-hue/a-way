@@ -95,7 +95,7 @@ public class InscripcionEquipo {
     }
 
     public void setNombreEquipo(String nombreEquipo) {
-        this.nombreEquipo = nombreEquipo;
+        this.nombreEquipo = Mayusculas.de(nombreEquipo);
     }
 
     public String getUrlLogo() {

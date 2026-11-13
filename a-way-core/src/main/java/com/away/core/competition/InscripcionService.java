@@ -65,6 +65,31 @@ public class InscripcionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void eliminar(UUID archivoId) {
+        InscripcionArchivo archivo = archivo(archivoId);
+        assertWrite(archivo.getIdLiga());
+        if (!"ACTIVO".equals(archivo.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo ya no está activo");
+        }
+        List<InscripcionEquipo> cargados = equipos.findByIdInscripcionArchivoAndEstadoOrderByNumeroFilaAsc(archivo.getId(), "ACTIVO");
+        boolean procesado = cargados.stream().anyMatch(equipo -> "OK".equals(equipo.getResultado()));
+        if (procesado) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo ya fue procesado");
+        }
+        String usuario = usuario();
+        for (InscripcionEquipo equipo : cargados) {
+            for (InscripcionJugador jugador : jugadores.findByIdInscripcionEquipoAndEstadoOrderByOrdenAsc(equipo.getId(), "ACTIVO")) {
+                jugador.setEstado("ELIMINADO");
+                auditar(jugador, usuario, false);
+            }
+            equipo.setEstado("ELIMINADO");
+            auditar(equipo, usuario, false);
+        }
+        archivo.setEstado("ELIMINADO");
+        auditar(archivo, usuario, false);
+    }
+
     @Transactional(readOnly = true)
     public InscripcionDetalleView detalle(UUID archivoId) {
         InscripcionArchivo archivo = archivo(archivoId);

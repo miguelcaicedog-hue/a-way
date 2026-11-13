@@ -98,7 +98,7 @@ public class InscripcionJugador {
     }
 
     public void setNombre(String nombre) {
-        this.nombre = nombre;
+        this.nombre = Mayusculas.de(nombre);
     }
 
     public String getNumeroCamisa() {
@@ -138,7 +138,7 @@ public class InscripcionJugador {
     }
 
     public void setAlias(String alias) {
-        this.alias = alias;
+        this.alias = Mayusculas.de(alias);
     }
 
     public boolean isCargado() {

@@ -74,7 +74,7 @@ public class Team {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = Mayusculas.de(name);
     }
 
     public String getNombreRepresentante() {

@@ -558,6 +558,18 @@ button.ghost {
   background: #e7f0fa;
 }
 
+.grupo-columna.excede {
+  border-style: solid;
+  border-color: #b45309;
+  background: #fff7ed;
+}
+
+.aviso-cupo {
+  margin: 0;
+  color: #9a3412;
+  font-size: 0.85rem;
+}
+
 .grupo-columna header {
   display: flex;
   align-items: center;

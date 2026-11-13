@@ -60,14 +60,14 @@ public class CalendarioService {
     }
 
     @Transactional(readOnly = true)
-    public CalendarioPanelView panel(UUID categoryId, UUID groupId) {
+    public CalendarioPanelView panel(UUID categoryId, UUID groupId, boolean todos) {
         Category category = category(categoryId);
         assertRead(category.getEdition().getLeague().getId());
-        return vista(category, groupId);
+        return vista(category, groupId, todos);
     }
 
     @Transactional
-    public CalendarioPanelView generar(UUID categoryId, UUID groupId) {
+    public CalendarioPanelView generar(UUID categoryId, UUID groupId, boolean todos) {
         Category category = category(categoryId);
         assertWrite(category.getEdition().getLeague().getId());
         List<Jornada> activas = jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO");
@@ -119,7 +119,7 @@ public class CalendarioService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay equipos en los grupos ni cruces completos para armar partidos.");
         }
         persistir(category.getId(), porFecha, usuario());
-        return vista(category, groupId);
+        return vista(category, groupId, todos);
     }
 
     @Transactional
@@ -229,7 +229,7 @@ public class CalendarioService {
     }
 
     @Transactional
-    public CalendarioPanelView fechaJornada(UUID jornadaId, LocalDate fecha, UUID groupId) {
+    public CalendarioPanelView fechaJornada(UUID jornadaId, LocalDate fecha, UUID groupId, boolean todos) {
         Jornada jornada = jornadas.findById(jornadaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La jornada no existe"));
         Category category = category(jornada.getIdCategoria());
@@ -240,11 +240,15 @@ public class CalendarioService {
         String usuario = usuario();
         jornada.setFecha(fecha);
         auditar(jornada, usuario, false);
-        return vista(category, groupId);
+        for (Partido partido : partidos.findByIdJornadaAndEstadoOrderByOrdenAsc(jornada.getId(), "ACTIVO")) {
+            partido.setFecha(fecha);
+            auditar(partido, usuario, false);
+        }
+        return vista(category, groupId, todos);
     }
 
     @Transactional
-    public CalendarioPanelView fechaPartido(UUID partidoId, LocalDate fecha, UUID groupId) {
+    public CalendarioPanelView fechaPartido(UUID partidoId, LocalDate fecha, UUID groupId, boolean todos) {
         Partido partido = partidos.findById(partidoId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El partido no existe"));
         Category category = category(partido.getIdCategoria());
@@ -254,11 +258,11 @@ public class CalendarioService {
         }
         partido.setFecha(fecha);
         auditar(partido, usuario(), false);
-        return vista(category, groupId);
+        return vista(category, groupId, todos);
     }
 
     @Transactional
-    public CalendarioPanelView eliminar(UUID categoryId, UUID groupId) {
+    public CalendarioPanelView eliminar(UUID categoryId, UUID groupId, boolean todos) {
         Category category = category(categoryId);
         assertWrite(category.getEdition().getLeague().getId());
         List<Jornada> activas = jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO");
@@ -274,7 +278,7 @@ public class CalendarioService {
             jornada.setEstado("ELIMINADO");
             auditar(jornada, usuario, false);
         }
-        return vista(category, groupId);
+        return vista(category, groupId, todos);
     }
 
     private void recalcularFasesSiguientes(Category category, Fase gruposFase, String usuario) {
@@ -461,6 +465,10 @@ public class CalendarioService {
     }
 
     private CalendarioPanelView vista(Category category, UUID groupId) {
+        return vista(category, groupId, false);
+    }
+
+    private CalendarioPanelView vista(Category category, UUID groupId, boolean todos) {
         Map<UUID, Team> porEquipo = new HashMap<>();
         Map<UUID, Grupo> porGrupo = new HashMap<>();
         List<CalendarioGrupoView> gruposVista = new ArrayList<>();
@@ -468,11 +476,11 @@ public class CalendarioService {
             porGrupo.put(grupo.getId(), grupo);
             gruposVista.add(new CalendarioGrupoView(grupo.getId(), grupo.getNombre()));
         }
-        UUID seleccionado = groupId;
+        UUID seleccionado = todos ? null : groupId;
         if (seleccionado != null && !porGrupo.containsKey(seleccionado)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El grupo no pertenece a la categoría.");
         }
-        if (seleccionado == null && !gruposVista.isEmpty()) {
+        if (!todos && seleccionado == null && !gruposVista.isEmpty()) {
             seleccionado = gruposVista.get(0).getId();
         }
         Map<UUID, Cruce> porCruce = new HashMap<>();

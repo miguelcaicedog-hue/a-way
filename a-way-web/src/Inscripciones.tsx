@@ -121,21 +121,37 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   }
 
   useEffect(() => {
+    setArchivos([])
+    setDetalle(null)
+    setAbierto(null)
+    setJugadores([])
+    setRevision(null)
+    setEditor(null)
     if (!leagueId || !editionId) {
-      setArchivos([])
-      setDetalle(null)
       return
     }
+    let vigente = true
     api<Archivo[]>(`/api/inscripciones?leagueId=${leagueId}&editionId=${editionId}`)
       .then(async (items) => {
+        if (!vigente) {
+          return
+        }
         setArchivos(items)
         if (items[0]) {
-          await abrir(items[0].id)
-        } else {
-          setDetalle(null)
+          const body = await api<Detalle>(`/api/inscripciones/${items[0].id}`)
+          if (vigente) {
+            setDetalle(body)
+          }
         }
       })
-      .catch((reason: Error) => setError(reason.message))
+      .catch((reason: Error) => {
+        if (vigente) {
+          setError(reason.message)
+        }
+      })
+    return () => {
+      vigente = false
+    }
   }, [leagueId, editionId])
 
   async function onFile(event: ChangeEvent<HTMLInputElement>) {
@@ -326,6 +342,33 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
 
   const equipoAbierto = detalle?.equipos.find((equipo) => equipo.id === abierto)
   const todosProcesados = Boolean(detalle?.equipos.length) && detalle.equipos.every((equipo) => equipo.resultado === 'OK')
+  const sinProcesar = Boolean(detalle) && detalle.equipos.every((equipo) => equipo.resultado !== 'OK')
+
+  async function eliminarArchivo() {
+    if (!detalle || !sinProcesar || !leagueId || !editionId) {
+      return
+    }
+    if (!window.confirm('¿Eliminar el archivo cargado?')) {
+      return
+    }
+    setError(null)
+    try {
+      await api<void>(`/api/inscripciones/${detalle.id}`, { method: 'DELETE' })
+      const items = await api<Archivo[]>(`/api/inscripciones?leagueId=${leagueId}&editionId=${editionId}`)
+      setArchivos(items)
+      setAbierto(null)
+      setJugadores([])
+      setRevision(null)
+      setEditor(null)
+      if (items[0]) {
+        await abrir(items[0].id)
+      } else {
+        setDetalle(null)
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo eliminar el archivo')
+    }
+  }
 
   return (
     <section className="catalog">
@@ -410,9 +453,16 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
             </div>
           )}
           {writable && (
-            <button type="button" onClick={() => procesar()} disabled={procesando || comprobando || todosProcesados}>
-              {procesando ? 'Procesando…' : comprobando ? 'Comprobando…' : 'Procesar'}
-            </button>
+            <div className="actions">
+              <button type="button" onClick={() => procesar()} disabled={procesando || comprobando || todosProcesados}>
+                {procesando ? 'Procesando…' : comprobando ? 'Comprobando…' : 'Procesar'}
+              </button>
+              {sinProcesar && (
+                <button type="button" className="ghost" onClick={eliminarArchivo} disabled={procesando || comprobando}>
+                  Eliminar archivo
+                </button>
+              )}
+            </div>
           )}
           {equipoAbierto && (
             <div className="inscripcion-jugadores">

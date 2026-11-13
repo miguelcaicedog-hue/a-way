@@ -93,6 +93,33 @@ export function GruposScreen({ profile, editionId }: { profile: Profile; edition
     }
   }
 
+  function sinCupo(vista: Panel) {
+    const limite = vista.equiposPorGrupo
+    return limite != null && vista.sinGrupo.length > 0 && vista.grupos.every((grupo) => grupo.equipos.length >= limite)
+  }
+
+  async function asignar() {
+    if (!panel || !categoryId) {
+      return
+    }
+    if (sinCupo(panel)) {
+      setError('No hay cupo disponible en los grupos.')
+      return
+    }
+    setError(null)
+    try {
+      const siguiente = await publicar(api<Panel>('/api/grupos/asignar', {
+        method: 'POST',
+        body: JSON.stringify({ categoryId }),
+      }))
+      if (sinCupo(siguiente)) {
+        setError('No hay cupo disponible en los grupos.')
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo completar la operación')
+    }
+  }
+
   async function eliminar(id: string) {
     setError(null)
     try {
@@ -123,6 +150,14 @@ export function GruposScreen({ profile, editionId }: { profile: Profile; edition
     if (!writable || !categoryId || !teamId) {
       return
     }
+    if (groupId && panel?.equiposPorGrupo != null) {
+      const grupo = panel.grupos.find((item) => item.id === groupId)
+      const yaEsta = grupo?.equipos.some((equipo) => equipo.teamId === teamId) ?? false
+      if (grupo && !yaEsta && grupo.equipos.length >= panel.equiposPorGrupo) {
+        setError('El grupo no tiene cupo disponible.')
+        return
+      }
+    }
     setError(null)
     try {
       await publicar(api<Panel>('/api/grupos/equipo', {
@@ -152,7 +187,7 @@ export function GruposScreen({ profile, editionId }: { profile: Profile; edition
             <div className="actions">
               <button type="button" onClick={() => ejecutar('/api/grupos/generar', { categoryId })}>Crear grupos</button>
               <button type="button" onClick={() => ejecutar('/api/grupos', { categoryId })}>Agregar grupo</button>
-              <button type="button" onClick={() => ejecutar('/api/grupos/asignar', { categoryId })}>Asignar equipos</button>
+              <button type="button" onClick={() => asignar()}>Asignar equipos</button>
             </div>
           )}
         </form>
@@ -178,10 +213,13 @@ export function GruposScreen({ profile, editionId }: { profile: Profile; edition
               ))}
               {panel.sinGrupo.length === 0 && <p className="vacio">No hay equipos pendientes.</p>}
             </section>
-            {panel.grupos.map((grupo) => (
+            {panel.grupos.map((grupo) => {
+              const excede = panel.equiposPorGrupo != null && grupo.equipos.length > panel.equiposPorGrupo
+              const clase = ['grupo-columna', sobre === grupo.id ? 'sobre' : '', excede ? 'excede' : ''].filter(Boolean).join(' ')
+              return (
               <section
                 key={grupo.id}
-                className={sobre === grupo.id ? 'grupo-columna sobre' : 'grupo-columna'}
+                className={clase}
                 onDragOver={(event) => permitir(event, grupo.id)}
                 onDragLeave={() => setSobre(null)}
                 onDrop={(event) => soltar(event, grupo.id)}
@@ -191,6 +229,7 @@ export function GruposScreen({ profile, editionId }: { profile: Profile; edition
                   <span>{grupo.equipos.length}</span>
                   {writable && <button type="button" className="ghost" onClick={() => eliminar(grupo.id)}>Eliminar</button>}
                 </header>
+                {excede && <p className="aviso-cupo">Supera el cupo de {panel.equiposPorGrupo} equipos.</p>}
                 {grupo.equipos.map((equipo) => (
                   <article key={equipo.teamId} className="equipo-ficha" role="button" aria-label={equipo.nombre} draggable={writable} onDragStart={(event) => arrastrar(event, equipo.teamId)}>
                     {equipo.nombre}
@@ -198,7 +237,8 @@ export function GruposScreen({ profile, editionId }: { profile: Profile; edition
                 ))}
                 {grupo.equipos.length === 0 && <p className="vacio">Suelta equipos aquí.</p>}
               </section>
-            ))}
+              )
+            })}
           </div>
         </>
       )}

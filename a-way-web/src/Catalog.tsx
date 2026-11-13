@@ -103,9 +103,9 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
   const [clearLogo, setClearLogo] = useState(false)
   const [logoStamp, setLogoStamp] = useState(0)
   const [filtroNombre, setFiltroNombre] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('ACTIVA')
   const [consultaNombre, setConsultaNombre] = useState('')
-  const [consultaEstado, setConsultaEstado] = useState('')
+  const [consultaEstado, setConsultaEstado] = useState('ACTIVA')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
   const ligas = rows.filter((row) => {

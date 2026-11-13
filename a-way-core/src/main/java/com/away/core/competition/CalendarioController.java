@@ -27,14 +27,16 @@ public class CalendarioController {
 
     @GetMapping
     public CalendarioPanelView panel(@RequestParam UUID categoryId,
-                                     @RequestParam(required = false) UUID groupId) {
-        return calendario.panel(categoryId, groupId);
+                                     @RequestParam(required = false) UUID groupId,
+                                     @RequestParam(defaultValue = "false") boolean todos) {
+        return calendario.panel(categoryId, groupId, todos);
     }
 
     @PostMapping("/generar")
     public CalendarioPanelView generar(@Valid @RequestBody CalendarioCategoriaRequest request,
-                                       @RequestParam(required = false) UUID groupId) {
-        return calendario.generar(request.getCategoryId(), groupId);
+                                       @RequestParam(required = false) UUID groupId,
+                                       @RequestParam(defaultValue = "false") boolean todos) {
+        return calendario.generar(request.getCategoryId(), groupId, todos);
     }
 
     @PostMapping(value = "/cargar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -47,20 +49,23 @@ public class CalendarioController {
     @PutMapping("/jornada/{id}")
     public CalendarioPanelView fechaJornada(@PathVariable UUID id,
                                             @RequestBody CalendarioFechaRequest request,
-                                            @RequestParam(required = false) UUID groupId) {
-        return calendario.fechaJornada(id, request.getFecha(), groupId);
+                                            @RequestParam(required = false) UUID groupId,
+                                            @RequestParam(defaultValue = "false") boolean todos) {
+        return calendario.fechaJornada(id, request.getFecha(), groupId, todos);
     }
 
     @PutMapping("/partido/{id}")
     public CalendarioPanelView fechaPartido(@PathVariable UUID id,
                                             @RequestBody CalendarioFechaRequest request,
-                                            @RequestParam(required = false) UUID groupId) {
-        return calendario.fechaPartido(id, request.getFecha(), groupId);
+                                            @RequestParam(required = false) UUID groupId,
+                                            @RequestParam(defaultValue = "false") boolean todos) {
+        return calendario.fechaPartido(id, request.getFecha(), groupId, todos);
     }
 
     @DeleteMapping
     public CalendarioPanelView eliminar(@RequestParam UUID categoryId,
-                                        @RequestParam(required = false) UUID groupId) {
-        return calendario.eliminar(categoryId, groupId);
+                                        @RequestParam(required = false) UUID groupId,
+                                        @RequestParam(defaultValue = "false") boolean todos) {
+        return calendario.eliminar(categoryId, groupId, todos);
     }
 }

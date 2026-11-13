@@ -420,7 +420,9 @@ function App() {
         {section === 'categorias' && <CategoryScreen profile={profile} editionId={editionId} />}
         {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
-        {section === 'inscripciones' && <InscripcionScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
+        {section === 'inscripciones' && (
+          <InscripcionScreen key={`${leagueId}-${editionId}`} profile={profile} leagueId={leagueId} editionId={editionId} />
+        )}
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
