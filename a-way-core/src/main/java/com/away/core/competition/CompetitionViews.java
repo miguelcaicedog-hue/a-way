@@ -612,6 +612,7 @@ class PlayerRequest {
     private Integer numeroCamisa;
     @NotNull
     private Integer rotationDegrees;
+    private String estado;
     private String photoBase64;
     private String photoContentType;
     private boolean clearPhoto;
@@ -664,6 +665,14 @@ class PlayerRequest {
         this.rotationDegrees = rotationDegrees;
     }
 
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
     public String getPhotoBase64() {
         return photoBase64;
     }
@@ -700,10 +709,12 @@ class PlayerView {
     private final String cedula;
     private final int numeroCamisa;
     private final int rotationDegrees;
+    private final String estado;
     private final boolean hasPhoto;
 
     PlayerView(UUID id, UUID teamEntryId, UUID teamId, String teamName, UUID categoryId,
-               String name, String alias, String cedula, int numeroCamisa, int rotationDegrees, boolean hasPhoto) {
+               String name, String alias, String cedula, int numeroCamisa, int rotationDegrees, String estado,
+               boolean hasPhoto) {
         this.id = id;
         this.teamEntryId = teamEntryId;
         this.teamId = teamId;
@@ -714,6 +725,7 @@ class PlayerView {
         this.cedula = cedula;
         this.numeroCamisa = numeroCamisa;
         this.rotationDegrees = rotationDegrees;
+        this.estado = estado;
         this.hasPhoto = hasPhoto;
     }
 
@@ -755,6 +767,10 @@ class PlayerView {
 
     public int getRotationDegrees() {
         return rotationDegrees;
+    }
+
+    public String getEstado() {
+        return estado;
     }
 
     public boolean isHasPhoto() {

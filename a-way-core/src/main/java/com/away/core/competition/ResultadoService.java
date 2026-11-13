@@ -367,6 +367,9 @@ public class ResultadoService {
         String nombreFiltro = nombre == null ? "" : nombre.trim().toLowerCase(Locale.ROOT);
         List<ResultadoViews.JugadorPartidoView> filas = new ArrayList<>();
         for (Player jugador : jugadores.findByTeamEntry_IdOrderByCedulaAsc(entrada.getId())) {
+            if (!"ACTIVO".equals(jugador.getEstado())) {
+                continue;
+            }
             String camisa = String.valueOf(jugador.getNumeroCamisa());
             if (!numeroFiltro.isEmpty() && !camisa.contains(numeroFiltro)) {
                 continue;

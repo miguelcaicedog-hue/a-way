@@ -41,19 +41,22 @@ public class CalendarioService {
     private final FaseRepository fases;
     private final CruceRepository cruces;
     private final TeamRepository teams;
+    private final TeamEntryRepository entries;
     private final JornadaRepository jornadas;
     private final PartidoRepository partidos;
     private final AppUserRepository users;
 
     public CalendarioService(CategoryRepository categories, GrupoRepository grupos, GrupoEquipoRepository asignaciones,
                              FaseRepository fases, CruceRepository cruces, TeamRepository teams,
-                             JornadaRepository jornadas, PartidoRepository partidos, AppUserRepository users) {
+                             TeamEntryRepository entries, JornadaRepository jornadas, PartidoRepository partidos,
+                             AppUserRepository users) {
         this.categories = categories;
         this.grupos = grupos;
         this.asignaciones = asignaciones;
         this.fases = fases;
         this.cruces = cruces;
         this.teams = teams;
+        this.entries = entries;
         this.jornadas = jornadas;
         this.partidos = partidos;
         this.users = users;
@@ -194,7 +197,8 @@ public class CalendarioService {
             borradores.add(borrador);
         }
         if (!faltantes.isEmpty()) {
-            throw new CalendarioCargaException(new ArrayList<>(faltantes));
+            throw new CalendarioCargaException(category.getName(), grupo.getNombre(),
+                    motivos(category, grupo, faltantes));
         }
         Map<Integer, Jornada> porNumero = new HashMap<>();
         Map<UUID, Integer> siguienteOrden = new HashMap<>();
@@ -614,6 +618,59 @@ public class CalendarioService {
         partido.setFecha(borrador.fecha);
         auditar(partido, usuario, true);
         partidos.save(partido);
+    }
+
+    private List<String> motivos(Category category, Grupo grupo, Set<String> faltantes) {
+        Map<String, String> otroGrupo = new HashMap<>();
+        Map<UUID, String> nombreGrupo = new HashMap<>();
+        for (Grupo item : grupos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            nombreGrupo.put(item.getId(), item.getNombre());
+        }
+        for (GrupoEquipo puesto : asignaciones.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            Team equipo = puesto.getEquipo();
+            if (equipo == null || !"ACTIVO".equals(equipo.getEstado()) || grupo.getId().equals(puesto.getIdGrupo())) {
+                continue;
+            }
+            otroGrupo.putIfAbsent(CalendarioWorkbook.clave(equipo.getName()), nombreGrupo.get(puesto.getIdGrupo()));
+        }
+        Set<String> inscritos = new HashSet<>();
+        for (TeamEntry entry : entries.findByCategory_IdOrderByTeam_NameAsc(category.getId())) {
+            Team equipo = entry.getTeam();
+            if (equipo != null && "ACTIVO".equals(equipo.getEstado())) {
+                inscritos.add(CalendarioWorkbook.clave(equipo.getName()));
+            }
+        }
+        Map<String, List<Team>> enLiga = new HashMap<>();
+        for (Team equipo : teams.buscar(category.getEdition().getLeague().getId(), "", "", "ACTIVO")) {
+            enLiga.computeIfAbsent(CalendarioWorkbook.clave(equipo.getName()), key -> new ArrayList<>()).add(equipo);
+        }
+        List<String> motivos = new ArrayList<>();
+        for (String nombre : faltantes) {
+            String clave = CalendarioWorkbook.clave(nombre);
+            if (otroGrupo.containsKey(clave)) {
+                motivos.add(nombre + " está en " + category.getName() + ", en " + otroGrupo.get(clave)
+                        + ", no en " + grupo.getNombre() + ".");
+                continue;
+            }
+            if (inscritos.contains(clave)) {
+                motivos.add(nombre + " está inscrito en " + category.getName() + " pero no está asignado a un grupo.");
+                continue;
+            }
+            LinkedHashSet<String> categorias = new LinkedHashSet<>();
+            for (Team equipo : enLiga.getOrDefault(clave, List.of())) {
+                for (TeamEntry entry : entries.findByEquipoEnEdicion(equipo.getId(), category.getEdition().getId())) {
+                    categorias.add(entry.getCategory().getName());
+                }
+            }
+            if (!categorias.isEmpty()) {
+                motivos.add(nombre + " está en " + String.join(", ", categorias) + ", no en " + category.getName() + ".");
+            } else if (enLiga.containsKey(clave)) {
+                motivos.add(nombre + " existe en la liga, pero no está inscrito en esta edición.");
+            } else {
+                motivos.add(nombre + " no existe en la liga.");
+            }
+        }
+        return motivos;
     }
 
     private Category category(UUID id) {

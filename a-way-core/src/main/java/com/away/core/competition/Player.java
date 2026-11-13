@@ -40,6 +40,9 @@ public class Player {
     @Column(name = "rotation_degrees", nullable = false)
     private short rotationDegrees;
 
+    @Column(nullable = false)
+    private String estado;
+
     public UUID getId() {
         return id;
     }
@@ -110,5 +113,13 @@ public class Player {
 
     public void setRotationDegrees(short rotationDegrees) {
         this.rotationDegrees = rotationDegrees;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

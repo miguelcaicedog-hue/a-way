@@ -79,6 +79,7 @@ interface PlayerRepository extends JpaRepository<Player, UUID> {
 
     @Query("select player.teamEntry.team.id, count(player.id) from Player player "
             + "where player.teamEntry.category.edition.id = :editionId and player.teamEntry.team.id in :teamIds "
+            + "and player.estado = 'ACTIVO' "
             + "group by player.teamEntry.team.id")
     List<Object[]> contarPorEquipo(@Param("editionId") UUID editionId, @Param("teamIds") Collection<UUID> teamIds);
 }

@@ -315,10 +315,12 @@ public class CompetitionService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlayerView> listPlayers(UUID teamEntryId) {
+    public List<PlayerView> listPlayers(UUID teamEntryId, String estado) {
         TeamEntry entry = teamEntry(teamEntryId);
         assertRead(entry.getTeam().getLeague().getId());
+        String filtro = estado == null || estado.isBlank() ? "ACTIVO" : estado.trim().toUpperCase(Locale.ROOT);
         return players.findByTeamEntry_IdOrderByCedulaAsc(teamEntryId).stream()
+                .filter(player -> "TODOS".equals(filtro) || filtro.equals(player.getEstado()))
                 .map(this::playerView)
                 .collect(Collectors.toList());
     }
@@ -527,6 +529,17 @@ public class CompetitionService {
         return value;
     }
 
+    private String estadoJugador(String estado) {
+        if (estado == null || estado.isBlank()) {
+            return "ACTIVO";
+        }
+        String value = estado.trim().toUpperCase(Locale.ROOT);
+        if (!Arrays.asList("ACTIVO", "INACTIVO").contains(value)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El estado del jugador debe ser activo o inactivo");
+        }
+        return value;
+    }
+
     private String textoFiltro(String value) {
         return value == null ? "" : value.trim();
     }
@@ -585,7 +598,7 @@ public class CompetitionService {
 
     private void assertRosterRoom(TeamEntry entry, UUID currentPlayerId) {
         long occupied = players.findByTeamEntry_IdOrderByCedulaAsc(entry.getId()).stream()
-                .filter(existing -> !existing.getId().equals(currentPlayerId))
+                .filter(existing -> "ACTIVO".equals(existing.getEstado()) && !existing.getId().equals(currentPlayerId))
                 .count();
         if (occupied >= entry.getCategory().getMaxPlayers()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El plantel ya alcanzó el máximo de jugadores de la categoría.");
@@ -603,6 +616,7 @@ public class CompetitionService {
         player.setCedula(request.getCedula().trim());
         player.setNumeroCamisa(request.getNumeroCamisa());
         player.setRotationDegrees((short) rotation);
+        player.setEstado(estadoJugador(request.getEstado()));
         if (request.isClearPhoto()) {
             player.getPhoto();
             player.setPhoto(null);
@@ -750,6 +764,6 @@ public class CompetitionService {
         return new PlayerView(player.getId(), entry.getId(), entry.getTeam().getId(), entry.getTeam().getName(),
                 entry.getCategory().getId(), player.getName(), player.getAlias(), player.getCedula(),
                 player.getNumeroCamisa(),
-                player.getRotationDegrees(), player.getPhoto() != null);
+                player.getRotationDegrees(), player.getEstado(), player.getPhoto() != null);
     }
 }

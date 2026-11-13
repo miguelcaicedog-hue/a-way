@@ -353,6 +353,7 @@ public class InscripcionService {
             player.setNumeroCamisa(numero);
             player.setAlias(aliasDesdeNombre(nombre));
             player.setRotationDegrees((short) 0);
+            player.setEstado("ACTIVO");
             players.save(player);
             jugador.setCargado(true);
             jugador.setAlias(player.getAlias());
@@ -557,6 +558,7 @@ public class InscripcionService {
             player.setId(UUID.randomUUID());
             player.setTeamEntry(entrada);
             player.setRotationDegrees((short) 0);
+            player.setEstado("ACTIVO");
         }
         player.setCedula(jugador.getCedula());
         player.setName(jugador.getNombre());

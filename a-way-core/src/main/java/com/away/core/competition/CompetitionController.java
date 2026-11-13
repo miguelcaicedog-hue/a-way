@@ -160,8 +160,9 @@ public class CompetitionController {
     }
 
     @GetMapping("/players")
-    public List<PlayerView> players(@RequestParam UUID teamEntryId) {
-        return competition.listPlayers(teamEntryId);
+    public List<PlayerView> players(@RequestParam UUID teamEntryId,
+                                    @RequestParam(defaultValue = "ACTIVO") String estado) {
+        return competition.listPlayers(teamEntryId, estado);
     }
 
     @GetMapping("/players/lookup")

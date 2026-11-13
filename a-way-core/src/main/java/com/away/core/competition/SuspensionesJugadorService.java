@@ -61,6 +61,9 @@ public class SuspensionesJugadorService {
         String texto = alias == null ? "" : alias.trim().toLowerCase();
         List<SuspensionesJugadorViews.JugadorView> filas = new ArrayList<>();
         for (Player jugador : jugadores.findByTeamEntry_IdOrderByCedulaAsc(entrada.getId())) {
+            if (!"ACTIVO".equals(jugador.getEstado())) {
+                continue;
+            }
             String nombre = alias(jugador);
             if (!texto.isEmpty() && !nombre.toLowerCase().contains(texto)) {
                 continue;

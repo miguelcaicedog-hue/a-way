@@ -891,6 +891,7 @@ type Player = {
   cedula: string
   numeroCamisa: number
   rotationDegrees: number
+  estado: string
   hasPhoto: boolean
 }
 
@@ -911,6 +912,8 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const [photoType, setPhotoType] = useState<string | null>(null)
   const [clearPhoto, setClearPhoto] = useState(false)
   const [photoStamp, setPhotoStamp] = useState(0)
+  const [estado, setEstado] = useState('ACTIVO')
+  const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
   const category = categories.find((item) => item.id === categoryId)
@@ -965,7 +968,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
       .then(async (items) => {
         const found = items.find((item) => item.teamId === teamId) ?? null
         setEntry(found)
-        setRows(found ? await api<Player[]>(`/api/players?teamEntryId=${found.id}`) : [])
+        setRows(found ? await api<Player[]>(`/api/players?teamEntryId=${found.id}&estado=TODOS`) : [])
         setPhotoStamp(Date.now())
       })
       .catch((reason: Error) => setError(reason.message))
@@ -981,11 +984,12 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
     setPhoto(null)
     setPhotoType(null)
     setClearPhoto(false)
+    setEstado('ACTIVO')
   }
 
   async function reload(nextEntry: TeamEntry) {
     setEntry(nextEntry)
-    setRows(await api<Player[]>(`/api/players?teamEntryId=${nextEntry.id}`))
+    setRows(await api<Player[]>(`/api/players?teamEntryId=${nextEntry.id}&estado=TODOS`))
     setPhotoStamp(Date.now())
   }
 
@@ -1080,6 +1084,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
     setPhoto(null)
     setPhotoType(null)
     setClearPhoto(false)
+    setEstado(row.estado === 'INACTIVO' ? 'INACTIVO' : 'ACTIVO')
   }
 
   async function onSubmit(event: FormEvent) {
@@ -1099,6 +1104,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
       cedula,
       numeroCamisa: Number(numeroCamisa),
       rotationDegrees: rotation,
+      estado,
       photoBase64: photo,
       photoContentType: photoType,
       clearPhoto,
@@ -1133,6 +1139,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   }
 
   const preview = photo ?? (editing?.hasPhoto && !clearPhoto ? `/api/players/${editing.id}/photo?v=${photoStamp}` : null)
+  const visibles = filtroEstado ? rows.filter((row) => row.estado === filtroEstado) : rows
 
   return (
     <section className="catalog">
@@ -1150,7 +1157,15 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
           {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
         </select>
       </label>
-      {category && <p>Máximo de jugadores: {category.maxPlayers}. Inscritos: {rows.length}.</p>}
+      <label>
+        Estado
+        <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)}>
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+          <option value="">Todos</option>
+        </select>
+      </label>
+      {category && <p>Máximo de jugadores: {category.maxPlayers}. Inscritos: {rows.filter((row) => row.estado === 'ACTIVO').length}.</p>}
       {categoryId && teamId && !entry && (
         <p>
           Este equipo no está inscrito en la categoría.
@@ -1167,11 +1182,12 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
               <th>Nº de camisa</th>
               <th>Nombre</th>
               <th>Alias</th>
+              <th>Estado</th>
               {writable && <th></th>}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
+            {visibles.map((row, index) => (
               <tr key={row.id}>
                 <td className="numero">{index + 1}</td>
                 <td>
@@ -1188,6 +1204,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 <td>{row.numeroCamisa}</td>
                 <td>{row.name}</td>
                 <td>{row.alias}</td>
+                <td>{row.estado === 'INACTIVO' ? 'Inactivo' : 'Activo'}</td>
                 {writable && (
                   <td className="actions">
                     <button type="button" onClick={() => edit(row)}>Editar</button>
@@ -1196,7 +1213,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 )}
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={writable ? 7 : 6}>No hay jugadores.</td></tr>}
+            {visibles.length === 0 && <tr><td colSpan={writable ? 8 : 7}>No hay jugadores.</td></tr>}
           </tbody>
         </table>
       )}
@@ -1222,6 +1239,13 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
           </label>
           <label>Alias<input value={alias} onChange={(event) => setAlias(event.target.value)} /></label>
           <label>Número de camisa<input type="number" min={0} value={numeroCamisa} onChange={(event) => setNumeroCamisa(event.target.value)} required /></label>
+          <label>
+            Estado
+            <select value={estado} onChange={(event) => setEstado(event.target.value)}>
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </label>
           <label>
             Foto
             <input key={editing?.id ?? 'nuevo'} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={onPhoto} />
