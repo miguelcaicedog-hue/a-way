@@ -33,11 +33,16 @@ class CalendarioFechaRequest {
 class CalendarioPanelView {
     private final UUID categoryId;
     private final String categoryName;
+    private final UUID groupId;
+    private final List<CalendarioGrupoView> grupos;
     private final List<JornadaView> jornadas;
 
-    CalendarioPanelView(UUID categoryId, String categoryName, List<JornadaView> jornadas) {
+    CalendarioPanelView(UUID categoryId, String categoryName, UUID groupId, List<CalendarioGrupoView> grupos,
+                        List<JornadaView> jornadas) {
         this.categoryId = categoryId;
         this.categoryName = categoryName;
+        this.groupId = groupId;
+        this.grupos = grupos;
         this.jornadas = jornadas;
     }
 
@@ -49,8 +54,34 @@ class CalendarioPanelView {
         return categoryName;
     }
 
+    public UUID getGroupId() {
+        return groupId;
+    }
+
+    public List<CalendarioGrupoView> getGrupos() {
+        return grupos;
+    }
+
     public List<JornadaView> getJornadas() {
         return jornadas;
+    }
+}
+
+class CalendarioGrupoView {
+    private final UUID id;
+    private final String nombre;
+
+    CalendarioGrupoView(UUID id, String nombre) {
+        this.id = id;
+        this.nombre = nombre;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
     }
 }
 

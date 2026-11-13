@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,18 +33,21 @@ public class CierreJornadaService {
     private final PartidoRepository partidos;
     private final TarjetaJugadorRepository tarjetas;
     private final SuspensionJugadorRepository suspensiones;
+    private final SuspensionExclusionRepository exclusiones;
     private final ReglaSuspensionRepository reglas;
     private final LeagueSettingsRepository ajustes;
     private final AppUserRepository users;
 
     public CierreJornadaService(CategoryRepository categories, JornadaRepository jornadas, PartidoRepository partidos,
                                 TarjetaJugadorRepository tarjetas, SuspensionJugadorRepository suspensiones,
-                                ReglaSuspensionRepository reglas, LeagueSettingsRepository ajustes, AppUserRepository users) {
+                                SuspensionExclusionRepository exclusiones, ReglaSuspensionRepository reglas,
+                                LeagueSettingsRepository ajustes, AppUserRepository users) {
         this.categories = categories;
         this.jornadas = jornadas;
         this.partidos = partidos;
         this.tarjetas = tarjetas;
         this.suspensiones = suspensiones;
+        this.exclusiones = exclusiones;
         this.reglas = reglas;
         this.ajustes = ajustes;
         this.users = users;
@@ -98,6 +102,10 @@ public class CierreJornadaService {
             if (!pedidos.contains(suspension.getIdJugador())) {
                 continue;
             }
+            if ("FALTA_GRAVE".equals(suspension.getMotivo())) {
+                resultado.add(suspension.getIdJugador());
+                continue;
+            }
             Integer inicio = indice.get(suspension.getIdJornadaInicio());
             if (inicio != null && aqui >= inicio && aqui < inicio + suspension.getJornadas()) {
                 resultado.add(suspension.getIdJugador());
@@ -139,14 +147,23 @@ public class CierreJornadaService {
     }
 
     private void recalcular(Category categoria, String usuario) {
+        List<Jornada> orden = ordenadas(categoria.getId());
+        Map<UUID, Integer> indice = indice(orden);
+        Map<UUID, Set<Integer>> manuales = new HashMap<>();
         for (SuspensionJugador anterior : suspensiones.findByIdCategoriaAndEstado(categoria.getId(), "ACTIVO")) {
+            if ("MANUAL".equals(anterior.getOrigen())) {
+                ocupar(manuales, anterior, orden, indice);
+                continue;
+            }
             anterior.setEstado("ELIMINADO");
             anterior.setFechaModificacion(OffsetDateTime.now());
             anterior.setUsuarioModificacion(usuario);
             suspensiones.save(anterior);
         }
-        List<Jornada> orden = ordenadas(categoria.getId());
-        Map<UUID, Integer> indice = indice(orden);
+        Set<String> excluidas = new HashSet<>();
+        for (SuspensionExclusion exclusion : exclusiones.findByIdCategoriaAndEstado(categoria.getId(), "ACTIVO")) {
+            excluidas.add(clave(exclusion.getIdJugador(), exclusion.getIdJornadaOrigen(), exclusion.getMotivo()));
+        }
         Map<UUID, Partido> porPartido = new HashMap<>();
         for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(categoria.getId(), "ACTIVO")) {
             porPartido.put(partido.getId(), partido);
@@ -176,34 +193,34 @@ public class CierreJornadaService {
                     .thenComparingInt(tarjeta -> ordenPartido(tarjeta, porPartido)));
             aplicar(categoria, entrada.getKey(), entrada.getValue(), orden, indice, usuario,
                     rojaJornadas, momentoRoja, amarillasUmbral, amarillasJornadas, momentoAmarillas,
-                    rojasUmbral, rojasJornadas, momentoRojas);
+                    rojasUmbral, rojasJornadas, momentoRojas,
+                    new HashSet<>(manuales.getOrDefault(entrada.getKey(), Collections.emptySet())), excluidas);
         }
     }
 
     private void aplicar(Category categoria, UUID jugadorId, List<TarjetaJugador> tarjetasJugador, List<Jornada> orden,
                          Map<UUID, Integer> indice, String usuario,
                          int rojaJornadas, String momentoRoja, int amarillasUmbral, int amarillasJornadas, String momentoAmarillas,
-                         int rojasUmbral, int rojasJornadas, String momentoRojas) {
+                         int rojasUmbral, int rojasJornadas, String momentoRojas, Set<Integer> ocupadas, Set<String> excluidas) {
         int amarillasPendientes = 0;
         int rojasPendientes = 0;
-        Set<Integer> ocupadas = new HashSet<>();
         for (TarjetaJugador tarjeta : tarjetasJugador) {
             int origen = indice.get(tarjeta.getIdJornada());
             int amarillas = tarjeta.getAmarillas() == null ? 0 : tarjeta.getAmarillas();
             int rojas = tarjeta.getRojas() == null ? 0 : tarjeta.getRojas();
             boolean cuentaAmarillas = !(amarillas == 2 && rojas >= 1);
             if (rojas >= 1) {
-                colocar(categoria, jugadorId, orden, ocupadas, origen, inicio(orden, origen, momentoRoja), rojaJornadas, "ROJA_DIRECTA", usuario);
+                colocar(categoria, jugadorId, orden, ocupadas, origen, inicio(orden, origen, momentoRoja), rojaJornadas, "ROJA_DIRECTA", usuario, excluidas);
                 rojasPendientes += rojas;
                 while (rojasUmbral > 0 && rojasPendientes >= rojasUmbral) {
-                    colocar(categoria, jugadorId, orden, ocupadas, origen, inicio(orden, origen, momentoRojas), rojasJornadas, "ROJAS_ACUMULADAS", usuario);
+                    colocar(categoria, jugadorId, orden, ocupadas, origen, inicio(orden, origen, momentoRojas), rojasJornadas, "ROJAS_ACUMULADAS", usuario, excluidas);
                     rojasPendientes -= rojasUmbral;
                 }
             }
             if (cuentaAmarillas && amarillas > 0) {
                 amarillasPendientes += amarillas;
                 while (amarillasUmbral > 0 && amarillasPendientes >= amarillasUmbral) {
-                    colocar(categoria, jugadorId, orden, ocupadas, origen, inicio(orden, origen, momentoAmarillas), amarillasJornadas, "AMARILLAS", usuario);
+                    colocar(categoria, jugadorId, orden, ocupadas, origen, inicio(orden, origen, momentoAmarillas), amarillasJornadas, "AMARILLAS", usuario, excluidas);
                     amarillasPendientes -= amarillasUmbral;
                 }
             }
@@ -211,8 +228,11 @@ public class CierreJornadaService {
     }
 
     private void colocar(Category categoria, UUID jugadorId, List<Jornada> orden, Set<Integer> ocupadas, int origen,
-                         int preferido, int cantidad, String motivo, String usuario) {
-        if (cantidad <= 0 || preferido < 0) {
+                         int preferido, int cantidad, String motivo, String usuario, Set<String> excluidas) {
+        if (cantidad <= 0 || preferido < 0 || origen < 0 || origen >= orden.size()) {
+            return;
+        }
+        if (excluidas.contains(clave(jugadorId, orden.get(origen).getId(), motivo))) {
             return;
         }
         for (int cursor = preferido; cursor + cantidad <= orden.size(); cursor++) {
@@ -238,6 +258,7 @@ public class CierreJornadaService {
             suspension.setIdJornadaInicio(orden.get(cursor).getId());
             suspension.setJornadas(cantidad);
             suspension.setMotivo(motivo);
+            suspension.setOrigen("CIERRE");
             suspension.setEstado("ACTIVO");
             OffsetDateTime ahora = OffsetDateTime.now();
             suspension.setFechaCreacion(ahora);
@@ -291,6 +312,27 @@ public class CierreJornadaService {
             delDia.add(porId.get(id));
         }
         return delDia;
+    }
+
+    private void ocupar(Map<UUID, Set<Integer>> manuales, SuspensionJugador suspension, List<Jornada> orden, Map<UUID, Integer> indice) {
+        Set<Integer> ocupadas = manuales.computeIfAbsent(suspension.getIdJugador(), id -> new HashSet<>());
+        if ("FALTA_GRAVE".equals(suspension.getMotivo())) {
+            for (int i = 0; i < orden.size(); i++) {
+                ocupadas.add(i);
+            }
+            return;
+        }
+        Integer inicio = indice.get(suspension.getIdJornadaInicio());
+        if (inicio == null) {
+            return;
+        }
+        for (int paso = 0; paso < suspension.getJornadas() && inicio + paso < orden.size(); paso++) {
+            ocupadas.add(inicio + paso);
+        }
+    }
+
+    private String clave(UUID jugadorId, UUID jornadaOrigenId, String motivo) {
+        return jugadorId + "|" + jornadaOrigenId + "|" + motivo;
     }
 
     private List<Jornada> ordenadas(UUID categoryId) {

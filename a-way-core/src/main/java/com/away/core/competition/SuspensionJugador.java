@@ -36,6 +36,9 @@ public class SuspensionJugador {
     @Column(nullable = false)
     private String motivo;
 
+    @Column(nullable = false)
+    private String origen;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -113,6 +116,14 @@ public class SuspensionJugador {
 
     public void setMotivo(String motivo) {
         this.motivo = motivo;
+    }
+
+    public String getOrigen() {
+        return origen;
+    }
+
+    public void setOrigen(String origen) {
+        this.origen = origen;
     }
 
     public OffsetDateTime getFechaCreacion() {

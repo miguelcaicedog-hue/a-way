@@ -316,6 +316,10 @@ ul {
   color: #b42318;
 }
 
+.equipos-sin-match {
+  margin-top: 0;
+}
+
 .ok {
   color: #1d7a3a;
   font-weight: 600;
@@ -496,6 +500,16 @@ button.ghost {
   margin: 0 0 12px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+}
+
+.jornada-proxima {
+  margin: 0 0 1rem;
+  color: #163a5f;
+  font-weight: 700;
+}
+
+.fila-jugador {
+  cursor: pointer;
 }
 
 .jornada-cerrada {

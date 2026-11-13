@@ -8,7 +8,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.away.core.competition.CalendarioCargaException;
+
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -38,6 +41,14 @@ public class ApiExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Collections.singletonMap("error", "No se pudo guardar: el nombre ya existe o hay registros que dependen de este dato."));
+    }
+
+    @ExceptionHandler(CalendarioCargaException.class)
+    public ResponseEntity<Map<String, Object>> calendarioCarga(CalendarioCargaException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", exception.getMessage());
+        body.put("equipos", exception.getEquipos());
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

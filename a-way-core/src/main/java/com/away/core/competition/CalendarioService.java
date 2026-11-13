@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -14,6 +17,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,14 +60,14 @@ public class CalendarioService {
     }
 
     @Transactional(readOnly = true)
-    public CalendarioPanelView panel(UUID categoryId) {
+    public CalendarioPanelView panel(UUID categoryId, UUID groupId) {
         Category category = category(categoryId);
         assertRead(category.getEdition().getLeague().getId());
-        return vista(category);
+        return vista(category, groupId);
     }
 
     @Transactional
-    public CalendarioPanelView generar(UUID categoryId) {
+    public CalendarioPanelView generar(UUID categoryId, UUID groupId) {
         Category category = category(categoryId);
         assertWrite(category.getEdition().getLeague().getId());
         List<Jornada> activas = jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO");
@@ -107,7 +111,217 @@ public class CalendarioService {
         for (Jornada jornada : activas) {
             fasesArmadas.add(jornada.getIdFase());
         }
+        completarFasesSiguientes(category, gruposFase, fasesArmadas, siguiente, porFecha, porCruce, porGrupo);
+        if (!activas.isEmpty() && porFecha.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El calendario de la categoría ya está creado.");
+        }
+        if (porFecha.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay equipos en los grupos ni cruces completos para armar partidos.");
+        }
+        persistir(category.getId(), porFecha, usuario());
+        return vista(category, groupId);
+    }
+
+    @Transactional
+    public CalendarioPanelView cargar(UUID categoryId, UUID groupId, MultipartFile archivo) {
+        Category category = category(categoryId);
+        assertWrite(category.getEdition().getLeague().getId());
+        if (groupId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecciona un grupo de la primera fase.");
+        }
+        if (archivo == null || archivo.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecciona un archivo de Excel");
+        }
+        String nombre = archivo.getOriginalFilename() == null ? "calendario.xlsx" : archivo.getOriginalFilename();
+        if (!nombre.toLowerCase(Locale.ROOT).endsWith(".xlsx")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo debe ser .xlsx");
+        }
+        Grupo grupo = grupos.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El grupo no existe"));
+        if (!category.getId().equals(grupo.getIdCategoria()) || !"ACTIVO".equals(grupo.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El grupo no pertenece a la categoría.");
+        }
+        List<Fase> rondas = fases.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO");
+        if (rondas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Crea las fases de la categoría antes de cargar el calendario.");
+        }
+        Fase gruposFase = rondas.get(0);
+        for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            if (groupId.equals(partido.getIdGrupo())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El grupo ya tiene calendario.");
+            }
+        }
+        List<CalendarioWorkbook.PartidoLeido> leidos;
+        try {
+            leidos = CalendarioWorkbook.leer(archivo.getInputStream());
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pudo leer el archivo de Excel");
+        }
+        if (leidos.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo no tiene partidos");
+        }
+        Map<String, Team> porNombre = new HashMap<>();
+        for (GrupoEquipo puesto : asignaciones.findByIdGrupoAndEstado(groupId, "ACTIVO")) {
+            Team equipo = puesto.getEquipo();
+            if (equipo == null || !"ACTIVO".equals(equipo.getEstado())) {
+                continue;
+            }
+            porNombre.put(CalendarioWorkbook.clave(equipo.getName()), equipo);
+        }
+        LinkedHashSet<String> faltantes = new LinkedHashSet<>();
+        List<PartidoBorrador> borradores = new ArrayList<>();
+        for (CalendarioWorkbook.PartidoLeido leido : leidos) {
+            Team local = porNombre.get(CalendarioWorkbook.clave(leido.local));
+            Team visita = porNombre.get(CalendarioWorkbook.clave(leido.visita));
+            if (local == null) {
+                faltantes.add(leido.local);
+            }
+            if (visita == null) {
+                faltantes.add(leido.visita);
+            }
+            if (local != null && visita != null && local.getId().equals(visita.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "La fila " + leido.fila + " tiene el mismo equipo como local y visitante.");
+            }
+            PartidoBorrador borrador = new PartidoBorrador();
+            borrador.faseId = gruposFase.getId();
+            borrador.grupoId = groupId;
+            borrador.equipoLocal = local == null ? null : local.getId();
+            borrador.equipoVisita = visita == null ? null : visita.getId();
+            borrador.nombre = "JORNADA " + leido.jornada;
+            borrador.numero = leido.jornada;
+            borrador.fecha = leido.fecha;
+            borradores.add(borrador);
+        }
+        if (!faltantes.isEmpty()) {
+            throw new CalendarioCargaException(new ArrayList<>(faltantes));
+        }
+        Map<Integer, Jornada> porNumero = new HashMap<>();
+        Map<UUID, Integer> siguienteOrden = new HashMap<>();
+        for (Jornada jornada : jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO")) {
+            porNumero.put(jornada.getNumero(), jornada);
+            siguienteOrden.put(jornada.getId(), 1);
+        }
+        for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            siguienteOrden.merge(partido.getIdJornada(), partido.getOrden() + 1, Math::max);
+        }
+        String usuario = usuario();
+        for (PartidoBorrador borrador : borradores) {
+            Jornada jornada = porNumero.get(borrador.numero);
+            if (jornada == null) {
+                jornada = guardarJornada(category.getId(), gruposFase.getId(), borrador.numero, borrador.nombre, usuario);
+                jornada.setFecha(borrador.fecha);
+                porNumero.put(borrador.numero, jornada);
+                siguienteOrden.put(jornada.getId(), 1);
+            } else if (!gruposFase.getId().equals(jornada.getIdFase())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "La jornada " + borrador.numero + " ya pertenece a otra fase.");
+            } else if (jornada.getFecha() == null && borrador.fecha != null) {
+                jornada.setFecha(borrador.fecha);
+                auditar(jornada, usuario, false);
+            }
+            int orden = siguienteOrden.getOrDefault(jornada.getId(), 1);
+            guardarPartido(category.getId(), jornada.getId(), borrador, orden, usuario);
+            siguienteOrden.put(jornada.getId(), orden + 1);
+        }
+        recalcularFasesSiguientes(category, gruposFase, usuario);
+        return vista(category, groupId);
+    }
+
+    @Transactional
+    public CalendarioPanelView fechaJornada(UUID jornadaId, LocalDate fecha, UUID groupId) {
+        Jornada jornada = jornadas.findById(jornadaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La jornada no existe"));
+        Category category = category(jornada.getIdCategoria());
+        assertWrite(category.getEdition().getLeague().getId());
+        if (!"ACTIVO".equals(jornada.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La jornada ya no está activa");
+        }
+        String usuario = usuario();
+        jornada.setFecha(fecha);
+        auditar(jornada, usuario, false);
+        return vista(category, groupId);
+    }
+
+    @Transactional
+    public CalendarioPanelView fechaPartido(UUID partidoId, LocalDate fecha, UUID groupId) {
+        Partido partido = partidos.findById(partidoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El partido no existe"));
+        Category category = category(partido.getIdCategoria());
+        assertWrite(category.getEdition().getLeague().getId());
+        if (!"ACTIVO".equals(partido.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El partido ya no está activo");
+        }
+        partido.setFecha(fecha);
+        auditar(partido, usuario(), false);
+        return vista(category, groupId);
+    }
+
+    @Transactional
+    public CalendarioPanelView eliminar(UUID categoryId, UUID groupId) {
+        Category category = category(categoryId);
+        assertWrite(category.getEdition().getLeague().getId());
+        List<Jornada> activas = jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO");
+        if (activas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no tiene calendario activo");
+        }
+        String usuario = usuario();
+        for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            partido.setEstado("ELIMINADO");
+            auditar(partido, usuario, false);
+        }
+        for (Jornada jornada : activas) {
+            jornada.setEstado("ELIMINADO");
+            auditar(jornada, usuario, false);
+        }
+        return vista(category, groupId);
+    }
+
+    private void recalcularFasesSiguientes(Category category, Fase gruposFase, String usuario) {
+        List<Fase> rondas = fases.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO");
+        Set<UUID> siguientes = new HashSet<>();
         for (Fase fase : rondas) {
+            if (!fase.getId().equals(gruposFase.getId())) {
+                siguientes.add(fase.getId());
+            }
+        }
+        if (siguientes.isEmpty()) {
+            return;
+        }
+        int maxPrimera = 0;
+        for (Jornada jornada : jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO")) {
+            if (gruposFase.getId().equals(jornada.getIdFase())) {
+                maxPrimera = Math.max(maxPrimera, jornada.getNumero());
+            } else if (siguientes.contains(jornada.getIdFase())) {
+                jornada.setEstado("ELIMINADO");
+                auditar(jornada, usuario, false);
+            }
+        }
+        for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            if (siguientes.contains(partido.getIdFase())) {
+                partido.setEstado("ELIMINADO");
+                auditar(partido, usuario, false);
+            }
+        }
+        jornadas.flush();
+        partidos.flush();
+        Map<UUID, Cruce> porCruce = new HashMap<>();
+        for (Cruce cruce : cruces.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            porCruce.put(cruce.getId(), cruce);
+        }
+        Map<UUID, Grupo> porGrupo = new HashMap<>();
+        for (Grupo grupo : grupos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            porGrupo.put(grupo.getId(), grupo);
+        }
+        TreeMap<Integer, List<PartidoBorrador>> porFecha = new TreeMap<>();
+        completarFasesSiguientes(category, gruposFase, Set.of(), maxPrimera, porFecha, porCruce, porGrupo);
+        persistir(category.getId(), porFecha, usuario);
+    }
+
+    private void completarFasesSiguientes(Category category, Fase gruposFase, Set<UUID> fasesArmadas, int siguiente,
+                                          Map<Integer, List<PartidoBorrador>> porFecha, Map<UUID, Cruce> porCruce,
+                                          Map<UUID, Grupo> porGrupo) {
+        for (Fase fase : fases.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
             if (fase.getId().equals(gruposFase.getId()) || fasesArmadas.contains(fase.getId())) {
                 continue;
             }
@@ -129,72 +343,18 @@ public class CalendarioService {
                 agregarCruces(porFecha, siguiente, fase, serie, fase.getNombre() + " VUELTA", true);
             }
         }
-        if (!activas.isEmpty() && porFecha.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El calendario de la categoría ya está creado.");
-        }
-        if (porFecha.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay equipos en los grupos ni cruces completos para armar partidos.");
-        }
-        String usuario = usuario();
+    }
+
+    private void persistir(UUID categoryId, Map<Integer, List<PartidoBorrador>> porFecha, String usuario) {
         for (Map.Entry<Integer, List<PartidoBorrador>> entrada : porFecha.entrySet()) {
             PartidoBorrador primero = entrada.getValue().get(0);
-            Jornada jornada = guardarJornada(category.getId(), primero.faseId, entrada.getKey(), primero.nombre, usuario);
+            Jornada jornada = guardarJornada(categoryId, primero.faseId, entrada.getKey(), primero.nombre, usuario);
             int orden = 1;
             for (PartidoBorrador borrador : entrada.getValue()) {
-                guardarPartido(category.getId(), jornada.getId(), borrador, orden, usuario);
+                guardarPartido(categoryId, jornada.getId(), borrador, orden, usuario);
                 orden++;
             }
         }
-        return vista(category);
-    }
-
-    @Transactional
-    public CalendarioPanelView fechaJornada(UUID jornadaId, LocalDate fecha) {
-        Jornada jornada = jornadas.findById(jornadaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La jornada no existe"));
-        Category category = category(jornada.getIdCategoria());
-        assertWrite(category.getEdition().getLeague().getId());
-        if (!"ACTIVO".equals(jornada.getEstado())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La jornada ya no está activa");
-        }
-        String usuario = usuario();
-        jornada.setFecha(fecha);
-        auditar(jornada, usuario, false);
-        return vista(category);
-    }
-
-    @Transactional
-    public CalendarioPanelView fechaPartido(UUID partidoId, LocalDate fecha) {
-        Partido partido = partidos.findById(partidoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El partido no existe"));
-        Category category = category(partido.getIdCategoria());
-        assertWrite(category.getEdition().getLeague().getId());
-        if (!"ACTIVO".equals(partido.getEstado())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El partido ya no está activo");
-        }
-        partido.setFecha(fecha);
-        auditar(partido, usuario(), false);
-        return vista(category);
-    }
-
-    @Transactional
-    public CalendarioPanelView eliminar(UUID categoryId) {
-        Category category = category(categoryId);
-        assertWrite(category.getEdition().getLeague().getId());
-        List<Jornada> activas = jornadas.findByIdCategoriaAndEstadoOrderByNumeroAsc(category.getId(), "ACTIVO");
-        if (activas.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no tiene calendario activo");
-        }
-        String usuario = usuario();
-        for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
-            partido.setEstado("ELIMINADO");
-            auditar(partido, usuario, false);
-        }
-        for (Jornada jornada : activas) {
-            jornada.setEstado("ELIMINADO");
-            auditar(jornada, usuario, false);
-        }
-        return vista(category);
     }
 
     private void agregarCruces(Map<Integer, List<PartidoBorrador>> porFecha, int fecha, Fase fase, List<Cruce> serie,
@@ -300,11 +460,20 @@ public class CalendarioService {
         return equipos;
     }
 
-    private CalendarioPanelView vista(Category category) {
+    private CalendarioPanelView vista(Category category, UUID groupId) {
         Map<UUID, Team> porEquipo = new HashMap<>();
         Map<UUID, Grupo> porGrupo = new HashMap<>();
+        List<CalendarioGrupoView> gruposVista = new ArrayList<>();
         for (Grupo grupo : grupos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
             porGrupo.put(grupo.getId(), grupo);
+            gruposVista.add(new CalendarioGrupoView(grupo.getId(), grupo.getNombre()));
+        }
+        UUID seleccionado = groupId;
+        if (seleccionado != null && !porGrupo.containsKey(seleccionado)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El grupo no pertenece a la categoría.");
+        }
+        if (seleccionado == null && !gruposVista.isEmpty()) {
+            seleccionado = gruposVista.get(0).getId();
         }
         Map<UUID, Cruce> porCruce = new HashMap<>();
         for (Cruce cruce : cruces.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
@@ -317,6 +486,9 @@ public class CalendarioService {
         }
         Map<UUID, List<PartidoView>> porJornada = new HashMap<>();
         for (Partido partido : partidos.findByIdCategoriaAndEstadoOrderByOrdenAsc(category.getId(), "ACTIVO")) {
+            if (seleccionado != null && !seleccionado.equals(partido.getIdGrupo())) {
+                continue;
+            }
             boolean vuelta = nombreJornada.getOrDefault(partido.getIdJornada(), "").endsWith(" VUELTA");
             porJornada.computeIfAbsent(partido.getIdJornada(), key -> new ArrayList<>())
                     .add(new PartidoView(partido.getId(), partido.getOrden(),
@@ -326,10 +498,14 @@ public class CalendarioService {
         }
         List<JornadaView> vistas = new ArrayList<>();
         for (Jornada jornada : activas) {
+            List<PartidoView> deGrupo = porJornada.getOrDefault(jornada.getId(), List.of());
+            if (deGrupo.isEmpty()) {
+                continue;
+            }
             vistas.add(new JornadaView(jornada.getId(), jornada.getNumero(), jornada.getNombre(), jornada.getFecha(),
-                    porJornada.getOrDefault(jornada.getId(), List.of())));
+                    deGrupo));
         }
-        return new CalendarioPanelView(category.getId(), category.getName(), vistas);
+        return new CalendarioPanelView(category.getId(), category.getName(), seleccionado, gruposVista, vistas);
     }
 
     private String texto(UUID equipoId, Integer posicion, UUID grupoId, Map<UUID, Team> equipos, Map<UUID, Grupo> grupos) {
@@ -427,6 +603,7 @@ public class CalendarioService {
         partido.setPosicionVisita(borrador.posicionVisita);
         partido.setIdGrupoVisita(borrador.grupoVisita);
         partido.setOrden(orden);
+        partido.setFecha(borrador.fecha);
         auditar(partido, usuario, true);
         partidos.save(partido);
     }
@@ -506,5 +683,7 @@ public class CalendarioService {
         private Integer posicionVisita;
         private UUID grupoVisita;
         private String nombre;
+        private int numero;
+        private LocalDate fecha;
     }
 }

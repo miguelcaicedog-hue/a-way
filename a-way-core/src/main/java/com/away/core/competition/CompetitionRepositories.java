@@ -111,6 +111,15 @@ interface JornadaRepository extends JpaRepository<Jornada, UUID> {
 
 interface SuspensionJugadorRepository extends JpaRepository<SuspensionJugador, UUID> {
     List<SuspensionJugador> findByIdCategoriaAndEstado(UUID idCategoria, String estado);
+
+    List<SuspensionJugador> findByIdCategoriaAndIdJugadorAndEstado(UUID idCategoria, UUID idJugador, String estado);
+}
+
+interface SuspensionExclusionRepository extends JpaRepository<SuspensionExclusion, UUID> {
+    List<SuspensionExclusion> findByIdCategoriaAndEstado(UUID idCategoria, String estado);
+
+    Optional<SuspensionExclusion> findByIdJugadorAndIdJornadaOrigenAndMotivoAndEstado(
+            UUID idJugador, UUID idJornadaOrigen, String motivo, String estado);
 }
 
 interface PartidoRepository extends JpaRepository<Partido, UUID> {

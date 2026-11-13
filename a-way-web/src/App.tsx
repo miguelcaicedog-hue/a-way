@@ -14,6 +14,7 @@ import { TablaScreen } from './Tabla'
 import { InscripcionScreen } from './Inscripciones'
 import { SancionesJugadorScreen } from './SancionesJugador'
 import { SuspensionesScreen } from './Suspensiones'
+import { SuspensionesJugadorScreen } from './SuspensionesJugador'
 import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 
 type Health = {
@@ -58,6 +59,7 @@ const sections = [
   { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
   { id: 'sanciones-jugador', label: 'Sanciones jugador', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
   { id: 'suspensiones', label: 'Suspensiones', summary: 'Jornadas de suspensión por tarjeta roja, acumulación de amarillas o rojas, y faltas media o grave.' },
+  { id: 'suspensiones-jugador', label: 'Suspensiones a jugador', summary: 'Suspensiones pendientes de cada jugador y altas o bajas manuales.' },
   { id: 'pagos', label: 'Pagos', summary: 'Arbitraje por jornada y cancelación de multas por tarjeta.' },
   { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
   { id: 'importaciones', label: 'Importaciones', summary: 'Planteles desde Excel y equipos desde el formulario de Google.' },
@@ -70,7 +72,7 @@ const menuGroups = [
   { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
-  { label: 'Disciplina', ids: ['catalogo-tarjetas', 'sanciones-jugador', 'suspensiones', 'sanciones'] },
+  { label: 'Disciplina', ids: ['catalogo-tarjetas', 'sanciones-jugador', 'suspensiones', 'suspensiones-jugador', 'sanciones'] },
   { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
   { label: 'Administración', ids: ['importaciones', 'configuracion', 'usuarios'] },
 ] as const
@@ -309,9 +311,13 @@ function App() {
         <div className="brand">A-WAY</div>
         <nav aria-label="Principal">
           {menuGroups.map((group) => {
+            const staff = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
             const items = group.ids.flatMap((id) => {
               const item = sections.find((sectionItem) => sectionItem.id === id)
-              return item ? [item] : []
+              if (!item || (item.id === 'suspensiones-jugador' && !staff)) {
+                return []
+              }
+              return [item]
             })
             if (items.length === 1 && items[0].id === 'inicio') {
               return (
@@ -426,6 +432,7 @@ function App() {
         {section === 'catalogo-tarjetas' && <TarjetasCatalogoScreen profile={profile} leagueId={leagueId} />}
         {section === 'sanciones-jugador' && <SancionesJugadorScreen profile={profile} leagueId={leagueId} />}
         {section === 'suspensiones' && <SuspensionesScreen key={leagueId} profile={profile} leagueId={leagueId} />}
+        {section === 'suspensiones-jugador' && <SuspensionesJugadorScreen key={editionId} editionId={editionId} leagueId={leagueId} />}
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
       </main>
       </div>
