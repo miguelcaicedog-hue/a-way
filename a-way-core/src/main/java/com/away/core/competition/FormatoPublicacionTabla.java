@@ -111,6 +111,9 @@ public class FormatoPublicacionTabla {
     @Column(name = "lugar_tamano", nullable = false)
     private int lugarTamano;
 
+    @Column(name = "agrupar_primera_columna", nullable = false)
+    private boolean agruparPrimeraColumna;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -388,6 +391,14 @@ public class FormatoPublicacionTabla {
 
     public void setLugarTamano(int lugarTamano) {
         this.lugarTamano = lugarTamano;
+    }
+
+    public boolean isAgruparPrimeraColumna() {
+        return agruparPrimeraColumna;
+    }
+
+    public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) {
+        this.agruparPrimeraColumna = agruparPrimeraColumna;
     }
 
     public OffsetDateTime getFechaCreacion() {

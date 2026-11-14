@@ -563,6 +563,14 @@ export function PublicacionesScreen({
                         <Numero etiqueta="Tamaño" valor={tabla.lugarTamano} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'lugarTamano', valor)} />
                         <Numero etiqueta="Posición Y" valor={tabla.lugarY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'lugarY', valor)} />
                       </Grupo>
+                      <Grupo titulo="Primera columna" abierto>
+                        <Marca
+                          etiqueta="Agrupar filas con el mismo valor"
+                          valor={tabla.agruparPrimeraColumna}
+                          disabled={!writable}
+                          onChange={(valor) => cambiarTabla(tabla.tipo, 'agruparPrimeraColumna', valor)}
+                        />
+                      </Grupo>
                       <Grupo titulo="Posición de la tabla" abierto>
                         <Numero etiqueta="X" valor={tabla.tablaX} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tablaX', valor)} />
                         <Numero etiqueta="Y" valor={tabla.tablaY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tablaY', valor)} />

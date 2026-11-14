@@ -161,6 +161,7 @@ public class FormatoPublicacionViews {
         private final int fechaTamano;
         private final int lugarY;
         private final int lugarTamano;
+        private final boolean agruparPrimeraColumna;
 
         TablaView(FormatoPublicacionTabla tabla) {
             this.tipo = tabla.getTipo();
@@ -193,6 +194,7 @@ public class FormatoPublicacionViews {
             this.fechaTamano = tabla.getFechaTamano();
             this.lugarY = tabla.getLugarY();
             this.lugarTamano = tabla.getLugarTamano();
+            this.agruparPrimeraColumna = tabla.isAgruparPrimeraColumna();
         }
 
         public String getTipo() { return tipo; }
@@ -225,6 +227,7 @@ public class FormatoPublicacionViews {
         public int getFechaTamano() { return fechaTamano; }
         public int getLugarY() { return lugarY; }
         public int getLugarTamano() { return lugarTamano; }
+        public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
     }
 
     public static class FormatoRequest {
@@ -361,6 +364,7 @@ public class FormatoPublicacionViews {
         private Integer fechaTamano;
         private Integer lugarY;
         private Integer lugarTamano;
+        private boolean agruparPrimeraColumna;
 
         public String getTipo() { return tipo; }
         public void setTipo(String tipo) { this.tipo = tipo; }
@@ -422,5 +426,7 @@ public class FormatoPublicacionViews {
         public void setLugarY(Integer lugarY) { this.lugarY = lugarY; }
         public Integer getLugarTamano() { return lugarTamano; }
         public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
+        public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
+        public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) { this.agruparPrimeraColumna = agruparPrimeraColumna; }
     }
 }

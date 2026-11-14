@@ -37,6 +37,7 @@ export type TablaEstilo = {
   fechaTamano: number
   lugarY: number
   lugarTamano: number
+  agruparPrimeraColumna: boolean
 }
 
 export type Formato = {
@@ -300,20 +301,33 @@ export async function dibujarPublicacion(
     cursor += anchos[indice]
   })
 
+  const agrupar = tabla.agruparPrimeraColumna && columnas.length > 0
   visibles.forEach((fila, indiceFila) => {
     const filaY = arriba + altoCabecera + indiceFila * altoFila
     let x = izquierda
     fila.valores.forEach((valor, indice) => {
       const columna = columnas[indice]
+      const inicioGrupo = indice === 0 && agrupar && (indiceFila === 0 || visibles[indiceFila - 1].valores[0] !== valor)
+      const sigueGrupo = indice === 0 && agrupar && indiceFila > 0 && visibles[indiceFila - 1].valores[0] === valor
+      if (sigueGrupo) {
+        x += anchos[indice]
+        return
+      }
+      let altoCelda = altoFila
+      if (inicioGrupo) {
+        let span = 1
+        while (indiceFila + span < visibles.length && visibles[indiceFila + span].valores[0] === valor) span += 1
+        altoCelda = altoFila * span
+      }
       ctx.fillStyle = columna.destacada ? tabla.destacadaFondo : tabla.filaFondo
-      ctx.fillRect(x, filaY, anchos[indice], altoFila)
+      ctx.fillRect(x, filaY, anchos[indice], altoCelda)
       const tamano = columna.numero ? px(tabla.numeroTamano) : px(tabla.filaTamano)
-      ctx.font = fuente(Math.min(tamano, altoFila * 0.72), columna.numero ? 'Arial' : 'Arial', columna.numero, false)
+      ctx.font = fuente(Math.min(tamano, altoFila * 0.72), 'Arial', columna.numero, false)
       ctx.fillStyle = columna.numero ? tabla.numeroColor : tabla.filaColor
       ctx.textAlign = columna.numero || columna.destacada ? 'center' : 'left'
       const texto = recortar(ctx, valor, anchos[indice] - px(16))
       const textoX = columna.numero || columna.destacada ? x + anchos[indice] / 2 : x + px(10)
-      ctx.fillText(texto, textoX, filaY + altoFila / 2)
+      ctx.fillText(texto, textoX, filaY + altoCelda / 2)
       x += anchos[indice]
     })
   })
@@ -329,7 +343,8 @@ export async function dibujarPublicacion(
   ctx.lineTo(izquierda + ancho, arriba + altoCabecera)
   for (let indice = 1; indice <= visibles.length; indice += 1) {
     const y = arriba + altoCabecera + indice * altoFila
-    ctx.moveTo(izquierda, y)
+    const cortaPrimera = agrupar && indice < visibles.length && visibles[indice].valores[0] === visibles[indice - 1].valores[0]
+    ctx.moveTo(cortaPrimera ? izquierda + anchos[0] : izquierda, y)
     ctx.lineTo(izquierda + ancho, y)
   }
   ctx.stroke()

@@ -180,6 +180,7 @@ public class FormatoPublicacionService {
             fila.setFechaTamano(medida(pedido.getFechaTamano(), "fecha tamaño", 8, 120));
             fila.setLugarY(medida(pedido.getLugarY(), "nombre de lugar y", 0, 4000));
             fila.setLugarTamano(medida(pedido.getLugarTamano(), "nombre de lugar tamaño", 8, 200));
+            fila.setAgruparPrimeraColumna(pedido.isAgruparPrimeraColumna());
             fila.setFechaModificacion(OffsetDateTime.now());
             fila.setUsuarioModificacion(usuario);
         }
@@ -280,6 +281,7 @@ public class FormatoPublicacionService {
         tabla.setFechaTamano(20);
         tabla.setLugarY(158);
         tabla.setLugarTamano(28);
+        tabla.setAgruparPrimeraColumna(false);
         tabla.setEstado("ACTIVO");
         OffsetDateTime ahora = OffsetDateTime.now();
         tabla.setFechaCreacion(ahora);
