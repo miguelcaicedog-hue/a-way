@@ -14,6 +14,7 @@ final class ReportePdf {
         try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
+            builder.useDefaultPageSize(297, 210, PdfRendererBuilder.PageSizeUnits.MM);
             builder.withHtmlContent(html, null);
             builder.toStream(salida);
             builder.run();
