@@ -38,6 +38,12 @@ public class TarjetaService {
     }
 
     @Transactional
+    public void sembrar(UUID leagueId) {
+        crearInicial(leagueId, "AMARILLA", "#FFFF00", new BigDecimal("1.00"), 0, 1);
+        crearInicial(leagueId, "ROJA", "#FF0000", new BigDecimal("3.00"), 1, 3);
+    }
+
+    @Transactional
     public TarjetaViews.TarjetaView crear(TarjetaViews.TarjetaRequest request) {
         League league = league(request.getLeagueId());
         assertWrite(league.getId());
@@ -67,6 +73,20 @@ public class TarjetaService {
         assertWrite(tarjeta.getIdLiga());
         tarjeta.setEstado("INACTIVO");
         auditar(tarjeta, usuario(), false);
+    }
+
+    private void crearInicial(UUID leagueId, String descripcion, String color, BigDecimal costo, int jornadas, int peso) {
+        Tarjeta tarjeta = new Tarjeta();
+        tarjeta.setId(UUID.randomUUID());
+        tarjeta.setIdLiga(leagueId);
+        tarjeta.setDescripcion(descripcion);
+        tarjeta.setColor(color);
+        tarjeta.setCosto(costo);
+        tarjeta.setCantidadJornadas(jornadas);
+        tarjeta.setPesoFairPlay(peso);
+        tarjeta.setEstado("ACTIVO");
+        auditar(tarjeta, usuario(), true);
+        tarjetas.save(tarjeta);
     }
 
     private void aplicar(Tarjeta tarjeta, TarjetaViews.TarjetaRequest request) {

@@ -38,6 +38,7 @@ public class CompetitionService {
     private final SuspensionesService suspensiones;
     private final CriterioDesempateGoleadorService criteriosGoleador;
     private final CriterioDesempateEquipoService criteriosEquipo;
+    private final TarjetaService tarjetas;
 
     public CompetitionService(AppUserRepository users,
                               LeagueRepository leagues,
@@ -49,7 +50,8 @@ public class CompetitionService {
                               PlayerRepository players,
                               SuspensionesService suspensiones,
                               CriterioDesempateGoleadorService criteriosGoleador,
-                              CriterioDesempateEquipoService criteriosEquipo) {
+                              CriterioDesempateEquipoService criteriosEquipo,
+                              TarjetaService tarjetas) {
         this.users = users;
         this.leagues = leagues;
         this.settings = settings;
@@ -61,6 +63,7 @@ public class CompetitionService {
         this.suspensiones = suspensiones;
         this.criteriosGoleador = criteriosGoleador;
         this.criteriosEquipo = criteriosEquipo;
+        this.tarjetas = tarjetas;
     }
 
     @Transactional(readOnly = true)
@@ -91,6 +94,7 @@ public class CompetitionService {
         defaults.setFairPlayRedPoints(3);
         settings.save(defaults);
         suspensiones.crearDefecto(league.getId());
+        tarjetas.sembrar(league.getId());
         return leagueView(league);
     }
 
