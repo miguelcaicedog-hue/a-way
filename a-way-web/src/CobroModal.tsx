@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
+import { aDia } from './Fecha'
 
 type Equipo = { id: string; nombre: string }
 
@@ -21,6 +22,10 @@ type Cobro = {
   visita: string
   equipoLocal: Equipo | null
   equipoVisita: Equipo | null
+  jornadaNombre: string
+  fecha: string | null
+  hora: string | null
+  canchaNombre: string | null
   editable: boolean
   equipoId: string
   equipoNombre: string
@@ -159,6 +164,9 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                 <span className="equipo-local">{cobro.local}</span>
                 <span className="vs">VS</span>
                 <span className="equipo-visita">{cobro.visita}</span>
+                <span className="dato-partido jornada">{cobro.jornadaNombre}</span>
+                <span className="dato-partido">{[aDia(cobro.fecha), cobro.hora].filter(Boolean).join(' ')}</span>
+                {cobro.canchaNombre && <span className="dato-partido jornada">{cobro.canchaNombre}</span>}
               </>
             ) : 'Partido'}
           </h2>

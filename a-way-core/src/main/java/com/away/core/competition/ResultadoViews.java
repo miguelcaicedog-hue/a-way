@@ -58,11 +58,16 @@ public class ResultadoViews {
         private final int orden;
         private final BigDecimal valorCobrado;
         private final boolean cerrada;
+        private final boolean tieneGolesJugador;
+        private final boolean tieneArbitro;
+        private final boolean arbitroNoPito;
+        private final int equiposCobrados;
 
         ResultadoPartidoView(UUID id, String categoryName, String jornadaNombre, String canchaNombre,
                              LocalDate fecha, String hora, String local, String visita,
                              Integer golesLocal, Integer golesVisita, boolean equiposDefinidos, int orden,
-                             BigDecimal valorCobrado, boolean cerrada) {
+                             BigDecimal valorCobrado, boolean cerrada, boolean tieneGolesJugador,
+                             boolean tieneArbitro, boolean arbitroNoPito, int equiposCobrados) {
             this.id = id;
             this.categoryName = categoryName;
             this.jornadaNombre = jornadaNombre;
@@ -77,6 +82,10 @@ public class ResultadoViews {
             this.orden = orden;
             this.valorCobrado = valorCobrado;
             this.cerrada = cerrada;
+            this.tieneGolesJugador = tieneGolesJugador;
+            this.tieneArbitro = tieneArbitro;
+            this.arbitroNoPito = arbitroNoPito;
+            this.equiposCobrados = equiposCobrados;
         }
 
         public UUID getId() {
@@ -133,6 +142,22 @@ public class ResultadoViews {
 
         public boolean isCerrada() {
             return cerrada;
+        }
+
+        public boolean isTieneGolesJugador() {
+            return tieneGolesJugador;
+        }
+
+        public boolean isTieneArbitro() {
+            return tieneArbitro;
+        }
+
+        public boolean isArbitroNoPito() {
+            return arbitroNoPito;
+        }
+
+        public int getEquiposCobrados() {
+            return equiposCobrados;
         }
     }
 
@@ -489,6 +514,12 @@ public class ResultadoViews {
         private final String visita;
         private final EquipoOpcionView equipoLocal;
         private final EquipoOpcionView equipoVisita;
+        private final Integer golesLocal;
+        private final Integer golesVisita;
+        private final String jornadaNombre;
+        private final LocalDate fecha;
+        private final String hora;
+        private final String canchaNombre;
         private final boolean editable;
         private final List<ArbitroOpcionView> arbitros;
         private final List<ArbitroAsignadoView> asignados;
@@ -498,13 +529,21 @@ public class ResultadoViews {
         private final List<SancionCargadaView> sanciones;
 
         public DetalleView(String local, String visita, EquipoOpcionView equipoLocal, EquipoOpcionView equipoVisita,
-                           boolean editable, List<ArbitroOpcionView> arbitros, List<ArbitroAsignadoView> asignados,
+                           Integer golesLocal, Integer golesVisita, String jornadaNombre, LocalDate fecha, String hora,
+                           String canchaNombre, boolean editable,
+                           List<ArbitroOpcionView> arbitros, List<ArbitroAsignadoView> asignados,
                            List<GolCargadoView> goles, List<TarjetaCargadaView> tarjetas,
                            List<SancionOpcionView> sancionesDisponibles, List<SancionCargadaView> sanciones) {
             this.local = local;
             this.visita = visita;
             this.equipoLocal = equipoLocal;
             this.equipoVisita = equipoVisita;
+            this.golesLocal = golesLocal;
+            this.golesVisita = golesVisita;
+            this.jornadaNombre = jornadaNombre;
+            this.fecha = fecha;
+            this.hora = hora;
+            this.canchaNombre = canchaNombre;
             this.editable = editable;
             this.arbitros = arbitros;
             this.asignados = asignados;
@@ -528,6 +567,30 @@ public class ResultadoViews {
 
         public EquipoOpcionView getEquipoVisita() {
             return equipoVisita;
+        }
+
+        public Integer getGolesLocal() {
+            return golesLocal;
+        }
+
+        public Integer getGolesVisita() {
+            return golesVisita;
+        }
+
+        public String getJornadaNombre() {
+            return jornadaNombre;
+        }
+
+        public LocalDate getFecha() {
+            return fecha;
+        }
+
+        public String getHora() {
+            return hora;
+        }
+
+        public String getCanchaNombre() {
+            return canchaNombre;
         }
 
         public boolean isEditable() {

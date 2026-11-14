@@ -115,6 +115,8 @@ public class ResultadoService {
                 }
             }
             cargarCobros(delDia, contexto);
+            marcarGolesJugador(delDia, contexto);
+            marcarArbitros(delDia, contexto);
             for (Partido partido : delDia) {
                 filas.add(vista(partido, contexto));
             }
@@ -208,7 +210,61 @@ public class ResultadoService {
                 partido.getIdEquipoLocal() != null && partido.getIdEquipoVisita() != null,
                 partido.getOrden(),
                 cobrado(partido, contexto),
-                jornada != null && "CERRADA".equals(jornada.getEstadoCierre()));
+                jornada != null && "CERRADA".equals(jornada.getEstadoCierre()),
+                tieneGolesJugador(partido, contexto),
+                tieneArbitro(partido, contexto),
+                arbitroNoPito(partido, contexto),
+                equiposCobrados(partido, contexto));
+    }
+
+    private void marcarGolesJugador(List<Partido> delDia, Contexto contexto) {
+        List<UUID> ids = new ArrayList<>();
+        for (Partido partido : delDia) {
+            ids.add(partido.getId());
+        }
+        contexto.golesListos = true;
+        if (ids.isEmpty()) {
+            return;
+        }
+        contexto.conGoles.addAll(golesJugadores.partidosConGoles(ids));
+    }
+
+    private boolean tieneGolesJugador(Partido partido, Contexto contexto) {
+        if (!contexto.golesListos) {
+            marcarGolesJugador(java.util.Collections.singletonList(partido), contexto);
+        }
+        return contexto.conGoles.contains(partido.getId());
+    }
+
+    private void marcarArbitros(List<Partido> delDia, Contexto contexto) {
+        List<UUID> ids = new ArrayList<>();
+        for (Partido partido : delDia) {
+            ids.add(partido.getId());
+        }
+        contexto.arbitrosListos = true;
+        if (ids.isEmpty()) {
+            return;
+        }
+        for (PartidoArbitro asignado : partidosArbitros.activosDePartidos(ids)) {
+            contexto.conArbitro.add(asignado.getIdPartido());
+            if (!asignado.isPito()) {
+                contexto.arbitroNoPito.add(asignado.getIdPartido());
+            }
+        }
+    }
+
+    private boolean tieneArbitro(Partido partido, Contexto contexto) {
+        if (!contexto.arbitrosListos) {
+            marcarArbitros(java.util.Collections.singletonList(partido), contexto);
+        }
+        return contexto.conArbitro.contains(partido.getId());
+    }
+
+    private boolean arbitroNoPito(Partido partido, Contexto contexto) {
+        if (!contexto.arbitrosListos) {
+            marcarArbitros(java.util.Collections.singletonList(partido), contexto);
+        }
+        return contexto.arbitroNoPito.contains(partido.getId());
     }
 
     private void cargarCobros(List<Partido> delDia, Contexto contexto) {
@@ -224,7 +280,16 @@ public class ResultadoService {
             BigDecimal suma = contexto.cobrado.get(cobro.getIdPartido());
             suma = suma.add(monto(cobro.getValorCobroEfectivo())).add(monto(cobro.getValorCobroTransferencia()));
             contexto.cobrado.put(cobro.getIdPartido(), suma);
+            contexto.equiposCobrados.computeIfAbsent(cobro.getIdPartido(), id -> new HashSet<>()).add(cobro.getIdEquipo());
         }
+    }
+
+    private int equiposCobrados(Partido partido, Contexto contexto) {
+        if (!contexto.cobrado.containsKey(partido.getId())) {
+            cargarCobros(java.util.Collections.singletonList(partido), contexto);
+        }
+        Set<UUID> equipos = contexto.equiposCobrados.get(partido.getId());
+        return equipos == null ? 0 : equipos.size();
     }
 
     private BigDecimal cobrado(Partido partido, Contexto contexto) {
@@ -337,11 +402,18 @@ public class ResultadoService {
                         new ResultadoViews.SancionOpcionView(sancion.getId(), sancion.getDescripcion(), sancion.getCosto(), sancion.getEstado())));
             }
         }
+        Jornada jornada = jornadas.findById(partido.getIdJornada()).orElse(null);
         return new ResultadoViews.DetalleView(
                 nombreEquipo(partido.getIdEquipoLocal()),
                 nombreEquipo(partido.getIdEquipoVisita()),
                 opcionEquipo(partido.getIdEquipoLocal()),
                 opcionEquipo(partido.getIdEquipoVisita()),
+                partido.getGolesLocal(),
+                partido.getGolesVisita(),
+                jornada == null ? "" : jornada.getNombre(),
+                partido.getFecha() != null ? partido.getFecha() : (jornada == null ? null : jornada.getFecha()),
+                textoHora(partido.getHora()),
+                partido.getIdCancha() == null ? null : canchas.findById(partido.getIdCancha()).map(Cancha::getDescripcion).orElse(null),
                 !cierres.jornadaCerrada(partido.getIdJornada()) && puedeEditar(ligaId, partido),
                 opciones,
                 asignados,
@@ -875,5 +947,11 @@ public class ResultadoService {
         private final Map<UUID, Team> porEquipo = new HashMap<>();
         private final List<Partido> partidos = new ArrayList<>();
         private final Map<UUID, BigDecimal> cobrado = new HashMap<>();
+        private final Map<UUID, Set<UUID>> equiposCobrados = new HashMap<>();
+        private final Set<UUID> conGoles = new HashSet<>();
+        private final Set<UUID> conArbitro = new HashSet<>();
+        private final Set<UUID> arbitroNoPito = new HashSet<>();
+        private boolean golesListos;
+        private boolean arbitrosListos;
     }
 }

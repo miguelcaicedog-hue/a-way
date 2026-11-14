@@ -1141,6 +1141,22 @@ button.silbato.sin-cobro {
   color: white;
 }
 
+.dato-partido {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  background: #e7eef5;
+  color: #163a5f;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.dato-partido.jornada {
+  background: #e5f6ea;
+  color: #1d7a3a;
+}
+
 .vs {
   color: #5c6b7a;
   font-size: 0.75rem;
@@ -1162,6 +1178,12 @@ button.silbato.sin-cobro {
 .partido-cuerpo {
   min-height: 0;
   overflow: auto;
+}
+
+.balance-goles {
+  margin: 0.7rem 0 0;
+  color: #163a5f;
+  font-weight: 600;
 }
 
 .pestanas {

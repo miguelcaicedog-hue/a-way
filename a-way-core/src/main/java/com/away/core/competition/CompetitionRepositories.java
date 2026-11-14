@@ -179,10 +179,16 @@ interface TarjetaRepository extends JpaRepository<Tarjeta, UUID> {
 
 interface PartidoArbitroRepository extends JpaRepository<PartidoArbitro, UUID> {
     List<PartidoArbitro> findByIdPartido(UUID idPartido);
+
+    @Query("select a from PartidoArbitro a where a.estado = 'ACTIVO' and a.idPartido in :ids")
+    List<PartidoArbitro> activosDePartidos(@Param("ids") Collection<UUID> ids);
 }
 
 interface GolJugadorRepository extends JpaRepository<GolJugador, UUID> {
     List<GolJugador> findByIdPartido(UUID idPartido);
+
+    @Query("select g.idPartido from GolJugador g where g.estado = 'ACTIVO' and g.cantidad > 0 and g.idPartido in :ids")
+    List<UUID> partidosConGoles(@Param("ids") Collection<UUID> ids);
 
     @Query("select g from GolJugador g where g.estado = 'ACTIVO' and g.idPartido in "
             + "(select p.id from Partido p where p.idCategoria = :categoria and p.estado = 'ACTIVO')")

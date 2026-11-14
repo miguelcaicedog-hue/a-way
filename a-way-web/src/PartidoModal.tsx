@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
+import { aDia } from './Fecha'
 
 type Arbitro = {
   id: string
@@ -22,6 +23,12 @@ type Detalle = {
   visita: string
   equipoLocal: Equipo
   equipoVisita: Equipo
+  golesLocal: number | null
+  golesVisita: number | null
+  jornadaNombre: string
+  fecha: string | null
+  hora: string | null
+  canchaNombre: string | null
   editable: boolean
   arbitros: Arbitro[]
   asignados: Asignado[]
@@ -72,6 +79,15 @@ function FotoJugador({ jugador }: { jugador: Jugador }) {
   return <span className="player-photo vacio" aria-label="Sin foto" />
 }
 
+function textoBalance(detalle: Detalle | null, equipoId: string, idsPlantilla: string[], goles: Record<string, string>) {
+  if (!detalle || !equipoId) return ''
+  const marcador = equipoId === detalle.equipoLocal?.id ? detalle.golesLocal : detalle.golesVisita
+  const asignados = idsPlantilla.reduce((suma, id) => suma + (goles[id] ? Number(goles[id]) : 0), 0)
+  const delEquipo = marcador == null ? '—' : String(marcador)
+  const diferencia = marcador == null ? '—' : String(marcador - asignados)
+  return `Goles del equipo: ${delEquipo} · Asignados: ${asignados} · Diferencia: ${diferencia}`
+}
+
 export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClose: () => void }) {
   const [detalle, setDetalle] = useState<Detalle | null>(null)
   const [pestana, setPestana] = useState<'arbitros' | 'goleadores' | 'tarjetas' | 'sanciones'>('arbitros')
@@ -81,6 +97,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
   const [numero, setNumero] = useState('')
   const [nombreJugador, setNombreJugador] = useState('')
   const [jugadores, setJugadores] = useState<Jugador[]>([])
+  const [idsPlantilla, setIdsPlantilla] = useState<string[]>([])
   const [goles, setGoles] = useState<Record<string, string>>({})
   const [tarjetas, setTarjetas] = useState<Record<string, Tarjeta>>({})
   const [sanciones, setSanciones] = useState<Record<string, SancionJugador>>({})
@@ -125,6 +142,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
         if (!activo) return
         setDetalle(respuesta)
         setAsignados(respuesta.asignados)
+        if (respuesta.asignados.length > 0) setPestana('goleadores')
         setGoles(golesDe(respuesta))
         setTarjetas(tarjetasDe(respuesta))
         setSanciones(sancionesDe(respuesta))
@@ -137,6 +155,24 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
       activo = false
     }
   }, [partidoId])
+
+  useEffect(() => {
+    if (!equipoId) {
+      setIdsPlantilla([])
+      return
+    }
+    let activo = true
+    api<Jugador[]>(`/api/resultados/partido/${partidoId}/jugadores?teamId=${equipoId}`)
+      .then((lista) => {
+        if (activo) setIdsPlantilla(lista.map((jugador) => jugador.id))
+      })
+      .catch((caught: Error) => {
+        if (activo) setError(caught.message)
+      })
+    return () => {
+      activo = false
+    }
+  }, [partidoId, equipoId])
 
   useEffect(() => {
     if (!equipoId) {
@@ -161,29 +197,33 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
 
   function elegir(arbitro: Arbitro) {
     if (!detalle?.editable || asignados.some((item) => item.arbitroId === arbitro.id)) return
-    setGrabado(false)
-    setAsignados([...asignados, { arbitroId: arbitro.id, pito: true }])
+    const siguientes = [...asignados, { arbitroId: arbitro.id, pito: true }]
+    setAsignados(siguientes)
+    void grabar(siguientes)
   }
 
   function quitar(arbitroId: string) {
-    setGrabado(false)
-    setAsignados(asignados.filter((item) => item.arbitroId !== arbitroId))
+    const siguientes = asignados.filter((item) => item.arbitroId !== arbitroId)
+    setAsignados(siguientes)
+    void grabar(siguientes)
   }
 
   function marcarPito(arbitroId: string, pito: boolean) {
-    setGrabado(false)
-    setAsignados(asignados.map((item) => (item.arbitroId === arbitroId ? { ...item, pito } : item)))
+    const siguientes = asignados.map((item) => (item.arbitroId === arbitroId ? { ...item, pito } : item))
+    setAsignados(siguientes)
+    void grabar(siguientes)
   }
 
-  async function grabar() {
+  async function grabar(arbitros = asignados) {
     if (!detalle?.editable) return
     setOcupado(true)
     setError(null)
+    setGrabado(false)
     try {
       const respuesta = await api<Detalle>(`/api/resultados/partido/${partidoId}/detalle`, {
         method: 'PUT',
         body: JSON.stringify({
-          arbitros: asignados,
+          arbitros,
           goles: Object.entries(goles)
             .filter(([, cantidad]) => cantidad !== '' && Number(cantidad) > 0)
             .map(([jugadorId, cantidad]) => ({ jugadorId, cantidad: Number(cantidad) })),
@@ -232,13 +272,16 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                 <span className="equipo-local">{detalle.local}</span>
                 <span className="vs">VS</span>
                 <span className="equipo-visita">{detalle.visita}</span>
+                <span className="dato-partido jornada">{detalle.jornadaNombre}</span>
+                <span className="dato-partido">{[aDia(detalle.fecha), detalle.hora].filter(Boolean).join(' ')}</span>
+                {detalle.canchaNombre && <span className="dato-partido jornada">{detalle.canchaNombre}</span>}
               </>
             ) : 'Partido'}
           </h2>
           <div className="actions">
             {grabado && <span className="aviso-grabado">Grabado</span>}
             <button type="button" className="ghost" onClick={onClose}>Cerrar</button>
-            {detalle?.editable && <button type="button" disabled={ocupado} onClick={grabar}>Grabar</button>}
+            {detalle?.editable && <button type="button" disabled={ocupado} onClick={() => void grabar()}>Grabar</button>}
           </div>
         </div>
         {error && <p className="down">{error}</p>}
@@ -305,6 +348,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                 <input value={nombreJugador} onChange={(event) => setNombreJugador(event.target.value)} />
               </label>
             </form>
+            <p className="balance-goles">{textoBalance(detalle, equipoId, idsPlantilla, goles)}</p>
             <ul className="lista-detalle">
               {jugadores.map((jugador) => (
                 <li key={jugador.id}>

@@ -29,6 +29,10 @@ type Partido = {
   equiposDefinidos: boolean
   valorCobrado: number
   cerrada: boolean
+  tieneGolesJugador: boolean
+  tieneArbitro: boolean
+  arbitroNoPito: boolean
+  equiposCobrados: number
 }
 
 type Panel = {
@@ -54,6 +58,21 @@ function textoGol(valor: number | null) {
   return valor == null ? '' : String(valor)
 }
 
+function cobroRojo(partido: Partido, local: string, visita: string) {
+  if (local === '' || visita === '' || Number(partido.valorCobrado) !== 0) {
+    return false
+  }
+  return !(partido.arbitroNoPito && partido.equiposCobrados === 1)
+}
+
+function silbatoRojo(partido: Partido) {
+  if (partido.arbitroNoPito || partido.golesLocal == null || partido.golesVisita == null) {
+    return false
+  }
+  const sinGoleadores = partido.golesLocal + partido.golesVisita > 0 && !partido.tieneGolesJugador
+  return sinGoleadores || !partido.tieneArbitro
+}
+
 export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Profile; editionId: string; leagueId: string }) {
   const [ahora, setAhora] = useState(() => new Date())
   const [categories, setCategories] = useState<Category[]>([])
@@ -65,6 +84,7 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
   const [partidoDetalle, setPartidoDetalle] = useState<string | null>(null)
   const [partidoCobro, setPartidoCobro] = useState<string | null>(null)
   const [revisionCobro, setRevisionCobro] = useState(0)
+  const [revisionDetalle, setRevisionDetalle] = useState(0)
   const [revisionCierre, setRevisionCierre] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const esperas = useRef<Record<string, number>>({})
@@ -138,7 +158,7 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
     return () => {
       activo = false
     }
-  }, [editionId, categoryId, fecha, revisionCobro, revisionCierre])
+  }, [editionId, categoryId, fecha, revisionCobro, revisionCierre, revisionDetalle])
 
   function puedeEditar(partido: Partido) {
     if (!partido.equiposDefinidos || partido.cerrada) return false
@@ -249,7 +269,7 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
           </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
-          <BotonDescargarImagen leagueId={leagueId} tipo="RESULTADOS" fecha={fecha} resultados={panel?.partidos ?? []} />
+          <BotonDescargarImagen leagueId={leagueId} tipo="RESULTADOS" fecha={fecha} etiqueta="Descargar resultados" resultados={panel?.partidos ?? []} />
         </form>
       )}
       {editionId && fecha && (panel?.partidos.length ?? 0) === 0 && <p>No hay partidos en esta fecha.</p>}
@@ -295,12 +315,17 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
                       />
                     </td>
                     <td className="acciones-partido">
-                      <button type="button" className="silbato" aria-label="Detalle del partido" onClick={() => setPartidoDetalle(partido.id)}>
+                      <button
+                        type="button"
+                        className={silbatoRojo(partido) ? 'silbato sin-cobro' : 'silbato'}
+                        aria-label="Detalle del partido"
+                        onClick={() => setPartidoDetalle(partido.id)}
+                      >
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M4 10h6l2-2h3a4 4 0 1 1 0 8h-1.2l-1.3 2.2a2 2 0 0 1-3.4 0L8 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2zm13 1.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6z" />
                         </svg>
                       </button>
-                      {marcador.local !== '' && marcador.visita !== '' && Number(partido.valorCobrado) === 0 ? (
+                      {cobroRojo(partido, marcador.local, marcador.visita) ? (
                         <span className="aviso-sin-cobro">
                           <button type="button" className="silbato sin-cobro" aria-label="No se ha cobrado ningún valor" onClick={() => setPartidoCobro(partido.id)}>
                             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -326,7 +351,15 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
           </table>
         </section>
       ))}
-      {partidoDetalle && <PartidoModal partidoId={partidoDetalle} onClose={() => setPartidoDetalle(null)} />}
+      {partidoDetalle && (
+        <PartidoModal
+          partidoId={partidoDetalle}
+          onClose={() => {
+            setPartidoDetalle(null)
+            setRevisionDetalle((valor) => valor + 1)
+          }}
+        />
+      )}
       {editionId && (
         <div className="cierre-jornada">
           <button

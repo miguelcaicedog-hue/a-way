@@ -1,6 +1,7 @@
 package com.away.core.competition;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -99,6 +100,10 @@ public class CobroViews {
         private final String visita;
         private final EquipoView equipoLocal;
         private final EquipoView equipoVisita;
+        private final String jornadaNombre;
+        private final LocalDate fecha;
+        private final String hora;
+        private final String canchaNombre;
         private final boolean editable;
         private final UUID equipoId;
         private final String equipoNombre;
@@ -110,7 +115,8 @@ public class CobroViews {
         private final BigDecimal valorCobroEfectivo;
         private final BigDecimal valorCobroTransferencia;
 
-        public CobroView(String local, String visita, EquipoView equipoLocal, EquipoView equipoVisita, boolean editable,
+        public CobroView(String local, String visita, EquipoView equipoLocal, EquipoView equipoVisita,
+                         String jornadaNombre, LocalDate fecha, String hora, String canchaNombre, boolean editable,
                          UUID equipoId, String equipoNombre, BigDecimal arbitraje, List<CargoView> tarjetas,
                          List<CargoView> sanciones, String observacion, BigDecimal total,
                          BigDecimal valorCobroEfectivo, BigDecimal valorCobroTransferencia) {
@@ -118,6 +124,10 @@ public class CobroViews {
             this.visita = visita;
             this.equipoLocal = equipoLocal;
             this.equipoVisita = equipoVisita;
+            this.jornadaNombre = jornadaNombre;
+            this.fecha = fecha;
+            this.hora = hora;
+            this.canchaNombre = canchaNombre;
             this.editable = editable;
             this.equipoId = equipoId;
             this.equipoNombre = equipoNombre;
@@ -144,6 +154,22 @@ public class CobroViews {
 
         public EquipoView getEquipoVisita() {
             return equipoVisita;
+        }
+
+        public String getJornadaNombre() {
+            return jornadaNombre;
+        }
+
+        public LocalDate getFecha() {
+            return fecha;
+        }
+
+        public String getHora() {
+            return hora;
+        }
+
+        public String getCanchaNombre() {
+            return canchaNombre;
         }
 
         public boolean isEditable() {

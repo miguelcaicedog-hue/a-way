@@ -104,10 +104,12 @@ export function BotonDescargarImagen({
   resultados = [],
   grupos = [],
   horarios = [],
+  etiqueta = 'Descargar imagen',
 }: {
   leagueId: string
   tipo: keyof typeof TITULOS
   fecha: string | null
+  etiqueta?: string
   deshabilitado?: boolean
   goleadores?: Goleador[]
   resultados?: Resultado[]
@@ -147,7 +149,7 @@ export function BotonDescargarImagen({
   return (
     <span className="descarga-imagen">
       <button type="button" disabled={deshabilitado || ocupado} onClick={descargar}>
-        {ocupado ? 'Generando…' : 'Descargar imagen'}
+        {ocupado ? 'Generando…' : etiqueta}
       </button>
       {error && <span className="down">{error}</span>}
     </span>

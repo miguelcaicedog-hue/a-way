@@ -45,6 +45,7 @@ public class CobroPartidoService {
     private final SancionJugadorRepository sancionesJugador;
     private final PartidoCobroRepository cobros;
     private final PartidoCobroDetalleRepository detalles;
+    private final CanchaRepository canchas;
     private final CierreJornadaService cierres;
 
     public CobroPartidoService(PartidoRepository partidos, JornadaRepository jornadas, CategoryRepository categories,
@@ -53,7 +54,7 @@ public class CobroPartidoService {
                                TarjetaRepository tarjetas, TarjetaJugadorRepository tarjetasJugadores,
                                PartidoSancionRepository partidosSanciones, PartidoSancionDetalleRepository partidosSancionesDetalle,
                                SancionJugadorRepository sancionesJugador, PartidoCobroRepository cobros,
-                               PartidoCobroDetalleRepository detalles, CierreJornadaService cierres) {
+                               PartidoCobroDetalleRepository detalles, CanchaRepository canchas, CierreJornadaService cierres) {
         this.partidos = partidos;
         this.jornadas = jornadas;
         this.categories = categories;
@@ -70,6 +71,7 @@ public class CobroPartidoService {
         this.sancionesJugador = sancionesJugador;
         this.cobros = cobros;
         this.detalles = detalles;
+        this.canchas = canchas;
         this.cierres = cierres;
     }
 
@@ -209,11 +211,16 @@ public class CobroPartidoService {
                 ? total : contexto.cobro.getValorCobroEfectivo().setScale(2);
         BigDecimal transferencia = contexto.cobro == null || contexto.cobro.getValorCobroTransferencia() == null
                 ? BigDecimal.ZERO.setScale(2) : contexto.cobro.getValorCobroTransferencia().setScale(2);
+        Jornada jornada = jornadas.findById(partido.getIdJornada()).orElse(null);
         return new CobroViews.CobroView(
                 nombre(partido.getIdEquipoLocal()),
                 nombre(partido.getIdEquipoVisita()),
                 opcion(partido.getIdEquipoLocal()),
                 opcion(partido.getIdEquipoVisita()),
+                jornada == null ? "" : jornada.getNombre(),
+                partido.getFecha() != null ? partido.getFecha() : (jornada == null ? null : jornada.getFecha()),
+                textoHora(partido.getHora()),
+                partido.getIdCancha() == null ? null : canchas.findById(partido.getIdCancha()).map(Cancha::getDescripcion).orElse(null),
                 puedeEditar(ligaId, partido),
                 equipoId,
                 nombre(equipoId),
@@ -282,7 +289,7 @@ public class CobroPartidoService {
             }
             Player jugador = porJugador.get(tarjeta.getIdJugador());
             Partido origen = porPartido.get(tarjeta.getIdPartido());
-            if (jugador == null || origen == null || !esPrevia(origen, porJornada, contexto.fechaActual)) {
+            if (jugador == null || origen == null || !esPrevia(origen, partido, porJornada)) {
                 continue;
             }
             if (tarjeta.getAmarillas() == null && tarjeta.getRojas() == null) {
@@ -303,7 +310,7 @@ public class CobroPartidoService {
             }
             Player jugador = porJugador.get(sancion.getIdJugador());
             Partido origen = porPartido.get(sancion.getIdPartido());
-            if (jugador == null || origen == null || !esPrevia(origen, porJornada, contexto.fechaActual)) {
+            if (jugador == null || origen == null || !esPrevia(origen, partido, porJornada)) {
                 continue;
             }
             for (PartidoSancionDetalle detalle : partidosSancionesDetalle.findByIdPartidoSancion(sancion.getId())) {
@@ -391,9 +398,22 @@ public class CobroPartidoService {
         return total.setScale(2);
     }
 
-    private boolean esPrevia(Partido origen, Map<UUID, Jornada> porJornada, LocalDate actual) {
-        LocalDate fecha = fechaDe(origen, porJornada);
-        return actual != null && fecha != null && fecha.isBefore(actual);
+    private boolean esPrevia(Partido origen, Partido actual, Map<UUID, Jornada> porJornada) {
+        Jornada jornadaOrigen = porJornada.get(origen.getIdJornada());
+        Jornada jornadaActual = porJornada.get(actual.getIdJornada());
+        if (jornadaOrigen == null || jornadaActual == null) {
+            LocalDate fecha = fechaDe(origen, porJornada);
+            LocalDate hoy = fechaDe(actual, porJornada);
+            return hoy != null && fecha != null && fecha.isBefore(hoy);
+        }
+        return jornadaOrigen.getNumero() < jornadaActual.getNumero();
+    }
+
+    private String textoHora(java.time.LocalTime hora) {
+        if (hora == null) {
+            return null;
+        }
+        return String.format("%02d:%02d", hora.getHour(), hora.getMinute());
     }
 
     private LocalDate fechaDe(Partido partido, Map<UUID, Jornada> porJornada) {
