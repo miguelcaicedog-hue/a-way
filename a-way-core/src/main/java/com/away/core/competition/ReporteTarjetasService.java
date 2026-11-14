@@ -131,9 +131,22 @@ public class ReporteTarjetasService {
             filas.add(fila);
         }
         filas.sort(Comparator.comparing((Fila fila) -> fila.equipo).thenComparing(fila -> fila.jugador));
+        Set<UUID> usadas = new HashSet<>();
+        for (Fila fila : filas) {
+            if (fila.idJornadaTarjeta != null) {
+                usadas.add(fila.idJornadaTarjeta);
+            }
+            usadas.addAll(fila.marcadas);
+        }
+        List<Jornada> columnas = new ArrayList<>();
+        for (Jornada jornada : orden) {
+            if (usadas.contains(jornada.getId())) {
+                columnas.add(jornada);
+            }
+        }
         Bloque bloque = new Bloque();
         bloque.filas = filas;
-        bloque.columnas = orden;
+        bloque.columnas = columnas;
         return bloque;
     }
 
@@ -168,7 +181,8 @@ public class ReporteTarjetasService {
     private String htmlBloque(String categoria, LocalDate fecha, Bloque bloque) {
         StringBuilder html = new StringBuilder();
         html.append("<h2>").append(esc(categoria)).append(" · ").append(fecha.format(DIA)).append("</h2>");
-        html.append("<table><thead><tr><th></th><th></th><th></th>");
+        html.append("<table>").append(columnas(bloque));
+        html.append("<thead><tr><th class=\"equipo\"></th><th class=\"numero\"></th><th class=\"jugador\"></th>");
         int indice = 0;
         while (indice < bloque.columnas.size()) {
             LocalDate dia = bloque.columnas.get(indice).getFecha();
@@ -181,7 +195,7 @@ public class ReporteTarjetasService {
                     .append(dia == null ? "" : fechaCorta(dia)).append("</th>");
             indice += ancho;
         }
-        html.append("</tr><tr><th>Equipo</th><th>Nº</th><th>Jugador</th>");
+        html.append("</tr><tr><th class=\"equipo\">Equipo</th><th class=\"numero\">Nº</th><th class=\"jugador\">Jugador</th>");
         for (Jornada jornada : bloque.columnas) {
             html.append("<th class=\"jornada\">").append(vertical(jornada.getNombre())).append("</th>");
         }
@@ -235,6 +249,30 @@ public class ReporteTarjetasService {
         return html.toString();
     }
 
+    private String columnas(Bloque bloque) {
+        int equipo = "Equipo".length();
+        int numero = 1;
+        int jugador = "Jugador".length();
+        for (Fila fila : bloque.filas) {
+            equipo = Math.max(equipo, fila.equipo == null ? 0 : fila.equipo.length());
+            numero = Math.max(numero, String.valueOf(fila.numero).length());
+            jugador = Math.max(jugador, nombrePropio(fila.jugador).length());
+        }
+        StringBuilder grupo = new StringBuilder("<colgroup>");
+        grupo.append("<col style=\"width:").append(milimetros(equipo)).append("mm\"/>");
+        grupo.append("<col style=\"width:").append(milimetros(numero)).append("mm\"/>");
+        grupo.append("<col style=\"width:").append(milimetros(jugador)).append("mm\"/>");
+        for (int i = 0; i < bloque.columnas.size(); i++) {
+            grupo.append("<col style=\"width:8mm\"/>");
+        }
+        grupo.append("</colgroup>");
+        return grupo.toString();
+    }
+
+    private int milimetros(int caracteres) {
+        return caracteres * 2 + 4;
+    }
+
     private static final String[] MESES = {
             "ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"
     };
@@ -247,8 +285,18 @@ public class ReporteTarjetasService {
         if (valor == null || valor.isEmpty()) {
             return "";
         }
-        String limpio = valor.toLowerCase(java.util.Locale.forLanguageTag("es"));
-        return limpio.substring(0, 1).toUpperCase(java.util.Locale.forLanguageTag("es")) + limpio.substring(1);
+        java.util.Locale idioma = java.util.Locale.forLanguageTag("es");
+        StringBuilder nombre = new StringBuilder();
+        for (String parte : valor.toLowerCase(idioma).split(" ")) {
+            if (parte.isEmpty()) {
+                continue;
+            }
+            if (nombre.length() > 0) {
+                nombre.append(' ');
+            }
+            nombre.append(parte.substring(0, 1).toUpperCase(idioma)).append(parte.substring(1));
+        }
+        return nombre.toString();
     }
 
     private String vertical(String valor) {
@@ -261,7 +309,7 @@ public class ReporteTarjetasService {
                 texto.append("<br/>");
             }
             char letra = valor.charAt(i);
-            texto.append(letra == ' ' ? "&nbsp;" : esc(String.valueOf(letra)));
+            texto.append(letra == ' ' ? "&#160;" : esc(String.valueOf(letra)));
         }
         return texto.toString();
     }
@@ -315,12 +363,13 @@ public class ReporteTarjetasService {
                 + "h1 { font-size: 16px; margin: 6px 0 0; }"
                 + "p.sub { margin: 2px 0 0; font-weight: 700; }"
                 + "h2 { font-size: 12px; margin: 14px 0 6px; }"
-                + "table { width: 100%; border-collapse: collapse; }"
+                + "table { width: auto; border-collapse: collapse; table-layout: fixed; }"
                 + "th, td { border: 1px solid #163a5f; padding: 3px 4px; }"
                 + "th { background: #163a5f; color: white; }"
                 + "th.fecha { font-size: 7px; padding: 2px; text-align: center; }"
-                + "th.jornada { font-size: 7px; line-height: 1.05; padding: 2px 1px; text-align: center; vertical-align: bottom; width: 14px; }"
-                + "td.numero { text-align: center; white-space: nowrap; }"
+                + "th.jornada { width: 8mm; font-size: 7px; line-height: 1.05; padding: 1px; text-align: center; vertical-align: bottom; }"
+                + "th.equipo, td.equipo, th.jugador, td.jugador, th.numero, td.numero { white-space: nowrap; }"
+                + "td.numero, th.numero { text-align: center; }"
                 + "th.fecha { background: #2f6f9f; }"
                 + "td.equipo, td.jugador { white-space: nowrap; }"
                 + "td.cuadro { text-align: center; font-weight: 700; font-size: 8px; }"
