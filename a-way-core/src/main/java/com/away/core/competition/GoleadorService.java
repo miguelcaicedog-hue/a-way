@@ -28,11 +28,17 @@ public class GoleadorService {
     private final PlayerRepository jugadores;
     private final TeamRepository teams;
     private final TeamEntryRepository entradas;
+    private final CriterioDesempateGoleadorService criterios;
+    private final TarjetaJugadorRepository tarjetasJugador;
+    private final TarjetaRepository tarjetas;
+    private final TablaService tablas;
     private final AppUserRepository users;
 
     public GoleadorService(EditionRepository editions, CategoryRepository categories, JornadaRepository jornadas,
                            PartidoRepository partidos, GolJugadorRepository goles, PlayerRepository jugadores,
-                           TeamRepository teams, TeamEntryRepository entradas, AppUserRepository users) {
+                           TeamRepository teams, TeamEntryRepository entradas, CriterioDesempateGoleadorService criterios,
+                           TarjetaJugadorRepository tarjetasJugador, TarjetaRepository tarjetas, TablaService tablas,
+                           AppUserRepository users) {
         this.editions = editions;
         this.categories = categories;
         this.jornadas = jornadas;
@@ -41,6 +47,10 @@ public class GoleadorService {
         this.jugadores = jugadores;
         this.teams = teams;
         this.entradas = entradas;
+        this.criterios = criterios;
+        this.tarjetasJugador = tarjetasJugador;
+        this.tarjetas = tarjetas;
+        this.tablas = tablas;
         this.users = users;
     }
 
@@ -116,6 +126,7 @@ public class GoleadorService {
         }
 
         List<GoleadorViews.GoleadorView> goleadores = new ArrayList<>();
+        Map<UUID, Map<UUID, Integer>> golesContra = new HashMap<>();
         if (!porJugador.isEmpty()) {
             Map<UUID, Player> porId = new HashMap<>();
             for (Player jugador : jugadores.findAllById(porJugador.keySet())) {
@@ -152,11 +163,141 @@ public class GoleadorService {
                         jugador.getPhoto() != null && jugador.getPhoto().length > 0,
                         jugador.getRotationDegrees(),
                         detalle));
+                golesContra.put(jugador.getId(), golesContra(fila, equipo.getId()));
             }
         }
+        ordenar(goleadores, criterios.orden(edition.getId()), fairPlay(edition.getLeague().getId(), porPartido),
+                tablas.puestos(categoryId, fecha), golesContra);
+        return new GoleadorViews.PanelView(fecha, equipos, goleadores);
+    }
+
+    private void ordenar(List<GoleadorViews.GoleadorView> goleadores, List<String> criteriosOrden,
+                         Map<UUID, Integer> fairPlay, Map<UUID, Integer> puestos,
+                         Map<UUID, Map<UUID, Integer>> golesContra) {
         goleadores.sort(Comparator.comparingInt(GoleadorViews.GoleadorView::getGoles).reversed()
                 .thenComparing(fila -> etiqueta(fila).toLowerCase()));
-        return new GoleadorViews.PanelView(fecha, equipos, goleadores);
+        List<GoleadorViews.GoleadorView> ordenados = new ArrayList<>();
+        int inicio = 0;
+        while (inicio < goleadores.size()) {
+            int goles = goleadores.get(inicio).getGoles();
+            int fin = inicio + 1;
+            while (fin < goleadores.size() && goleadores.get(fin).getGoles() == goles) {
+                fin++;
+            }
+            List<GoleadorViews.GoleadorView> grupo = new ArrayList<>(goleadores.subList(inicio, fin));
+            if (grupo.size() > 1) {
+                Map<UUID, Integer> directo = directo(grupo, golesContra);
+                grupo.sort((izquierda, derecha) -> comparar(izquierda, derecha, criteriosOrden, fairPlay, directo, puestos));
+            }
+            ordenados.addAll(grupo);
+            inicio = fin;
+        }
+        goleadores.clear();
+        goleadores.addAll(ordenados);
+    }
+
+    private int comparar(GoleadorViews.GoleadorView izquierda, GoleadorViews.GoleadorView derecha, List<String> criteriosOrden,
+                         Map<UUID, Integer> fairPlay, Map<UUID, Integer> directo, Map<UUID, Integer> puestos) {
+        for (String codigo : criteriosOrden) {
+            int diferencia = 0;
+            if ("FAIR_PLAY".equals(codigo)) {
+                diferencia = Integer.compare(fairPlay.getOrDefault(izquierda.getJugadorId(), 0),
+                        fairPlay.getOrDefault(derecha.getJugadorId(), 0));
+            } else if ("ENFRENTAMIENTO_DIRECTO".equals(codigo)) {
+                diferencia = Integer.compare(directo.getOrDefault(derecha.getJugadorId(), 0),
+                        directo.getOrDefault(izquierda.getJugadorId(), 0));
+            } else if ("POSICION_TABLA".equals(codigo)) {
+                diferencia = Integer.compare(puestos.getOrDefault(izquierda.getEquipoId(), Integer.MAX_VALUE),
+                        puestos.getOrDefault(derecha.getEquipoId(), Integer.MAX_VALUE));
+            }
+            if (diferencia != 0) {
+                return diferencia;
+            }
+        }
+        return etiqueta(izquierda).compareToIgnoreCase(etiqueta(derecha));
+    }
+
+    private Map<UUID, Integer> directo(List<GoleadorViews.GoleadorView> grupo, Map<UUID, Map<UUID, Integer>> golesContra) {
+        Set<UUID> equipos = new HashSet<>();
+        for (GoleadorViews.GoleadorView fila : grupo) {
+            equipos.add(fila.getEquipoId());
+        }
+        Map<UUID, Integer> totales = new HashMap<>();
+        for (GoleadorViews.GoleadorView fila : grupo) {
+            int goles = 0;
+            Map<UUID, Integer> contra = golesContra.getOrDefault(fila.getJugadorId(), Map.of());
+            for (Map.Entry<UUID, Integer> rival : contra.entrySet()) {
+                if (equipos.contains(rival.getKey()) && !rival.getKey().equals(fila.getEquipoId())) {
+                    goles += rival.getValue();
+                }
+            }
+            totales.put(fila.getJugadorId(), goles);
+        }
+        return totales;
+    }
+
+    private Map<UUID, Integer> golesContra(Acumulado fila, UUID equipoId) {
+        Map<UUID, Integer> contra = new HashMap<>();
+        for (DetalleItem item : fila.detalle) {
+            UUID rival = equipoId != null && equipoId.equals(item.equipoLocal) ? item.equipoVisita : item.equipoLocal;
+            if (rival != null) {
+                contra.merge(rival, item.cantidad, Integer::sum);
+            }
+        }
+        return contra;
+    }
+
+    private Map<UUID, Integer> fairPlay(UUID leagueId, Map<UUID, Partido> porPartido) {
+        int pesoAmarilla = peso(cercano(leagueId, true, null));
+        int pesoRoja = peso(cercano(leagueId, false, cercano(leagueId, true, null)));
+        Map<UUID, Integer> totales = new HashMap<>();
+        if (porPartido.isEmpty()) {
+            return totales;
+        }
+        for (TarjetaJugador tarjeta : tarjetasJugador.activasDeCategoria(porPartido.values().iterator().next().getIdCategoria())) {
+            if (!porPartido.containsKey(tarjeta.getIdPartido())) {
+                continue;
+            }
+            int amarillas = tarjeta.getAmarillas() == null ? 0 : tarjeta.getAmarillas();
+            int rojas = tarjeta.getRojas() == null ? 0 : tarjeta.getRojas();
+            totales.merge(tarjeta.getIdJugador(), amarillas * pesoAmarilla + rojas * pesoRoja, Integer::sum);
+        }
+        return totales;
+    }
+
+    private int peso(Tarjeta tarjeta) {
+        return tarjeta == null || tarjeta.getPesoFairPlay() < 0 ? 1 : tarjeta.getPesoFairPlay();
+    }
+
+    private Tarjeta cercano(UUID ligaId, boolean amarillo, Tarjeta excepto) {
+        Tarjeta mejor = null;
+        int distancia = Integer.MAX_VALUE;
+        int objetivoR = amarillo ? 0xF5 : 0xC6;
+        int objetivoG = amarillo ? 0xC5 : 0x28;
+        int objetivoB = amarillo ? 0x18 : 0x28;
+        UUID excluido = excepto == null ? null : excepto.getId();
+        for (Tarjeta tarjeta : tarjetas.buscar(ligaId, "", "ACTIVO")) {
+            if (excluido != null && excluido.equals(tarjeta.getId())) {
+                continue;
+            }
+            int actual = distancia(tarjeta.getColor(), objetivoR, objetivoG, objetivoB);
+            if (actual < distancia) {
+                distancia = actual;
+                mejor = tarjeta;
+            }
+        }
+        return mejor;
+    }
+
+    private int distancia(String color, int rojo, int verde, int azul) {
+        if (color == null || !color.matches("#[0-9A-Fa-f]{6}")) {
+            return Integer.MAX_VALUE;
+        }
+        int valor = Integer.parseInt(color.substring(1), 16);
+        int dr = ((valor >> 16) & 255) - rojo;
+        int dg = ((valor >> 8) & 255) - verde;
+        int db = (valor & 255) - azul;
+        return dr * dr + dg * dg + db * db;
     }
 
     private LocalDate fechaDe(Jornada jornada) {

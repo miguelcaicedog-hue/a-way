@@ -16,6 +16,7 @@ public class TarjetaViews {
         private String color;
         private BigDecimal costo;
         private Integer cantidadJornadas;
+        private Integer pesoFairPlay;
         private String estado;
 
         public UUID getLeagueId() {
@@ -58,6 +59,14 @@ public class TarjetaViews {
             this.cantidadJornadas = cantidadJornadas;
         }
 
+        public Integer getPesoFairPlay() {
+            return pesoFairPlay;
+        }
+
+        public void setPesoFairPlay(Integer pesoFairPlay) {
+            this.pesoFairPlay = pesoFairPlay;
+        }
+
         public String getEstado() {
             return estado;
         }
@@ -74,15 +83,18 @@ public class TarjetaViews {
         private final String color;
         private final BigDecimal costo;
         private final int cantidadJornadas;
+        private final int pesoFairPlay;
         private final String estado;
 
-        TarjetaView(UUID id, UUID leagueId, String descripcion, String color, BigDecimal costo, int cantidadJornadas, String estado) {
+        TarjetaView(UUID id, UUID leagueId, String descripcion, String color, BigDecimal costo, int cantidadJornadas,
+                    int pesoFairPlay, String estado) {
             this.id = id;
             this.leagueId = leagueId;
             this.descripcion = descripcion;
             this.color = color;
             this.costo = costo;
             this.cantidadJornadas = cantidadJornadas;
+            this.pesoFairPlay = pesoFairPlay;
             this.estado = estado;
         }
 
@@ -108,6 +120,10 @@ public class TarjetaViews {
 
         public int getCantidadJornadas() {
             return cantidadJornadas;
+        }
+
+        public int getPesoFairPlay() {
+            return pesoFairPlay;
         }
 
         public String getEstado() {

@@ -79,6 +79,7 @@ public class TarjetaService {
         tarjeta.setColor(color(request.getColor()));
         tarjeta.setCosto(costo(request.getCosto()));
         tarjeta.setCantidadJornadas(jornadas(request.getCantidadJornadas()));
+        tarjeta.setPesoFairPlay(peso(request.getPesoFairPlay()));
         tarjeta.setEstado(estado);
     }
 
@@ -124,6 +125,16 @@ public class TarjetaService {
         return valor;
     }
 
+    private int peso(Integer valor) {
+        if (valor == null) {
+            return 1;
+        }
+        if (valor < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El peso de Fair Play debe ser cero o más");
+        }
+        return valor;
+    }
+
     private String estado(String valor) {
         if (valor == null || valor.trim().isEmpty()) {
             return "ACTIVO";
@@ -143,6 +154,7 @@ public class TarjetaService {
                 tarjeta.getColor(),
                 tarjeta.getCosto(),
                 tarjeta.getCantidadJornadas(),
+                tarjeta.getPesoFairPlay(),
                 tarjeta.getEstado());
     }
 

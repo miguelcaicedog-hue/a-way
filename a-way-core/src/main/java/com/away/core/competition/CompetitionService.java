@@ -36,6 +36,8 @@ public class CompetitionService {
     private final TeamEntryRepository entries;
     private final PlayerRepository players;
     private final SuspensionesService suspensiones;
+    private final CriterioDesempateGoleadorService criteriosGoleador;
+    private final CriterioDesempateEquipoService criteriosEquipo;
 
     public CompetitionService(AppUserRepository users,
                               LeagueRepository leagues,
@@ -45,7 +47,9 @@ public class CompetitionService {
                               TeamRepository teams,
                               TeamEntryRepository entries,
                               PlayerRepository players,
-                              SuspensionesService suspensiones) {
+                              SuspensionesService suspensiones,
+                              CriterioDesempateGoleadorService criteriosGoleador,
+                              CriterioDesempateEquipoService criteriosEquipo) {
         this.users = users;
         this.leagues = leagues;
         this.settings = settings;
@@ -55,6 +59,8 @@ public class CompetitionService {
         this.entries = entries;
         this.players = players;
         this.suspensiones = suspensiones;
+        this.criteriosGoleador = criteriosGoleador;
+        this.criteriosEquipo = criteriosEquipo;
     }
 
     @Transactional(readOnly = true)
@@ -123,7 +129,10 @@ public class CompetitionService {
         edition.setName(request.getName().trim());
         edition.setStartsOn(request.getStartsOn());
         edition.setEndsOn(request.getEndsOn());
-        return editionView(editions.save(edition));
+        Edition guardada = editions.save(edition);
+        criteriosGoleador.sembrar(guardada);
+        criteriosEquipo.sembrar(guardada);
+        return editionView(guardada);
     }
 
     public EditionView updateEdition(UUID id, EditionRequest request) {

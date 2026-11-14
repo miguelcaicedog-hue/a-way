@@ -31,6 +31,9 @@ public class Tarjeta {
     @Column(name = "cantidad_jornadas", nullable = false)
     private int cantidadJornadas;
 
+    @Column(name = "peso_fair_play", nullable = false)
+    private int pesoFairPlay;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -92,6 +95,14 @@ public class Tarjeta {
 
     public void setCantidadJornadas(int cantidadJornadas) {
         this.cantidadJornadas = cantidadJornadas;
+    }
+
+    public int getPesoFairPlay() {
+        return pesoFairPlay;
+    }
+
+    public void setPesoFairPlay(int pesoFairPlay) {
+        this.pesoFairPlay = pesoFairPlay;
     }
 
     public OffsetDateTime getFechaCreacion() {

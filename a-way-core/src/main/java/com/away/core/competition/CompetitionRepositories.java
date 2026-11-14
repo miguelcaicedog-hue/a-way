@@ -215,6 +215,14 @@ interface PartidoCobroDetalleRepository extends JpaRepository<PartidoCobroDetall
     List<PartidoCobroDetalle> cargosActivos();
 }
 
+interface CriterioDesempateGoleadorRepository extends JpaRepository<CriterioDesempateGoleador, UUID> {
+    List<CriterioDesempateGoleador> findByIdEdicionAndEstadoOrderByOrdenAsc(UUID idEdicion, String estado);
+}
+
+interface CriterioDesempateEquipoRepository extends JpaRepository<CriterioDesempateEquipo, UUID> {
+    List<CriterioDesempateEquipo> findByIdEdicionAndEstadoOrderByOrdenAsc(UUID idEdicion, String estado);
+}
+
 interface CanchaRepository extends JpaRepository<Cancha, UUID> {
     @Query("select c from Cancha c where c.idLiga = :liga and c.estado <> 'ELIMINADO' "
             + "and (:estado = '' or c.estado = :estado) "

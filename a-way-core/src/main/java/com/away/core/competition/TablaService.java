@@ -11,9 +11,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -26,11 +28,17 @@ public class TablaService {
     private final GrupoRepository grupos;
     private final GrupoEquipoRepository asignaciones;
     private final TeamEntryRepository entradas;
+    private final CriterioDesempateEquipoService criterios;
+    private final TarjetaJugadorRepository tarjetasJugador;
+    private final TarjetaRepository tarjetas;
+    private final PlayerRepository jugadores;
     private final AppUserRepository users;
 
     public TablaService(EditionRepository editions, CategoryRepository categories, JornadaRepository jornadas,
                         PartidoRepository partidos, GrupoRepository grupos, GrupoEquipoRepository asignaciones,
-                        TeamEntryRepository entradas, AppUserRepository users) {
+                        TeamEntryRepository entradas, CriterioDesempateEquipoService criterios,
+                        TarjetaJugadorRepository tarjetasJugador, TarjetaRepository tarjetas,
+                        PlayerRepository jugadores, AppUserRepository users) {
         this.editions = editions;
         this.categories = categories;
         this.jornadas = jornadas;
@@ -38,6 +46,10 @@ public class TablaService {
         this.grupos = grupos;
         this.asignaciones = asignaciones;
         this.entradas = entradas;
+        this.criterios = criterios;
+        this.tarjetasJugador = tarjetasJugador;
+        this.tarjetas = tarjetas;
+        this.jugadores = jugadores;
         this.users = users;
     }
 
@@ -109,18 +121,22 @@ public class TablaService {
             }
             sumar(tabla, partido.getIdEquipoLocal(), partido.getGolesLocal(), partido.getGolesVisita());
             sumar(tabla, partido.getIdEquipoVisita(), partido.getGolesVisita(), partido.getGolesLocal());
+            tabla.encuentros.add(new Encuentro(partido.getId(), partido.getIdEquipoLocal(), partido.getIdEquipoVisita(),
+                    partido.getGolesLocal(), partido.getGolesVisita()));
         }
 
+        List<String> ordenCriterios = criterios.orden(edition.getId());
+        int pesoAmarilla = peso(cercano(edition.getLeague().getId(), true, null));
+        int pesoRoja = peso(cercano(edition.getLeague().getId(), false, cercano(edition.getLeague().getId(), true, null)));
+        Map<UUID, UUID> equipoDeJugador = equipoDeJugador(categoryId);
+        List<TarjetaJugador> tarjetasCategoria = tarjetasJugador.activasDeCategoria(categoryId);
         List<TablaViews.GrupoView> resultado = new ArrayList<>();
         for (TablaGrupo tabla : porGrupo.values()) {
             if (tabla.filas.isEmpty()) {
                 continue;
             }
-            List<Acumulado> ordenadas = new ArrayList<>(tabla.filas.values());
-            ordenadas.sort(Comparator.comparingInt(Acumulado::getPuntos).reversed()
-                    .thenComparing(Comparator.comparingInt(Acumulado::getDiferencia).reversed())
-                    .thenComparing(Comparator.comparingInt(Acumulado::getGolesFavor).reversed())
-                    .thenComparing(fila -> fila.equipo.toLowerCase()));
+            Map<UUID, Integer> fairPlay = fairPlay(tabla.encuentros, tarjetasCategoria, equipoDeJugador, pesoAmarilla, pesoRoja);
+            List<Acumulado> ordenadas = ordenar(new ArrayList<>(tabla.filas.values()), ordenCriterios, fairPlay, tabla.encuentros);
             List<TablaViews.FilaView> filas = new ArrayList<>();
             int posicion = 1;
             for (Acumulado fila : ordenadas) {
@@ -142,6 +158,19 @@ public class TablaService {
         return new TablaViews.TablaView(fecha, resultado);
     }
 
+    @Transactional(readOnly = true)
+    public Map<UUID, Integer> puestos(UUID categoryId, LocalDate fecha) {
+        Category categoria = categories.findById(categoryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La categoría no existe"));
+        Map<UUID, Integer> puestos = new HashMap<>();
+        for (TablaViews.GrupoView grupo : listar(categoria.getEdition().getId(), categoryId, fecha).getGrupos()) {
+            for (TablaViews.FilaView fila : grupo.getEquipos()) {
+                puestos.put(fila.getTeamId(), fila.getPosicion());
+            }
+        }
+        return puestos;
+    }
+
     private TablaGrupo tablaDelPartido(Partido partido, Map<UUID, UUID> grupoDeEquipo, Map<UUID, TablaGrupo> porGrupo) {
         if (porGrupo.containsKey(null)) {
             return porGrupo.get(null);
@@ -155,6 +184,142 @@ public class TablaService {
             }
         }
         return grupoId == null ? null : porGrupo.get(grupoId);
+    }
+
+    private List<Acumulado> ordenar(List<Acumulado> filas, List<String> criteriosOrden, Map<UUID, Integer> fairPlay,
+                                   List<Encuentro> encuentros) {
+        filas.sort(Comparator.comparingInt(Acumulado::getPuntos).reversed()
+                .thenComparing(Comparator.comparingInt(Acumulado::getDiferencia).reversed())
+                .thenComparing(fila -> fila.equipo.toLowerCase()));
+        List<Acumulado> ordenadas = new ArrayList<>();
+        int inicio = 0;
+        while (inicio < filas.size()) {
+            Acumulado actual = filas.get(inicio);
+            int fin = inicio + 1;
+            while (fin < filas.size()
+                    && filas.get(fin).puntos() == actual.puntos()
+                    && filas.get(fin).diferencia() == actual.diferencia()) {
+                fin++;
+            }
+            List<Acumulado> grupo = new ArrayList<>(filas.subList(inicio, fin));
+            if (grupo.size() > 1) {
+                Map<UUID, Integer> directo = directo(grupo, encuentros);
+                grupo.sort((izquierda, derecha) -> comparar(izquierda, derecha, criteriosOrden, fairPlay, directo));
+            }
+            ordenadas.addAll(grupo);
+            inicio = fin;
+        }
+        return ordenadas;
+    }
+
+    private int comparar(Acumulado izquierda, Acumulado derecha, List<String> criteriosOrden,
+                         Map<UUID, Integer> fairPlay, Map<UUID, Integer> directo) {
+        for (String codigo : criteriosOrden) {
+            int diferencia = 0;
+            if ("FAIR_PLAY".equals(codigo)) {
+                diferencia = Integer.compare(fairPlay.getOrDefault(izquierda.teamId, 0), fairPlay.getOrDefault(derecha.teamId, 0));
+            } else if ("GOLES_FAVOR".equals(codigo)) {
+                diferencia = Integer.compare(derecha.golesFavor, izquierda.golesFavor);
+            } else if ("ENFRENTAMIENTO_DIRECTO".equals(codigo)) {
+                diferencia = Integer.compare(directo.getOrDefault(derecha.teamId, 0), directo.getOrDefault(izquierda.teamId, 0));
+            }
+            if (diferencia != 0) {
+                return diferencia;
+            }
+        }
+        return izquierda.equipo.compareToIgnoreCase(derecha.equipo);
+    }
+
+    private Map<UUID, Integer> directo(List<Acumulado> grupo, List<Encuentro> encuentros) {
+        Set<UUID> equipos = new HashSet<>();
+        for (Acumulado fila : grupo) {
+            equipos.add(fila.teamId);
+        }
+        Map<UUID, Integer> puntos = new HashMap<>();
+        for (Encuentro encuentro : encuentros) {
+            if (!equipos.contains(encuentro.local) || !equipos.contains(encuentro.visita)) {
+                continue;
+            }
+            if (encuentro.golesLocal > encuentro.golesVisita) {
+                puntos.merge(encuentro.local, 3, Integer::sum);
+            } else if (encuentro.golesLocal < encuentro.golesVisita) {
+                puntos.merge(encuentro.visita, 3, Integer::sum);
+            } else {
+                puntos.merge(encuentro.local, 1, Integer::sum);
+                puntos.merge(encuentro.visita, 1, Integer::sum);
+            }
+        }
+        return puntos;
+    }
+
+    private Map<UUID, UUID> equipoDeJugador(UUID categoryId) {
+        Map<UUID, UUID> equipoDeJugador = new HashMap<>();
+        for (TeamEntry entrada : entradas.findByCategory_IdOrderByTeam_NameAsc(categoryId)) {
+            if (entrada.getTeam() == null) {
+                continue;
+            }
+            for (Player jugador : jugadores.findByTeamEntry_IdOrderByCedulaAsc(entrada.getId())) {
+                equipoDeJugador.put(jugador.getId(), entrada.getTeam().getId());
+            }
+        }
+        return equipoDeJugador;
+    }
+
+    private Map<UUID, Integer> fairPlay(List<Encuentro> encuentros, List<TarjetaJugador> tarjetas, Map<UUID, UUID> equipoDeJugador,
+                                        int pesoAmarilla, int pesoRoja) {
+        Set<UUID> partidos = new HashSet<>();
+        for (Encuentro encuentro : encuentros) {
+            partidos.add(encuentro.id);
+        }
+        Map<UUID, Integer> totales = new HashMap<>();
+        for (TarjetaJugador tarjeta : tarjetas) {
+            if (!partidos.contains(tarjeta.getIdPartido())) {
+                continue;
+            }
+            UUID equipo = equipoDeJugador.get(tarjeta.getIdJugador());
+            if (equipo == null) {
+                continue;
+            }
+            int amarillas = tarjeta.getAmarillas() == null ? 0 : tarjeta.getAmarillas();
+            int rojas = tarjeta.getRojas() == null ? 0 : tarjeta.getRojas();
+            totales.merge(equipo, amarillas * pesoAmarilla + rojas * pesoRoja, Integer::sum);
+        }
+        return totales;
+    }
+
+    private int peso(Tarjeta tarjeta) {
+        return tarjeta == null || tarjeta.getPesoFairPlay() < 0 ? 1 : tarjeta.getPesoFairPlay();
+    }
+
+    private Tarjeta cercano(UUID ligaId, boolean amarillo, Tarjeta excepto) {
+        Tarjeta mejor = null;
+        int distancia = Integer.MAX_VALUE;
+        int objetivoR = amarillo ? 0xF5 : 0xC6;
+        int objetivoG = amarillo ? 0xC5 : 0x28;
+        int objetivoB = amarillo ? 0x18 : 0x28;
+        UUID excluido = excepto == null ? null : excepto.getId();
+        for (Tarjeta tarjeta : tarjetas.buscar(ligaId, "", "ACTIVO")) {
+            if (excluido != null && excluido.equals(tarjeta.getId())) {
+                continue;
+            }
+            int actual = distancia(tarjeta.getColor(), objetivoR, objetivoG, objetivoB);
+            if (actual < distancia) {
+                distancia = actual;
+                mejor = tarjeta;
+            }
+        }
+        return mejor;
+    }
+
+    private int distancia(String color, int rojo, int verde, int azul) {
+        if (color == null || !color.matches("#[0-9A-Fa-f]{6}")) {
+            return Integer.MAX_VALUE;
+        }
+        int valor = Integer.parseInt(color.substring(1), 16);
+        int dr = ((valor >> 16) & 255) - rojo;
+        int dg = ((valor >> 8) & 255) - verde;
+        int db = (valor & 255) - azul;
+        return dr * dr + dg * dg + db * db;
     }
 
     private void sumar(TablaGrupo tabla, UUID teamId, int favor, int contra) {
@@ -189,6 +354,7 @@ public class TablaService {
         private final UUID id;
         private final String nombre;
         private final Map<UUID, Acumulado> filas = new LinkedHashMap<>();
+        private final List<Encuentro> encuentros = new ArrayList<>();
 
         private TablaGrupo(UUID id, String nombre) {
             this.id = id;
@@ -229,6 +395,22 @@ public class TablaService {
 
         private int getGolesFavor() {
             return golesFavor;
+        }
+    }
+
+    private static final class Encuentro {
+        private final UUID id;
+        private final UUID local;
+        private final UUID visita;
+        private final int golesLocal;
+        private final int golesVisita;
+
+        private Encuentro(UUID id, UUID local, UUID visita, int golesLocal, int golesVisita) {
+            this.id = id;
+            this.local = local;
+            this.visita = visita;
+            this.golesLocal = golesLocal;
+            this.golesVisita = golesVisita;
         }
     }
 }

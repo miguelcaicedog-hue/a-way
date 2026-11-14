@@ -13,6 +13,7 @@ type Tarjeta = {
   color: string
   costo: number
   cantidadJornadas: number
+  pesoFairPlay: number
   estado: string
 }
 
@@ -36,6 +37,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
   const [color, setColor] = useState('#F5C518')
   const [costo, setCosto] = useState('0')
   const [jornadas, setJornadas] = useState('0')
+  const [peso, setPeso] = useState('1')
   const [estado, setEstado] = useState('ACTIVO')
   const [editing, setEditing] = useState<Tarjeta | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +74,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
     setColor('#F5C518')
     setCosto('0')
     setJornadas('0')
+    setPeso('1')
     setEstado('ACTIVO')
   }
 
@@ -81,6 +84,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
     setColor(row.color.toLowerCase())
     setCosto(dinero(row.costo))
     setJornadas(String(row.cantidadJornadas))
+    setPeso(String(row.pesoFairPlay ?? 1))
     setEstado(row.estado === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO')
     setError(null)
   }
@@ -94,6 +98,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
       color,
       costo: Number(costo),
       cantidadJornadas: Number(jornadas),
+      pesoFairPlay: Number(peso),
       estado,
     }
     try {
@@ -148,6 +153,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
             <th>Color</th>
             <th>Costo</th>
             <th>Jornadas de suspensión</th>
+            <th>Peso Fair Play</th>
             <th>Estado</th>
             {writable && <th></th>}
           </tr>
@@ -159,6 +165,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
               <td><span className="tarjeta-color" style={{ background: row.color }} aria-label={row.color} /></td>
               <td>{dinero(row.costo)}</td>
               <td>{row.cantidadJornadas}</td>
+              <td>{row.pesoFairPlay}</td>
               <td>{etiqueta(row.estado)}</td>
               {writable && (
                 <td className="actions">
@@ -168,7 +175,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
               )}
             </tr>
           ))}
-          {rows.length === 0 && <tr><td colSpan={writable ? 6 : 5}>No hay tarjetas.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={writable ? 7 : 6}>No hay tarjetas.</td></tr>}
         </tbody>
       </table>
       {writable && leagueId && (
@@ -189,6 +196,10 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
           <label>
             Jornadas de suspensión
             <input type="number" min={0} step={1} required value={jornadas} onChange={(event) => setJornadas(event.target.value)} />
+          </label>
+          <label>
+            Peso Fair Play
+            <input type="number" min={0} step={1} required value={peso} onChange={(event) => setPeso(event.target.value)} />
           </label>
           <label>
             Estado

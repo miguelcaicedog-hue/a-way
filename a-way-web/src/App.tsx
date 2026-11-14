@@ -16,6 +16,8 @@ import { SancionesJugadorScreen } from './SancionesJugador'
 import { SuspensionesScreen } from './Suspensiones'
 import { SuspensionesJugadorScreen } from './SuspensionesJugador'
 import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
+import { DesempateGoleadoresScreen } from './DesempateGoleadores'
+import { DesempateEquiposScreen } from './DesempateEquipos'
 
 type Health = {
   service?: string
@@ -64,6 +66,8 @@ const sections = [
   { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
   { id: 'importaciones', label: 'Importaciones', summary: 'Planteles desde Excel y equipos desde el formulario de Google.' },
   { id: 'configuracion', label: 'Configuración', summary: 'Fair play, momento de la suspensión y reglas de la liga.' },
+  { id: 'desempate-goleadores', label: 'Desempate goleadores', summary: 'Orden de los criterios de desempate de la tabla de goleadores de la edición.' },
+  { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },
   { id: 'usuarios', label: 'Usuarios', summary: 'Master, administrativo y asistente de cada liga.' },
 ] as const
 
@@ -74,7 +78,7 @@ const menuGroups = [
   { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
   { label: 'Disciplina', ids: ['catalogo-tarjetas', 'sanciones-jugador', 'suspensiones', 'suspensiones-jugador', 'sanciones'] },
   { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
-  { label: 'Administración', ids: ['importaciones', 'configuracion', 'usuarios'] },
+  { label: 'Administración', ids: ['importaciones', 'configuracion', 'desempate-goleadores', 'desempate-equipos', 'usuarios'] },
 ] as const
 
 type SectionId = (typeof sections)[number]['id']
@@ -436,6 +440,8 @@ function App() {
         {section === 'suspensiones' && <SuspensionesScreen key={leagueId} profile={profile} leagueId={leagueId} />}
         {section === 'suspensiones-jugador' && <SuspensionesJugadorScreen key={editionId} editionId={editionId} leagueId={leagueId} />}
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
+        {section === 'desempate-goleadores' && <DesempateGoleadoresScreen key={editionId} profile={profile} editionId={editionId} />}
+        {section === 'desempate-equipos' && <DesempateEquiposScreen key={editionId} profile={profile} editionId={editionId} />}
       </main>
       </div>
     </div>
