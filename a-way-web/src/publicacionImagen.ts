@@ -26,6 +26,17 @@ export type TablaEstilo = {
   destacadaFondo: string
   columnasTabla: string
   titulo: string
+  tituloX: number
+  tituloY: number
+  tituloTamano: number
+  subtituloX: number
+  subtituloY: number
+  subtituloTamano: number
+  fechaX: number
+  fechaY: number
+  fechaTamano: number
+  lugarY: number
+  lugarTamano: number
 }
 
 export type Formato = {
@@ -40,9 +51,6 @@ export type Formato = {
   logoY: number
   logoAncho: number
   logoAlto: number
-  tituloX: number
-  tituloY: number
-  tituloTamano: number
   tituloNegrita: boolean
   tituloCursiva: boolean
   tituloFamilia: string
@@ -51,28 +59,20 @@ export type Formato = {
   tituloContornoColor: string
   tituloContornoGrosor: number
   tituloSombra: boolean
-  subtituloX: number
-  subtituloY: number
-  subtituloTamano: number
   subtituloNegrita: boolean
   subtituloCursiva: boolean
   subtituloFamilia: string
   subtituloColor: string
-  lugarY: number
-  lugarTamano: number
   lugarCursiva: boolean
   lugarFamilia: string
   lugarColor: string
   lugarRayaAncho: number
   lugarRayaGrosor: number
-  fechaX: number
-  fechaY: number
   fechaAncho: number
   fechaAlto: number
   fechaRadio: number
   fechaBordeGrosor: number
   fechaBordeColor: string
-  fechaTamano: number
   fechaNegrita: boolean
   fechaFamilia: string
   fechaColor: string
@@ -186,12 +186,12 @@ export async function dibujarPublicacion(
     ctx.drawImage(logo, px(formato.logoX), py(formato.logoY), px(formato.logoAncho), py(formato.logoAlto))
   }
 
-  const tituloTamano = px(formato.tituloTamano)
+  const tituloTamano = px(tabla.tituloTamano)
   ctx.font = fuente(tituloTamano, formato.tituloFamilia, formato.tituloNegrita, formato.tituloCursiva)
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
-  const tituloX = px(formato.tituloX)
-  const tituloBase = py(formato.tituloY) + tituloTamano * 0.85
+  const tituloX = px(tabla.tituloX)
+  const tituloBase = py(tabla.tituloY) + tituloTamano * 0.85
   ctx.lineJoin = 'round'
   ctx.miterLimit = 2
   ctx.lineWidth = px(formato.tituloContornoGrosor)
@@ -214,20 +214,20 @@ export async function dibujarPublicacion(
 
   const descripcion = formato.descripcion.trim()
   if (descripcion) {
-    const subtituloTamano = px(formato.subtituloTamano)
+    const subtituloTamano = px(tabla.subtituloTamano)
     ctx.font = fuente(subtituloTamano, formato.subtituloFamilia, formato.subtituloNegrita, formato.subtituloCursiva)
     ctx.fillStyle = formato.subtituloColor
-    ctx.fillText(descripcion, px(formato.subtituloX), py(formato.subtituloY) + subtituloTamano * 0.85)
+    ctx.fillText(descripcion, px(tabla.subtituloX), py(tabla.subtituloY) + subtituloTamano * 0.85)
   }
 
   const lugar = formato.nombreLugar.trim()
   if (lugar) {
-    const lugarTamano = px(formato.lugarTamano)
+    const lugarTamano = px(tabla.lugarTamano)
     ctx.font = fuente(lugarTamano, formato.lugarFamilia, false, formato.lugarCursiva)
     ctx.fillStyle = formato.lugarColor
     ctx.textAlign = 'center'
     const centro = canvas.width / 2
-    const lugarBase = py(formato.lugarY) + lugarTamano * 0.85
+    const lugarBase = py(tabla.lugarY) + lugarTamano * 0.85
     ctx.fillText(lugar, centro, lugarBase)
     const mitad = ctx.measureText(lugar).width / 2
     const separacion = px(16)
@@ -243,8 +243,8 @@ export async function dibujarPublicacion(
     ctx.textAlign = 'left'
   }
 
-  const fechaX = px(formato.fechaX)
-  const fechaY = py(formato.fechaY)
+  const fechaX = px(tabla.fechaX)
+  const fechaY = py(tabla.fechaY)
   const fechaAncho = px(formato.fechaAncho)
   const fechaAlto = py(formato.fechaAlto)
   ctx.beginPath()
@@ -260,7 +260,7 @@ export async function dibujarPublicacion(
     iconoTamano,
     formato.fechaColor,
   )
-  const fechaTamano = px(formato.fechaTamano)
+  const fechaTamano = px(tabla.fechaTamano)
   ctx.font = fuente(fechaTamano, formato.fechaFamilia, formato.fechaNegrita, false)
   ctx.fillStyle = formato.fechaColor
   ctx.textAlign = 'center'

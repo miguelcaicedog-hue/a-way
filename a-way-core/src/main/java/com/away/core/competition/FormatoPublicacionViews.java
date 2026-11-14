@@ -20,9 +20,6 @@ public class FormatoPublicacionViews {
         private final int logoY;
         private final int logoAncho;
         private final int logoAlto;
-        private final int tituloX;
-        private final int tituloY;
-        private final int tituloTamano;
         private final boolean tituloNegrita;
         private final boolean tituloCursiva;
         private final String tituloFamilia;
@@ -31,28 +28,20 @@ public class FormatoPublicacionViews {
         private final String tituloContornoColor;
         private final int tituloContornoGrosor;
         private final boolean tituloSombra;
-        private final int subtituloX;
-        private final int subtituloY;
-        private final int subtituloTamano;
         private final boolean subtituloNegrita;
         private final boolean subtituloCursiva;
         private final String subtituloFamilia;
         private final String subtituloColor;
-        private final int lugarY;
-        private final int lugarTamano;
         private final boolean lugarCursiva;
         private final String lugarFamilia;
         private final String lugarColor;
         private final int lugarRayaAncho;
         private final int lugarRayaGrosor;
-        private final int fechaX;
-        private final int fechaY;
         private final int fechaAncho;
         private final int fechaAlto;
         private final int fechaRadio;
         private final int fechaBordeGrosor;
         private final String fechaBordeColor;
-        private final int fechaTamano;
         private final boolean fechaNegrita;
         private final String fechaFamilia;
         private final String fechaColor;
@@ -72,9 +61,6 @@ public class FormatoPublicacionViews {
             this.logoY = formato.getLogoY();
             this.logoAncho = formato.getLogoAncho();
             this.logoAlto = formato.getLogoAlto();
-            this.tituloX = formato.getTituloX();
-            this.tituloY = formato.getTituloY();
-            this.tituloTamano = formato.getTituloTamano();
             this.tituloNegrita = formato.isTituloNegrita();
             this.tituloCursiva = formato.isTituloCursiva();
             this.tituloFamilia = formato.getTituloFamilia();
@@ -83,28 +69,20 @@ public class FormatoPublicacionViews {
             this.tituloContornoColor = formato.getTituloContornoColor();
             this.tituloContornoGrosor = formato.getTituloContornoGrosor();
             this.tituloSombra = formato.isTituloSombra();
-            this.subtituloX = formato.getSubtituloX();
-            this.subtituloY = formato.getSubtituloY();
-            this.subtituloTamano = formato.getSubtituloTamano();
             this.subtituloNegrita = formato.isSubtituloNegrita();
             this.subtituloCursiva = formato.isSubtituloCursiva();
             this.subtituloFamilia = formato.getSubtituloFamilia();
             this.subtituloColor = formato.getSubtituloColor();
-            this.lugarY = formato.getLugarY();
-            this.lugarTamano = formato.getLugarTamano();
             this.lugarCursiva = formato.isLugarCursiva();
             this.lugarFamilia = formato.getLugarFamilia();
             this.lugarColor = formato.getLugarColor();
             this.lugarRayaAncho = formato.getLugarRayaAncho();
             this.lugarRayaGrosor = formato.getLugarRayaGrosor();
-            this.fechaX = formato.getFechaX();
-            this.fechaY = formato.getFechaY();
             this.fechaAncho = formato.getFechaAncho();
             this.fechaAlto = formato.getFechaAlto();
             this.fechaRadio = formato.getFechaRadio();
             this.fechaBordeGrosor = formato.getFechaBordeGrosor();
             this.fechaBordeColor = formato.getFechaBordeColor();
-            this.fechaTamano = formato.getFechaTamano();
             this.fechaNegrita = formato.isFechaNegrita();
             this.fechaFamilia = formato.getFechaFamilia();
             this.fechaColor = formato.getFechaColor();
@@ -123,9 +101,6 @@ public class FormatoPublicacionViews {
         public int getLogoY() { return logoY; }
         public int getLogoAncho() { return logoAncho; }
         public int getLogoAlto() { return logoAlto; }
-        public int getTituloX() { return tituloX; }
-        public int getTituloY() { return tituloY; }
-        public int getTituloTamano() { return tituloTamano; }
         public boolean isTituloNegrita() { return tituloNegrita; }
         public boolean isTituloCursiva() { return tituloCursiva; }
         public String getTituloFamilia() { return tituloFamilia; }
@@ -134,28 +109,20 @@ public class FormatoPublicacionViews {
         public String getTituloContornoColor() { return tituloContornoColor; }
         public int getTituloContornoGrosor() { return tituloContornoGrosor; }
         public boolean isTituloSombra() { return tituloSombra; }
-        public int getSubtituloX() { return subtituloX; }
-        public int getSubtituloY() { return subtituloY; }
-        public int getSubtituloTamano() { return subtituloTamano; }
         public boolean isSubtituloNegrita() { return subtituloNegrita; }
         public boolean isSubtituloCursiva() { return subtituloCursiva; }
         public String getSubtituloFamilia() { return subtituloFamilia; }
         public String getSubtituloColor() { return subtituloColor; }
-        public int getLugarY() { return lugarY; }
-        public int getLugarTamano() { return lugarTamano; }
         public boolean isLugarCursiva() { return lugarCursiva; }
         public String getLugarFamilia() { return lugarFamilia; }
         public String getLugarColor() { return lugarColor; }
         public int getLugarRayaAncho() { return lugarRayaAncho; }
         public int getLugarRayaGrosor() { return lugarRayaGrosor; }
-        public int getFechaX() { return fechaX; }
-        public int getFechaY() { return fechaY; }
         public int getFechaAncho() { return fechaAncho; }
         public int getFechaAlto() { return fechaAlto; }
         public int getFechaRadio() { return fechaRadio; }
         public int getFechaBordeGrosor() { return fechaBordeGrosor; }
         public String getFechaBordeColor() { return fechaBordeColor; }
-        public int getFechaTamano() { return fechaTamano; }
         public boolean isFechaNegrita() { return fechaNegrita; }
         public String getFechaFamilia() { return fechaFamilia; }
         public String getFechaColor() { return fechaColor; }
@@ -183,6 +150,17 @@ public class FormatoPublicacionViews {
         private final String destacadaFondo;
         private final String columnasTabla;
         private final String titulo;
+        private final int tituloX;
+        private final int tituloY;
+        private final int tituloTamano;
+        private final int subtituloX;
+        private final int subtituloY;
+        private final int subtituloTamano;
+        private final int fechaX;
+        private final int fechaY;
+        private final int fechaTamano;
+        private final int lugarY;
+        private final int lugarTamano;
 
         TablaView(FormatoPublicacionTabla tabla) {
             this.tipo = tabla.getTipo();
@@ -204,6 +182,17 @@ public class FormatoPublicacionViews {
             this.destacadaFondo = tabla.getDestacadaFondo();
             this.columnasTabla = tabla.getColumnasTabla();
             this.titulo = tabla.getTitulo();
+            this.tituloX = tabla.getTituloX();
+            this.tituloY = tabla.getTituloY();
+            this.tituloTamano = tabla.getTituloTamano();
+            this.subtituloX = tabla.getSubtituloX();
+            this.subtituloY = tabla.getSubtituloY();
+            this.subtituloTamano = tabla.getSubtituloTamano();
+            this.fechaX = tabla.getFechaX();
+            this.fechaY = tabla.getFechaY();
+            this.fechaTamano = tabla.getFechaTamano();
+            this.lugarY = tabla.getLugarY();
+            this.lugarTamano = tabla.getLugarTamano();
         }
 
         public String getTipo() { return tipo; }
@@ -225,6 +214,17 @@ public class FormatoPublicacionViews {
         public String getDestacadaFondo() { return destacadaFondo; }
         public String getColumnasTabla() { return columnasTabla; }
         public String getTitulo() { return titulo; }
+        public int getTituloX() { return tituloX; }
+        public int getTituloY() { return tituloY; }
+        public int getTituloTamano() { return tituloTamano; }
+        public int getSubtituloX() { return subtituloX; }
+        public int getSubtituloY() { return subtituloY; }
+        public int getSubtituloTamano() { return subtituloTamano; }
+        public int getFechaX() { return fechaX; }
+        public int getFechaY() { return fechaY; }
+        public int getFechaTamano() { return fechaTamano; }
+        public int getLugarY() { return lugarY; }
+        public int getLugarTamano() { return lugarTamano; }
     }
 
     public static class FormatoRequest {
@@ -234,9 +234,6 @@ public class FormatoPublicacionViews {
         private Integer logoY;
         private Integer logoAncho;
         private Integer logoAlto;
-        private Integer tituloX;
-        private Integer tituloY;
-        private Integer tituloTamano;
         private boolean tituloNegrita;
         private boolean tituloCursiva;
         private String tituloFamilia;
@@ -245,28 +242,20 @@ public class FormatoPublicacionViews {
         private String tituloContornoColor;
         private Integer tituloContornoGrosor;
         private boolean tituloSombra;
-        private Integer subtituloX;
-        private Integer subtituloY;
-        private Integer subtituloTamano;
         private boolean subtituloNegrita;
         private boolean subtituloCursiva;
         private String subtituloFamilia;
         private String subtituloColor;
-        private Integer lugarY;
-        private Integer lugarTamano;
         private boolean lugarCursiva;
         private String lugarFamilia;
         private String lugarColor;
         private Integer lugarRayaAncho;
         private Integer lugarRayaGrosor;
-        private Integer fechaX;
-        private Integer fechaY;
         private Integer fechaAncho;
         private Integer fechaAlto;
         private Integer fechaRadio;
         private Integer fechaBordeGrosor;
         private String fechaBordeColor;
-        private Integer fechaTamano;
         private boolean fechaNegrita;
         private String fechaFamilia;
         private String fechaColor;
@@ -285,12 +274,6 @@ public class FormatoPublicacionViews {
         public void setLogoAncho(Integer logoAncho) { this.logoAncho = logoAncho; }
         public Integer getLogoAlto() { return logoAlto; }
         public void setLogoAlto(Integer logoAlto) { this.logoAlto = logoAlto; }
-        public Integer getTituloX() { return tituloX; }
-        public void setTituloX(Integer tituloX) { this.tituloX = tituloX; }
-        public Integer getTituloY() { return tituloY; }
-        public void setTituloY(Integer tituloY) { this.tituloY = tituloY; }
-        public Integer getTituloTamano() { return tituloTamano; }
-        public void setTituloTamano(Integer tituloTamano) { this.tituloTamano = tituloTamano; }
         public boolean isTituloNegrita() { return tituloNegrita; }
         public void setTituloNegrita(boolean tituloNegrita) { this.tituloNegrita = tituloNegrita; }
         public boolean isTituloCursiva() { return tituloCursiva; }
@@ -307,12 +290,6 @@ public class FormatoPublicacionViews {
         public void setTituloContornoGrosor(Integer tituloContornoGrosor) { this.tituloContornoGrosor = tituloContornoGrosor; }
         public boolean isTituloSombra() { return tituloSombra; }
         public void setTituloSombra(boolean tituloSombra) { this.tituloSombra = tituloSombra; }
-        public Integer getSubtituloX() { return subtituloX; }
-        public void setSubtituloX(Integer subtituloX) { this.subtituloX = subtituloX; }
-        public Integer getSubtituloY() { return subtituloY; }
-        public void setSubtituloY(Integer subtituloY) { this.subtituloY = subtituloY; }
-        public Integer getSubtituloTamano() { return subtituloTamano; }
-        public void setSubtituloTamano(Integer subtituloTamano) { this.subtituloTamano = subtituloTamano; }
         public boolean isSubtituloNegrita() { return subtituloNegrita; }
         public void setSubtituloNegrita(boolean subtituloNegrita) { this.subtituloNegrita = subtituloNegrita; }
         public boolean isSubtituloCursiva() { return subtituloCursiva; }
@@ -321,10 +298,6 @@ public class FormatoPublicacionViews {
         public void setSubtituloFamilia(String subtituloFamilia) { this.subtituloFamilia = subtituloFamilia; }
         public String getSubtituloColor() { return subtituloColor; }
         public void setSubtituloColor(String subtituloColor) { this.subtituloColor = subtituloColor; }
-        public Integer getLugarY() { return lugarY; }
-        public void setLugarY(Integer lugarY) { this.lugarY = lugarY; }
-        public Integer getLugarTamano() { return lugarTamano; }
-        public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
         public boolean isLugarCursiva() { return lugarCursiva; }
         public void setLugarCursiva(boolean lugarCursiva) { this.lugarCursiva = lugarCursiva; }
         public String getLugarFamilia() { return lugarFamilia; }
@@ -335,10 +308,6 @@ public class FormatoPublicacionViews {
         public void setLugarRayaAncho(Integer lugarRayaAncho) { this.lugarRayaAncho = lugarRayaAncho; }
         public Integer getLugarRayaGrosor() { return lugarRayaGrosor; }
         public void setLugarRayaGrosor(Integer lugarRayaGrosor) { this.lugarRayaGrosor = lugarRayaGrosor; }
-        public Integer getFechaX() { return fechaX; }
-        public void setFechaX(Integer fechaX) { this.fechaX = fechaX; }
-        public Integer getFechaY() { return fechaY; }
-        public void setFechaY(Integer fechaY) { this.fechaY = fechaY; }
         public Integer getFechaAncho() { return fechaAncho; }
         public void setFechaAncho(Integer fechaAncho) { this.fechaAncho = fechaAncho; }
         public Integer getFechaAlto() { return fechaAlto; }
@@ -349,8 +318,6 @@ public class FormatoPublicacionViews {
         public void setFechaBordeGrosor(Integer fechaBordeGrosor) { this.fechaBordeGrosor = fechaBordeGrosor; }
         public String getFechaBordeColor() { return fechaBordeColor; }
         public void setFechaBordeColor(String fechaBordeColor) { this.fechaBordeColor = fechaBordeColor; }
-        public Integer getFechaTamano() { return fechaTamano; }
-        public void setFechaTamano(Integer fechaTamano) { this.fechaTamano = fechaTamano; }
         public boolean isFechaNegrita() { return fechaNegrita; }
         public void setFechaNegrita(boolean fechaNegrita) { this.fechaNegrita = fechaNegrita; }
         public String getFechaFamilia() { return fechaFamilia; }
@@ -383,6 +350,17 @@ public class FormatoPublicacionViews {
         private String destacadaFondo;
         private String columnasTabla;
         private String titulo;
+        private Integer tituloX;
+        private Integer tituloY;
+        private Integer tituloTamano;
+        private Integer subtituloX;
+        private Integer subtituloY;
+        private Integer subtituloTamano;
+        private Integer fechaX;
+        private Integer fechaY;
+        private Integer fechaTamano;
+        private Integer lugarY;
+        private Integer lugarTamano;
 
         public String getTipo() { return tipo; }
         public void setTipo(String tipo) { this.tipo = tipo; }
@@ -422,5 +400,27 @@ public class FormatoPublicacionViews {
         public void setColumnasTabla(String columnasTabla) { this.columnasTabla = columnasTabla; }
         public String getTitulo() { return titulo; }
         public void setTitulo(String titulo) { this.titulo = titulo; }
+        public Integer getTituloX() { return tituloX; }
+        public void setTituloX(Integer tituloX) { this.tituloX = tituloX; }
+        public Integer getTituloY() { return tituloY; }
+        public void setTituloY(Integer tituloY) { this.tituloY = tituloY; }
+        public Integer getTituloTamano() { return tituloTamano; }
+        public void setTituloTamano(Integer tituloTamano) { this.tituloTamano = tituloTamano; }
+        public Integer getSubtituloX() { return subtituloX; }
+        public void setSubtituloX(Integer subtituloX) { this.subtituloX = subtituloX; }
+        public Integer getSubtituloY() { return subtituloY; }
+        public void setSubtituloY(Integer subtituloY) { this.subtituloY = subtituloY; }
+        public Integer getSubtituloTamano() { return subtituloTamano; }
+        public void setSubtituloTamano(Integer subtituloTamano) { this.subtituloTamano = subtituloTamano; }
+        public Integer getFechaX() { return fechaX; }
+        public void setFechaX(Integer fechaX) { this.fechaX = fechaX; }
+        public Integer getFechaY() { return fechaY; }
+        public void setFechaY(Integer fechaY) { this.fechaY = fechaY; }
+        public Integer getFechaTamano() { return fechaTamano; }
+        public void setFechaTamano(Integer fechaTamano) { this.fechaTamano = fechaTamano; }
+        public Integer getLugarY() { return lugarY; }
+        public void setLugarY(Integer lugarY) { this.lugarY = lugarY; }
+        public Integer getLugarTamano() { return lugarTamano; }
+        public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
     }
 }

@@ -475,11 +475,8 @@ export function PublicacionesScreen({
               <Numero etiqueta="Ancho" valor={formato.logoAncho} disabled={!writable} onChange={(valor) => cambiar('logoAncho', valor)} />
               <Numero etiqueta="Alto" valor={formato.logoAlto} disabled={!writable} onChange={(valor) => cambiar('logoAlto', valor)} />
             </Grupo>
-            <Grupo titulo="Título" nota="El texto de cada publicación se escribe en su tabla. Aquí se define el estilo.">
+            <Grupo titulo="Título" nota="Letra, colores y contorno son comunes. El texto, el tamaño y la posición están en cada tabla.">
               <Letra etiqueta="Letra" valor={formato.tituloFamilia} disabled={!writable} onChange={(valor) => cambiar('tituloFamilia', valor)} />
-              <Numero etiqueta="Tamaño" valor={formato.tituloTamano} disabled={!writable} onChange={(valor) => cambiar('tituloTamano', valor)} />
-              <Numero etiqueta="Posición X" valor={formato.tituloX} disabled={!writable} onChange={(valor) => cambiar('tituloX', valor)} />
-              <Numero etiqueta="Posición Y" valor={formato.tituloY} disabled={!writable} onChange={(valor) => cambiar('tituloY', valor)} />
               <ColorCampo etiqueta="Color inicial" valor={formato.tituloColorInicio} disabled={!writable} onChange={(valor) => cambiar('tituloColorInicio', valor)} />
               <ColorCampo etiqueta="Color final" valor={formato.tituloColorFin} disabled={!writable} onChange={(valor) => cambiar('tituloColorFin', valor)} />
               <ColorCampo etiqueta="Color del contorno" valor={formato.tituloContornoColor} disabled={!writable} onChange={(valor) => cambiar('tituloContornoColor', valor)} />
@@ -490,29 +487,24 @@ export function PublicacionesScreen({
                 <Marca etiqueta="Sombra" valor={formato.tituloSombra} disabled={!writable} onChange={(valor) => cambiar('tituloSombra', valor)} />
               </div>
             </Grupo>
-            <Grupo titulo="Subtítulo" nota="Si la descripción queda vacía, la imagen no muestra esta línea.">
+            <Grupo titulo="Subtítulo" nota="La descripción, la letra y el color son comunes. El tamaño y la posición están en cada tabla. Si la descripción queda vacía, la imagen no muestra esta línea.">
               <label className="formato-texto">
                 Descripción
                 <input value={formato.descripcion} disabled={!writable} onChange={(event) => cambiar('descripcion', event.target.value)} />
               </label>
               <Letra etiqueta="Letra" valor={formato.subtituloFamilia} disabled={!writable} onChange={(valor) => cambiar('subtituloFamilia', valor)} />
-              <Numero etiqueta="Tamaño" valor={formato.subtituloTamano} disabled={!writable} onChange={(valor) => cambiar('subtituloTamano', valor)} />
-              <Numero etiqueta="Posición X" valor={formato.subtituloX} disabled={!writable} onChange={(valor) => cambiar('subtituloX', valor)} />
-              <Numero etiqueta="Posición Y" valor={formato.subtituloY} disabled={!writable} onChange={(valor) => cambiar('subtituloY', valor)} />
               <ColorCampo etiqueta="Color" valor={formato.subtituloColor} disabled={!writable} onChange={(valor) => cambiar('subtituloColor', valor)} />
               <div className="formato-marcas">
                 <Marca etiqueta="Negrita" valor={formato.subtituloNegrita} disabled={!writable} onChange={(valor) => cambiar('subtituloNegrita', valor)} />
                 <Marca etiqueta="Cursiva" valor={formato.subtituloCursiva} disabled={!writable} onChange={(valor) => cambiar('subtituloCursiva', valor)} />
               </div>
             </Grupo>
-            <Grupo titulo="Nombre de lugar" nota="Si el texto queda vacío, la imagen no muestra las rayas.">
+            <Grupo titulo="Nombre de lugar" nota="El texto, la letra, el color y las rayas son comunes. El tamaño y la posición están en cada tabla. Si el texto queda vacío, la imagen no muestra las rayas.">
               <label>
                 Texto
                 <input value={formato.nombreLugar} disabled={!writable} onChange={(event) => cambiar('nombreLugar', event.target.value)} />
               </label>
               <Letra etiqueta="Letra" valor={formato.lugarFamilia} disabled={!writable} onChange={(valor) => cambiar('lugarFamilia', valor)} />
-              <Numero etiqueta="Tamaño" valor={formato.lugarTamano} disabled={!writable} onChange={(valor) => cambiar('lugarTamano', valor)} />
-              <Numero etiqueta="Posición Y" valor={formato.lugarY} disabled={!writable} onChange={(valor) => cambiar('lugarY', valor)} />
               <ColorCampo etiqueta="Color" valor={formato.lugarColor} disabled={!writable} onChange={(valor) => cambiar('lugarColor', valor)} />
               <Numero etiqueta="Ancho de cada raya" valor={formato.lugarRayaAncho} disabled={!writable} onChange={(valor) => cambiar('lugarRayaAncho', valor)} />
               <Numero etiqueta="Grosor de la raya" valor={formato.lugarRayaGrosor} disabled={!writable} onChange={(valor) => cambiar('lugarRayaGrosor', valor)} />
@@ -520,11 +512,8 @@ export function PublicacionesScreen({
                 <Marca etiqueta="Cursiva" valor={formato.lugarCursiva} disabled={!writable} onChange={(valor) => cambiar('lugarCursiva', valor)} />
               </div>
             </Grupo>
-            <Grupo titulo="Fecha" nota="Pastilla con el icono de calendario y el día de la jornada.">
+            <Grupo titulo="Fecha" nota="La pastilla, la letra y el color son comunes. El tamaño del texto y la posición están en cada tabla.">
               <Letra etiqueta="Letra" valor={formato.fechaFamilia} disabled={!writable} onChange={(valor) => cambiar('fechaFamilia', valor)} />
-              <Numero etiqueta="Tamaño del texto" valor={formato.fechaTamano} disabled={!writable} onChange={(valor) => cambiar('fechaTamano', valor)} />
-              <Numero etiqueta="Posición X" valor={formato.fechaX} disabled={!writable} onChange={(valor) => cambiar('fechaX', valor)} />
-              <Numero etiqueta="Posición Y" valor={formato.fechaY} disabled={!writable} onChange={(valor) => cambiar('fechaY', valor)} />
               <Numero etiqueta="Ancho" valor={formato.fechaAncho} disabled={!writable} onChange={(valor) => cambiar('fechaAncho', valor)} />
               <Numero etiqueta="Alto" valor={formato.fechaAlto} disabled={!writable} onChange={(valor) => cambiar('fechaAlto', valor)} />
               <Numero etiqueta="Radio de la esquina" valor={formato.fechaRadio} disabled={!writable} onChange={(valor) => cambiar('fechaRadio', valor)} />
@@ -546,16 +535,35 @@ export function PublicacionesScreen({
                     : `Tabla de ${(TIPOS.find((item) => item.id === tabla.tipo)?.etiqueta ?? tabla.tipo).toLowerCase()}`
                 return (
                   <Grupo key={tabla.tipo} titulo={leyenda} plano>
-                    <label className="formato-texto">
-                      Título
-                      <input
-                        value={tabla.titulo}
-                        disabled={!writable}
-                        onChange={(event) => cambiarTabla(tabla.tipo, 'titulo', event.target.value)}
-                      />
-                    </label>
                     <div className="formato-secciones">
-                      <Grupo titulo="Posición" abierto>
+                      <Grupo titulo="Título" abierto>
+                        <label className="formato-texto">
+                          Texto
+                          <input
+                            value={tabla.titulo}
+                            disabled={!writable}
+                            onChange={(event) => cambiarTabla(tabla.tipo, 'titulo', event.target.value)}
+                          />
+                        </label>
+                        <Numero etiqueta="Tamaño" valor={tabla.tituloTamano} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tituloTamano', valor)} />
+                        <Numero etiqueta="Posición X" valor={tabla.tituloX} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tituloX', valor)} />
+                        <Numero etiqueta="Posición Y" valor={tabla.tituloY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tituloY', valor)} />
+                      </Grupo>
+                      <Grupo titulo="Subtítulo" abierto>
+                        <Numero etiqueta="Tamaño" valor={tabla.subtituloTamano} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'subtituloTamano', valor)} />
+                        <Numero etiqueta="Posición X" valor={tabla.subtituloX} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'subtituloX', valor)} />
+                        <Numero etiqueta="Posición Y" valor={tabla.subtituloY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'subtituloY', valor)} />
+                      </Grupo>
+                      <Grupo titulo="Fecha" abierto>
+                        <Numero etiqueta="Tamaño del texto" valor={tabla.fechaTamano} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'fechaTamano', valor)} />
+                        <Numero etiqueta="Posición X" valor={tabla.fechaX} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'fechaX', valor)} />
+                        <Numero etiqueta="Posición Y" valor={tabla.fechaY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'fechaY', valor)} />
+                      </Grupo>
+                      <Grupo titulo="Nombre de lugar" abierto>
+                        <Numero etiqueta="Tamaño" valor={tabla.lugarTamano} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'lugarTamano', valor)} />
+                        <Numero etiqueta="Posición Y" valor={tabla.lugarY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'lugarY', valor)} />
+                      </Grupo>
+                      <Grupo titulo="Posición de la tabla" abierto>
                         <Numero etiqueta="X" valor={tabla.tablaX} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tablaX', valor)} />
                         <Numero etiqueta="Y" valor={tabla.tablaY} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tablaY', valor)} />
                         <Numero etiqueta="Ancho" valor={tabla.tablaAncho} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tablaAncho', valor)} />

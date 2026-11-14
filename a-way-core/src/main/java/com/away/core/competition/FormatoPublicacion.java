@@ -36,15 +36,6 @@ public class FormatoPublicacion {
     @Column(name = "logo_alto", nullable = false)
     private int logoAlto;
 
-    @Column(name = "titulo_x", nullable = false)
-    private int tituloX;
-
-    @Column(name = "titulo_y", nullable = false)
-    private int tituloY;
-
-    @Column(name = "titulo_tamano", nullable = false)
-    private int tituloTamano;
-
     @Column(name = "titulo_negrita", nullable = false)
     private boolean tituloNegrita;
 
@@ -69,15 +60,6 @@ public class FormatoPublicacion {
     @Column(name = "titulo_sombra", nullable = false)
     private boolean tituloSombra;
 
-    @Column(name = "subtitulo_x", nullable = false)
-    private int subtituloX;
-
-    @Column(name = "subtitulo_y", nullable = false)
-    private int subtituloY;
-
-    @Column(name = "subtitulo_tamano", nullable = false)
-    private int subtituloTamano;
-
     @Column(name = "subtitulo_negrita", nullable = false)
     private boolean subtituloNegrita;
 
@@ -89,12 +71,6 @@ public class FormatoPublicacion {
 
     @Column(name = "subtitulo_color", nullable = false, length = 7)
     private String subtituloColor;
-
-    @Column(name = "lugar_y", nullable = false)
-    private int lugarY;
-
-    @Column(name = "lugar_tamano", nullable = false)
-    private int lugarTamano;
 
     @Column(name = "lugar_cursiva", nullable = false)
     private boolean lugarCursiva;
@@ -111,12 +87,6 @@ public class FormatoPublicacion {
     @Column(name = "lugar_raya_grosor", nullable = false)
     private int lugarRayaGrosor;
 
-    @Column(name = "fecha_x", nullable = false)
-    private int fechaX;
-
-    @Column(name = "fecha_y", nullable = false)
-    private int fechaY;
-
     @Column(name = "fecha_ancho", nullable = false)
     private int fechaAncho;
 
@@ -131,9 +101,6 @@ public class FormatoPublicacion {
 
     @Column(name = "fecha_borde_color", nullable = false, length = 7)
     private String fechaBordeColor;
-
-    @Column(name = "fecha_tamano", nullable = false)
-    private int fechaTamano;
 
     @Column(name = "fecha_negrita", nullable = false)
     private boolean fechaNegrita;
@@ -226,30 +193,6 @@ public class FormatoPublicacion {
         this.logoAlto = logoAlto;
     }
 
-    public int getTituloX() {
-        return tituloX;
-    }
-
-    public void setTituloX(int tituloX) {
-        this.tituloX = tituloX;
-    }
-
-    public int getTituloY() {
-        return tituloY;
-    }
-
-    public void setTituloY(int tituloY) {
-        this.tituloY = tituloY;
-    }
-
-    public int getTituloTamano() {
-        return tituloTamano;
-    }
-
-    public void setTituloTamano(int tituloTamano) {
-        this.tituloTamano = tituloTamano;
-    }
-
     public boolean isTituloNegrita() {
         return tituloNegrita;
     }
@@ -314,30 +257,6 @@ public class FormatoPublicacion {
         this.tituloSombra = tituloSombra;
     }
 
-    public int getSubtituloX() {
-        return subtituloX;
-    }
-
-    public void setSubtituloX(int subtituloX) {
-        this.subtituloX = subtituloX;
-    }
-
-    public int getSubtituloY() {
-        return subtituloY;
-    }
-
-    public void setSubtituloY(int subtituloY) {
-        this.subtituloY = subtituloY;
-    }
-
-    public int getSubtituloTamano() {
-        return subtituloTamano;
-    }
-
-    public void setSubtituloTamano(int subtituloTamano) {
-        this.subtituloTamano = subtituloTamano;
-    }
-
     public boolean isSubtituloNegrita() {
         return subtituloNegrita;
     }
@@ -368,22 +287,6 @@ public class FormatoPublicacion {
 
     public void setSubtituloColor(String subtituloColor) {
         this.subtituloColor = subtituloColor;
-    }
-
-    public int getLugarY() {
-        return lugarY;
-    }
-
-    public void setLugarY(int lugarY) {
-        this.lugarY = lugarY;
-    }
-
-    public int getLugarTamano() {
-        return lugarTamano;
-    }
-
-    public void setLugarTamano(int lugarTamano) {
-        this.lugarTamano = lugarTamano;
     }
 
     public boolean isLugarCursiva() {
@@ -426,22 +329,6 @@ public class FormatoPublicacion {
         this.lugarRayaGrosor = lugarRayaGrosor;
     }
 
-    public int getFechaX() {
-        return fechaX;
-    }
-
-    public void setFechaX(int fechaX) {
-        this.fechaX = fechaX;
-    }
-
-    public int getFechaY() {
-        return fechaY;
-    }
-
-    public void setFechaY(int fechaY) {
-        this.fechaY = fechaY;
-    }
-
     public int getFechaAncho() {
         return fechaAncho;
     }
@@ -480,14 +367,6 @@ public class FormatoPublicacion {
 
     public void setFechaBordeColor(String fechaBordeColor) {
         this.fechaBordeColor = fechaBordeColor;
-    }
-
-    public int getFechaTamano() {
-        return fechaTamano;
-    }
-
-    public void setFechaTamano(int fechaTamano) {
-        this.fechaTamano = fechaTamano;
     }
 
     public boolean isFechaNegrita() {

@@ -78,6 +78,39 @@ public class FormatoPublicacionTabla {
     @Column(nullable = false, length = 80)
     private String titulo;
 
+    @Column(name = "titulo_x", nullable = false)
+    private int tituloX;
+
+    @Column(name = "titulo_y", nullable = false)
+    private int tituloY;
+
+    @Column(name = "titulo_tamano", nullable = false)
+    private int tituloTamano;
+
+    @Column(name = "subtitulo_x", nullable = false)
+    private int subtituloX;
+
+    @Column(name = "subtitulo_y", nullable = false)
+    private int subtituloY;
+
+    @Column(name = "subtitulo_tamano", nullable = false)
+    private int subtituloTamano;
+
+    @Column(name = "fecha_x", nullable = false)
+    private int fechaX;
+
+    @Column(name = "fecha_y", nullable = false)
+    private int fechaY;
+
+    @Column(name = "fecha_tamano", nullable = false)
+    private int fechaTamano;
+
+    @Column(name = "lugar_y", nullable = false)
+    private int lugarY;
+
+    @Column(name = "lugar_tamano", nullable = false)
+    private int lugarTamano;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -267,6 +300,94 @@ public class FormatoPublicacionTabla {
 
     public void setTitulo(String titulo) {
         this.titulo = titulo;
+    }
+
+    public int getTituloX() {
+        return tituloX;
+    }
+
+    public void setTituloX(int tituloX) {
+        this.tituloX = tituloX;
+    }
+
+    public int getTituloY() {
+        return tituloY;
+    }
+
+    public void setTituloY(int tituloY) {
+        this.tituloY = tituloY;
+    }
+
+    public int getTituloTamano() {
+        return tituloTamano;
+    }
+
+    public void setTituloTamano(int tituloTamano) {
+        this.tituloTamano = tituloTamano;
+    }
+
+    public int getSubtituloX() {
+        return subtituloX;
+    }
+
+    public void setSubtituloX(int subtituloX) {
+        this.subtituloX = subtituloX;
+    }
+
+    public int getSubtituloY() {
+        return subtituloY;
+    }
+
+    public void setSubtituloY(int subtituloY) {
+        this.subtituloY = subtituloY;
+    }
+
+    public int getSubtituloTamano() {
+        return subtituloTamano;
+    }
+
+    public void setSubtituloTamano(int subtituloTamano) {
+        this.subtituloTamano = subtituloTamano;
+    }
+
+    public int getFechaX() {
+        return fechaX;
+    }
+
+    public void setFechaX(int fechaX) {
+        this.fechaX = fechaX;
+    }
+
+    public int getFechaY() {
+        return fechaY;
+    }
+
+    public void setFechaY(int fechaY) {
+        this.fechaY = fechaY;
+    }
+
+    public int getFechaTamano() {
+        return fechaTamano;
+    }
+
+    public void setFechaTamano(int fechaTamano) {
+        this.fechaTamano = fechaTamano;
+    }
+
+    public int getLugarY() {
+        return lugarY;
+    }
+
+    public void setLugarY(int lugarY) {
+        this.lugarY = lugarY;
+    }
+
+    public int getLugarTamano() {
+        return lugarTamano;
+    }
+
+    public void setLugarTamano(int lugarTamano) {
+        this.lugarTamano = lugarTamano;
     }
 
     public OffsetDateTime getFechaCreacion() {
