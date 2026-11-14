@@ -37,6 +37,16 @@ public class SuspensionesViews {
         @NotNull
         @Min(0)
         private Integer faltaMediaJornadas;
+        @NotBlank
+        private String estadoRoja;
+        @NotBlank
+        private String estadoAmarillas;
+        @NotBlank
+        private String estadoRojas;
+        @NotBlank
+        private String estadoFaltaMedia;
+        @NotBlank
+        private String estadoFaltaGrave;
 
         public UUID getLeagueId() {
             return leagueId;
@@ -117,6 +127,46 @@ public class SuspensionesViews {
         public void setFaltaMediaJornadas(Integer faltaMediaJornadas) {
             this.faltaMediaJornadas = faltaMediaJornadas;
         }
+
+        public String getEstadoRoja() {
+            return estadoRoja;
+        }
+
+        public void setEstadoRoja(String estadoRoja) {
+            this.estadoRoja = estadoRoja;
+        }
+
+        public String getEstadoAmarillas() {
+            return estadoAmarillas;
+        }
+
+        public void setEstadoAmarillas(String estadoAmarillas) {
+            this.estadoAmarillas = estadoAmarillas;
+        }
+
+        public String getEstadoRojas() {
+            return estadoRojas;
+        }
+
+        public void setEstadoRojas(String estadoRojas) {
+            this.estadoRojas = estadoRojas;
+        }
+
+        public String getEstadoFaltaMedia() {
+            return estadoFaltaMedia;
+        }
+
+        public void setEstadoFaltaMedia(String estadoFaltaMedia) {
+            this.estadoFaltaMedia = estadoFaltaMedia;
+        }
+
+        public String getEstadoFaltaGrave() {
+            return estadoFaltaGrave;
+        }
+
+        public void setEstadoFaltaGrave(String estadoFaltaGrave) {
+            this.estadoFaltaGrave = estadoFaltaGrave;
+        }
     }
 
     public static class ReglaView {
@@ -131,10 +181,16 @@ public class SuspensionesViews {
         private final String rojasMomento;
         private final int faltaMediaJornadas;
         private final String faltaGrave;
+        private final String estadoRoja;
+        private final String estadoAmarillas;
+        private final String estadoRojas;
+        private final String estadoFaltaMedia;
+        private final String estadoFaltaGrave;
 
         public ReglaView(UUID leagueId, String momento, int rojaJornadas, int amarillasAcumuladas, int amarillasJornadas,
                          String amarillasMomento, int rojasAcumuladas, int rojasJornadas, String rojasMomento,
-                         int faltaMediaJornadas) {
+                         int faltaMediaJornadas, String estadoRoja, String estadoAmarillas, String estadoRojas,
+                         String estadoFaltaMedia, String estadoFaltaGrave) {
             this.leagueId = leagueId;
             this.momento = momento;
             this.rojaJornadas = rojaJornadas;
@@ -146,6 +202,11 @@ public class SuspensionesViews {
             this.rojasMomento = rojasMomento;
             this.faltaMediaJornadas = faltaMediaJornadas;
             this.faltaGrave = "ELIMINACION";
+            this.estadoRoja = estadoRoja;
+            this.estadoAmarillas = estadoAmarillas;
+            this.estadoRojas = estadoRojas;
+            this.estadoFaltaMedia = estadoFaltaMedia;
+            this.estadoFaltaGrave = estadoFaltaGrave;
         }
 
         public UUID getLeagueId() {
@@ -190,6 +251,26 @@ public class SuspensionesViews {
 
         public String getFaltaGrave() {
             return faltaGrave;
+        }
+
+        public String getEstadoRoja() {
+            return estadoRoja;
+        }
+
+        public String getEstadoAmarillas() {
+            return estadoAmarillas;
+        }
+
+        public String getEstadoRojas() {
+            return estadoRojas;
+        }
+
+        public String getEstadoFaltaMedia() {
+            return estadoFaltaMedia;
+        }
+
+        public String getEstadoFaltaGrave() {
+            return estadoFaltaGrave;
         }
     }
 }

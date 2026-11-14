@@ -120,7 +120,11 @@ public class SuspensionesJugadorService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La categoría no tiene jornadas");
         }
         List<SuspensionJugador> activas = suspensiones.findByIdCategoriaAndIdJugadorAndEstado(categoria.getId(), jugador.getId(), "ACTIVO");
+        Regla regla = regla(categoria);
         if ("FALTA_GRAVE".equals(motivo)) {
+            if (!regla.faltaGrave) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esa suspensión no está activa");
+            }
             for (SuspensionJugador suspension : activas) {
                 if ("FALTA_GRAVE".equals(suspension.getMotivo())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador ya está eliminado del campeonato");
@@ -129,7 +133,9 @@ public class SuspensionesJugadorService {
             guardar(categoria, jugador.getId(), orden.get(0).getId(), orden.get(0).getId(), orden.size(), motivo);
             return detalle(jugador.getId(), categoria.getId());
         }
-        Regla regla = regla(categoria);
+        if (!activa(regla, motivo)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esa suspensión no está activa");
+        }
         int cantidad = cantidad(regla, motivo);
         if (cantidad <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esa suspensión no tiene jornadas configuradas");
@@ -210,19 +216,21 @@ public class SuspensionesJugadorService {
     private List<SuspensionesJugadorViews.OpcionView> opciones(Category categoria) {
         Regla regla = regla(categoria);
         List<SuspensionesJugadorViews.OpcionView> opciones = new ArrayList<>();
-        if (regla.roja > 0) {
+        if (regla.rojaActiva && regla.roja > 0) {
             opciones.add(new SuspensionesJugadorViews.OpcionView("ROJA_DIRECTA", "Tarjeta roja", regla.roja, false));
         }
-        if (regla.amarillas > 0) {
+        if (regla.amarillasActiva && regla.amarillas > 0) {
             opciones.add(new SuspensionesJugadorViews.OpcionView("AMARILLAS", "Acumulación de amarillas", regla.amarillas, false));
         }
-        if (regla.rojas > 0) {
+        if (regla.rojasActiva && regla.rojas > 0) {
             opciones.add(new SuspensionesJugadorViews.OpcionView("ROJAS_ACUMULADAS", "Acumulación de rojas", regla.rojas, false));
         }
-        if (regla.media > 0) {
+        if (regla.mediaActiva && regla.media > 0) {
             opciones.add(new SuspensionesJugadorViews.OpcionView("FALTA_MEDIA", "Falta media", regla.media, true));
         }
-        opciones.add(new SuspensionesJugadorViews.OpcionView("FALTA_GRAVE", "Eliminación del campeonato", 0, false));
+        if (regla.faltaGrave) {
+            opciones.add(new SuspensionesJugadorViews.OpcionView("FALTA_GRAVE", "Eliminación del campeonato", 0, false));
+        }
         return opciones;
     }
 
@@ -385,12 +393,33 @@ public class SuspensionesJugadorService {
         ReglaSuspension regla = reglas.findByIdLigaAndEstado(ligaId, "ACTIVO").orElse(null);
         String momentoRoja = ajustes.findById(ligaId).map(LeagueSettings::getSuspensionTiming).orElse(JORNADA_SIGUIENTE);
         if (regla == null) {
-            return new Regla(1, 1, 2, 3, momentoRoja, JORNADA_SIGUIENTE, JORNADA_SIGUIENTE);
+            return new Regla(1, 1, 2, 3, momentoRoja, JORNADA_SIGUIENTE, JORNADA_SIGUIENTE, true, true, true, true, true);
         }
         return new Regla(regla.getRojaJornadas(), regla.getAmarillasJornadas(), regla.getRojasJornadas(),
                 regla.getFaltaMediaJornadas(), momentoRoja,
                 regla.getAmarillasMomento() == null ? JORNADA_SIGUIENTE : regla.getAmarillasMomento(),
-                regla.getRojasMomento() == null ? JORNADA_SIGUIENTE : regla.getRojasMomento());
+                regla.getRojasMomento() == null ? JORNADA_SIGUIENTE : regla.getRojasMomento(),
+                "ACTIVO".equals(regla.getEstadoRoja()),
+                "ACTIVO".equals(regla.getEstadoAmarillas()),
+                "ACTIVO".equals(regla.getEstadoRojas()),
+                "ACTIVO".equals(regla.getEstadoFaltaMedia()),
+                "ACTIVO".equals(regla.getEstadoFaltaGrave()));
+    }
+
+    private boolean activa(Regla regla, String motivo) {
+        if ("ROJA_DIRECTA".equals(motivo)) {
+            return regla.rojaActiva;
+        }
+        if ("AMARILLAS".equals(motivo)) {
+            return regla.amarillasActiva;
+        }
+        if ("ROJAS_ACUMULADAS".equals(motivo)) {
+            return regla.rojasActiva;
+        }
+        if ("FALTA_MEDIA".equals(motivo)) {
+            return regla.mediaActiva;
+        }
+        return false;
     }
 
     private String etiqueta(String motivo) {
@@ -485,8 +514,15 @@ public class SuspensionesJugadorService {
         private final String momentoRoja;
         private final String momentoAmarillas;
         private final String momentoRojas;
+        private final boolean rojaActiva;
+        private final boolean amarillasActiva;
+        private final boolean rojasActiva;
+        private final boolean mediaActiva;
+        private final boolean faltaGrave;
 
-        private Regla(int roja, int amarillas, int rojas, int media, String momentoRoja, String momentoAmarillas, String momentoRojas) {
+        private Regla(int roja, int amarillas, int rojas, int media, String momentoRoja, String momentoAmarillas,
+                      String momentoRojas, boolean rojaActiva, boolean amarillasActiva, boolean rojasActiva,
+                      boolean mediaActiva, boolean faltaGrave) {
             this.roja = roja;
             this.amarillas = amarillas;
             this.rojas = rojas;
@@ -494,6 +530,11 @@ public class SuspensionesJugadorService {
             this.momentoRoja = momentoRoja;
             this.momentoAmarillas = momentoAmarillas;
             this.momentoRojas = momentoRojas;
+            this.rojaActiva = rojaActiva;
+            this.amarillasActiva = amarillasActiva;
+            this.rojasActiva = rojasActiva;
+            this.mediaActiva = mediaActiva;
+            this.faltaGrave = faltaGrave;
         }
     }
 }

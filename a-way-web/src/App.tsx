@@ -54,7 +54,6 @@ const sections = [
   { id: 'horarios', label: 'Horarios', summary: 'Cancha y hora de los partidos. Filtra por categoría y fecha, y asigna turnos desde la hora y el intervalo que elijas.' },
   { id: 'resultados', label: 'Resultados', summary: 'Marcador de los partidos de una jornada.' },
   { id: 'goles', label: 'Goleadores', summary: 'Goleadores de una categoría al cierre de la fecha elegida, con el detalle por jornada.' },
-  { id: 'tarjetas', label: 'Tarjetas', summary: 'Amarillas y rojas de cada jugador por jornada.' },
   { id: 'tabla', label: 'Tabla', summary: 'Posiciones de una categoría al cierre de la fecha elegida: puntos, diferencia y goles.' },
   { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la liga: cédula, nombre, teléfono, foto y contacto por WhatsApp.' },
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
@@ -62,23 +61,17 @@ const sections = [
   { id: 'sanciones-jugador', label: 'Sanciones jugador', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
   { id: 'suspensiones', label: 'Suspensiones', summary: 'Jornadas de suspensión por tarjeta roja, acumulación de amarillas o rojas, y faltas media o grave.' },
   { id: 'suspensiones-jugador', label: 'Suspensiones a jugador', summary: 'Suspensiones pendientes de cada jugador y altas o bajas manuales.' },
-  { id: 'pagos', label: 'Pagos', summary: 'Arbitraje por jornada y cancelación de multas por tarjeta.' },
-  { id: 'sanciones', label: 'Sanciones', summary: 'Quitar puntos, o puntos y goles, a un equipo.' },
-  { id: 'importaciones', label: 'Importaciones', summary: 'Planteles desde Excel y equipos desde el formulario de Google.' },
-  { id: 'configuracion', label: 'Configuración', summary: 'Fair play, momento de la suspensión y reglas de la liga.' },
   { id: 'desempate-goleadores', label: 'Desempate goleadores', summary: 'Orden de los criterios de desempate de la tabla de goleadores de la edición.' },
   { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },
-  { id: 'usuarios', label: 'Usuarios', summary: 'Master, administrativo y asistente de cada liga.' },
 ] as const
 
 const menuGroups = [
   { label: 'Inicio', ids: ['inicio'] },
   { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
-  { label: 'Jornada', ids: ['resultados', 'goles', 'tarjetas', 'tabla'] },
-  { label: 'Disciplina', ids: ['catalogo-tarjetas', 'sanciones-jugador', 'suspensiones', 'suspensiones-jugador', 'sanciones'] },
-  { label: 'Cancha', ids: ['arbitros', 'canchas', 'pagos'] },
-  { label: 'Administración', ids: ['importaciones', 'configuracion', 'desempate-goleadores', 'desempate-equipos', 'usuarios'] },
+  { label: 'Jornada', ids: ['resultados', 'goles', 'tabla'] },
+  { label: 'Disciplina', ids: ['sanciones-jugador', 'suspensiones-jugador'] },
+  { label: 'Administración', ids: ['arbitros', 'canchas', 'catalogo-tarjetas', 'suspensiones', 'desempate-goleadores', 'desempate-equipos'] },
 ] as const
 
 type SectionId = (typeof sections)[number]['id']

@@ -61,6 +61,11 @@ public class SuspensionesService {
         regla.setRojasJornadas(request.getRojasJornadas());
         regla.setRojasMomento(rojasMomento);
         regla.setFaltaMediaJornadas(request.getFaltaMediaJornadas());
+        regla.setEstadoRoja(estadoRegla(request.getEstadoRoja()));
+        regla.setEstadoAmarillas(estadoRegla(request.getEstadoAmarillas()));
+        regla.setEstadoRojas(estadoRegla(request.getEstadoRojas()));
+        regla.setEstadoFaltaMedia(estadoRegla(request.getEstadoFaltaMedia()));
+        regla.setEstadoFaltaGrave(estadoRegla(request.getEstadoFaltaGrave()));
         auditar(regla, usuario(), nueva);
         reglas.save(regla);
         LeagueSettings ajuste = ajustes.findById(league.getId()).orElseGet(() -> {
@@ -92,13 +97,15 @@ public class SuspensionesService {
         regla.setRojasJornadas(2);
         regla.setRojasMomento(JORNADA_SIGUIENTE);
         regla.setFaltaMediaJornadas(3);
+        activar(regla);
         auditar(regla, usuario(), true);
         reglas.save(regla);
     }
 
     private SuspensionesViews.ReglaView vista(UUID leagueId, ReglaSuspension regla, String momento) {
         if (regla == null) {
-            return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, JORNADA_SIGUIENTE, 2, 2, JORNADA_SIGUIENTE, 3);
+            return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, JORNADA_SIGUIENTE, 2, 2, JORNADA_SIGUIENTE, 3,
+                    "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO");
         }
         return new SuspensionesViews.ReglaView(
                 leagueId,
@@ -110,7 +117,28 @@ public class SuspensionesService {
                 regla.getRojasAcumuladas(),
                 regla.getRojasJornadas(),
                 regla.getRojasMomento(),
-                regla.getFaltaMediaJornadas());
+                regla.getFaltaMediaJornadas(),
+                regla.getEstadoRoja(),
+                regla.getEstadoAmarillas(),
+                regla.getEstadoRojas(),
+                regla.getEstadoFaltaMedia(),
+                regla.getEstadoFaltaGrave());
+    }
+
+    private void activar(ReglaSuspension regla) {
+        regla.setEstadoRoja("ACTIVO");
+        regla.setEstadoAmarillas("ACTIVO");
+        regla.setEstadoRojas("ACTIVO");
+        regla.setEstadoFaltaMedia("ACTIVO");
+        regla.setEstadoFaltaGrave("ACTIVO");
+    }
+
+    private String estadoRegla(String valor) {
+        String texto = valor == null ? "" : valor.trim().toUpperCase();
+        if (!"ACTIVO".equals(texto) && !"INACTIVO".equals(texto)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El estado de la regla debe ser activo o inactivo");
+        }
+        return texto;
     }
 
     private String momento(UUID leagueId) {

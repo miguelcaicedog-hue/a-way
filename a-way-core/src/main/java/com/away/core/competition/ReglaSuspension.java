@@ -42,6 +42,21 @@ public class ReglaSuspension {
     @Column(name = "falta_media_jornadas", nullable = false)
     private int faltaMediaJornadas;
 
+    @Column(name = "estado_roja", nullable = false)
+    private String estadoRoja;
+
+    @Column(name = "estado_amarillas", nullable = false)
+    private String estadoAmarillas;
+
+    @Column(name = "estado_rojas", nullable = false)
+    private String estadoRojas;
+
+    @Column(name = "estado_falta_media", nullable = false)
+    private String estadoFaltaMedia;
+
+    @Column(name = "estado_falta_grave", nullable = false)
+    private String estadoFaltaGrave;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -135,6 +150,46 @@ public class ReglaSuspension {
 
     public void setFaltaMediaJornadas(int faltaMediaJornadas) {
         this.faltaMediaJornadas = faltaMediaJornadas;
+    }
+
+    public String getEstadoRoja() {
+        return estadoRoja;
+    }
+
+    public void setEstadoRoja(String estadoRoja) {
+        this.estadoRoja = estadoRoja;
+    }
+
+    public String getEstadoAmarillas() {
+        return estadoAmarillas;
+    }
+
+    public void setEstadoAmarillas(String estadoAmarillas) {
+        this.estadoAmarillas = estadoAmarillas;
+    }
+
+    public String getEstadoRojas() {
+        return estadoRojas;
+    }
+
+    public void setEstadoRojas(String estadoRojas) {
+        this.estadoRojas = estadoRojas;
+    }
+
+    public String getEstadoFaltaMedia() {
+        return estadoFaltaMedia;
+    }
+
+    public void setEstadoFaltaMedia(String estadoFaltaMedia) {
+        this.estadoFaltaMedia = estadoFaltaMedia;
+    }
+
+    public String getEstadoFaltaGrave() {
+        return estadoFaltaGrave;
+    }
+
+    public void setEstadoFaltaGrave(String estadoFaltaGrave) {
+        this.estadoFaltaGrave = estadoFaltaGrave;
     }
 
     public OffsetDateTime getFechaCreacion() {

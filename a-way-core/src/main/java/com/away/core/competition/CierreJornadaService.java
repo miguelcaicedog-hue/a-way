@@ -169,11 +169,14 @@ public class CierreJornadaService {
             porPartido.put(partido.getId(), partido);
         }
         ReglaSuspension regla = reglas.findByIdLigaAndEstado(categoria.getEdition().getLeague().getId(), "ACTIVO").orElse(null);
-        int rojaJornadas = regla == null ? 1 : regla.getRojaJornadas();
-        int amarillasUmbral = regla == null ? 3 : regla.getAmarillasAcumuladas();
-        int amarillasJornadas = regla == null ? 1 : regla.getAmarillasJornadas();
-        int rojasUmbral = regla == null ? 2 : regla.getRojasAcumuladas();
-        int rojasJornadas = regla == null ? 2 : regla.getRojasJornadas();
+        boolean rojaActiva = regla == null || "ACTIVO".equals(regla.getEstadoRoja());
+        boolean amarillasActivas = regla == null || "ACTIVO".equals(regla.getEstadoAmarillas());
+        boolean rojasActivas = regla == null || "ACTIVO".equals(regla.getEstadoRojas());
+        int rojaJornadas = !rojaActiva ? 0 : regla == null ? 1 : regla.getRojaJornadas();
+        int amarillasUmbral = !amarillasActivas ? 0 : regla == null ? 3 : regla.getAmarillasAcumuladas();
+        int amarillasJornadas = !amarillasActivas ? 0 : regla == null ? 1 : regla.getAmarillasJornadas();
+        int rojasUmbral = !rojasActivas ? 0 : regla == null ? 2 : regla.getRojasAcumuladas();
+        int rojasJornadas = !rojasActivas ? 0 : regla == null ? 2 : regla.getRojasJornadas();
         String momentoRoja = ajustes.findById(categoria.getEdition().getLeague().getId())
                 .map(LeagueSettings::getSuspensionTiming).orElse(JORNADA_SIGUIENTE);
         String momentoAmarillas = regla == null || regla.getAmarillasMomento() == null ? JORNADA_SIGUIENTE : regla.getAmarillasMomento();
