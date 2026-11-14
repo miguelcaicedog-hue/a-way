@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -23,7 +25,8 @@ import java.util.UUID;
 @Service
 public class ReporteTarjetasService {
 
-    private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter GENERADO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final ZoneId ZONA = ZoneId.of("America/Guayaquil");
 
     private final EditionRepository editions;
     private final CategoryRepository categories;
@@ -82,7 +85,7 @@ public class ReporteTarjetasService {
                 continue;
             }
             alguna = true;
-            cuerpo.append(htmlBloque(categoria.getName(), fecha, bloque));
+            cuerpo.append(htmlBloque(bloque));
         }
         if (!alguna) {
             cuerpo.append("<p class=\"vacio\">No hay tarjetas en esta fecha.</p>");
@@ -123,8 +126,8 @@ public class ReporteTarjetasService {
             fila.jugador = jugador.getAlias() == null ? "" : jugador.getAlias();
             fila.numero = jugador.getNumeroCamisa();
             fila.idJornadaTarjeta = partido.getIdJornada();
-            boolean roja = tarjeta.getRojas() != null && tarjeta.getRojas() > 0;
-            fila.color = roja ? colores.roja : colores.amarilla;
+            fila.amarillas = tarjeta.getAmarillas() == null ? 0 : tarjeta.getAmarillas();
+            fila.rojas = tarjeta.getRojas() == null ? 0 : tarjeta.getRojas();
             fila.pagada = pagadas.contains(tarjeta.getId());
             fila.marcadas.addAll(jornadasSuspendidas(activas, tarjeta.getIdJugador(), orden, indice));
             fila.marcadas.remove(fila.idJornadaTarjeta);
@@ -147,6 +150,7 @@ public class ReporteTarjetasService {
         Bloque bloque = new Bloque();
         bloque.filas = filas;
         bloque.columnas = columnas;
+        bloque.colores = colores;
         return bloque;
     }
 
@@ -178,11 +182,10 @@ public class ReporteTarjetasService {
         return marcas;
     }
 
-    private String htmlBloque(String categoria, LocalDate fecha, Bloque bloque) {
+    private String htmlBloque(Bloque bloque) {
         StringBuilder html = new StringBuilder();
-        html.append("<h2>").append(esc(categoria)).append(" · ").append(fecha.format(DIA)).append("</h2>");
         html.append("<table>").append(columnas(bloque));
-        html.append("<thead><tr><th class=\"equipo\"></th><th class=\"numero\"></th><th class=\"jugador\"></th>");
+        html.append("<thead><tr><th class=\"equipo\" rowspan=\"3\">Equipo</th><th class=\"numero\" rowspan=\"3\">Nº</th><th class=\"jugador\" rowspan=\"3\">Jugador</th>");
         int indice = 0;
         while (indice < bloque.columnas.size()) {
             LocalDate dia = bloque.columnas.get(indice).getFecha();
@@ -191,13 +194,19 @@ public class ReporteTarjetasService {
                     && mismoDia(dia, bloque.columnas.get(indice + ancho).getFecha())) {
                 ancho++;
             }
-            html.append("<th class=\"fecha\" colspan=\"").append(ancho).append("\">")
+            html.append("<th class=\"fecha\" colspan=\"").append(ancho * 2).append("\">")
                     .append(dia == null ? "" : fechaCorta(dia)).append("</th>");
             indice += ancho;
         }
-        html.append("</tr><tr><th class=\"equipo\">Equipo</th><th class=\"numero\">Nº</th><th class=\"jugador\">Jugador</th>");
+        html.append("</tr><tr>");
         for (Jornada jornada : bloque.columnas) {
-            html.append("<th class=\"jornada\">").append(vertical(jornada.getNombre())).append("</th>");
+            html.append("<th class=\"jornada\" colspan=\"2\"><div class=\"giro\">")
+                    .append(esc(nombrePropio(jornada.getNombre()))).append("</div></th>");
+        }
+        html.append("</tr><tr>");
+        for (int i = 0; i < bloque.columnas.size(); i++) {
+            html.append("<th class=\"muestra\" style=\"background:").append(cssColor(bloque.colores.amarilla)).append("\"></th>");
+            html.append("<th class=\"muestra\" style=\"background:").append(cssColor(bloque.colores.roja)).append("\"></th>");
         }
         html.append("</tr></thead><tbody>");
         int filaIndice = 0;
@@ -221,10 +230,8 @@ public class ReporteTarjetasService {
             while (columna < bloque.columnas.size()) {
                 Jornada jornada = bloque.columnas.get(columna);
                 if (jornada.getId().equals(fila.idJornadaTarjeta)) {
-                    String fondo = cssColor(fila.color);
-                    html.append("<td class=\"cuadro\" style=\"background:").append(fondo)
-                            .append(";color:").append(tinta(fondo)).append(";\">")
-                            .append(fila.pagada ? "P" : "").append("</td>");
+                    celda(html, fila.amarillas, fila.pagada, bloque.colores.amarilla);
+                    celda(html, fila.rojas, fila.pagada, bloque.colores.roja);
                     columna++;
                     continue;
                 }
@@ -234,11 +241,11 @@ public class ReporteTarjetasService {
                             && fila.marcadas.contains(bloque.columnas.get(columna + ancho).getId())) {
                         ancho++;
                     }
-                    html.append("<td class=\"cuadro susp\" colspan=\"").append(ancho).append("\">SUSP</td>");
+                    html.append("<td class=\"cuadro susp\" colspan=\"").append(ancho * 2).append("\">SUSP</td>");
                     columna += ancho;
                     continue;
                 }
-                html.append("<td class=\"cuadro\"></td>");
+                html.append("<td class=\"cuadro\"></td><td class=\"cuadro\"></td>");
                 columna++;
             }
             html.append("</tr>");
@@ -263,7 +270,7 @@ public class ReporteTarjetasService {
         grupo.append("<col style=\"width:").append(milimetros(numero)).append("mm\"/>");
         grupo.append("<col style=\"width:").append(milimetros(jugador)).append("mm\"/>");
         for (int i = 0; i < bloque.columnas.size(); i++) {
-            grupo.append("<col style=\"width:8mm\"/>");
+            grupo.append("<col style=\"width:5.6mm\"/><col style=\"width:5.6mm\"/>");
         }
         grupo.append("</colgroup>");
         return grupo.toString();
@@ -299,20 +306,6 @@ public class ReporteTarjetasService {
         return nombre.toString();
     }
 
-    private String vertical(String valor) {
-        if (valor == null || valor.isEmpty()) {
-            return "";
-        }
-        StringBuilder texto = new StringBuilder();
-        for (int i = 0; i < valor.length(); i++) {
-            if (i > 0) {
-                texto.append("<br/>");
-            }
-            char letra = valor.charAt(i);
-            texto.append(letra == ' ' ? "&#160;" : esc(String.valueOf(letra)));
-        }
-        return texto.toString();
-    }
 
     private boolean mismoDia(LocalDate izquierda, LocalDate derecha) {
         return izquierda == null ? derecha == null : izquierda.equals(derecha);
@@ -331,6 +324,17 @@ public class ReporteTarjetasService {
             }
         }
         return new Colores(amarilla, roja);
+    }
+
+    private void celda(StringBuilder html, int cantidad, boolean pagada, String color) {
+        if (cantidad <= 0) {
+            html.append("<td class=\"cuadro\"></td>");
+            return;
+        }
+        String fondo = cssColor(color);
+        String marca = pagada ? cantidad + "P" : (cantidad > 1 ? String.valueOf(cantidad) : "");
+        html.append("<td class=\"cuadro\" style=\"background:").append(fondo)
+                .append(";color:").append(tinta(fondo)).append(";\">").append(marca).append("</td>");
     }
 
     private String cssColor(String color) {
@@ -362,12 +366,14 @@ public class ReporteTarjetasService {
                 + ".logo { height: 58px; }"
                 + "h1 { font-size: 16px; margin: 6px 0 0; }"
                 + "p.sub { margin: 2px 0 0; font-weight: 700; }"
-                + "h2 { font-size: 12px; margin: 14px 0 6px; }"
+                + "p.generado { margin: 2px 0 0; font-size: 9px; }"
                 + "table { width: auto; border-collapse: collapse; table-layout: fixed; }"
                 + "th, td { border: 1px solid #163a5f; padding: 3px 4px; }"
                 + "th { background: #163a5f; color: white; }"
                 + "th.fecha { font-size: 7px; padding: 2px; text-align: center; }"
-                + "th.jornada { width: 8mm; font-size: 7px; line-height: 1.05; padding: 1px; text-align: center; vertical-align: bottom; }"
+                + "th.jornada { background: #e7f0f8; color: #163a5f; height: 24mm; padding: 0; text-align: center; vertical-align: middle; }"
+                + ".giro { display: inline-block; white-space: nowrap; font-size: 8px; font-weight: 700; transform: rotate(-90deg); }"
+                + "th.muestra { height: 8px; padding: 0; }"
                 + "th.equipo, td.equipo, th.jugador, td.jugador, th.numero, td.numero { white-space: nowrap; }"
                 + "td.numero, th.numero { text-align: center; }"
                 + "th.fecha { background: #2f6f9f; }"
@@ -376,7 +382,8 @@ public class ReporteTarjetasService {
                 + "td.susp { background: #f3c98b; color: #163a5f; }"
                 + "</style></head><body><div class=\"cabeza\">" + logo
                 + "<h1>" + esc(liga.getName()) + "</h1>"
-                + "<p class=\"sub\">DETALLE DE TARJETAS Y SUSPENSIONES</p></div>"
+                + "<p class=\"sub\">DETALLE DE TARJETAS Y SUSPENSIONES</p>"
+                + "<p class=\"generado\">" + ZonedDateTime.now(ZONA).format(GENERADO) + "</p></div>"
                 + cuerpo + "</body></html>";
     }
 
@@ -409,6 +416,7 @@ public class ReporteTarjetasService {
     private static final class Bloque {
         private List<Fila> filas = new ArrayList<>();
         private List<Jornada> columnas = new ArrayList<>();
+        private Colores colores;
     }
 
     private static final class Colores {
@@ -426,7 +434,8 @@ public class ReporteTarjetasService {
         private int numero;
         private String jugador;
         private UUID idJornadaTarjeta;
-        private String color;
+        private int amarillas;
+        private int rojas;
         private boolean pagada;
         private final Set<UUID> marcadas = new HashSet<>();
     }
