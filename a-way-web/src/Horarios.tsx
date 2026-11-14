@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import { FechaCampo } from './Fecha'
+import { BotonDescargarImagen } from './DescargarImagen'
 
 type Profile = {
   master: boolean
@@ -65,7 +66,7 @@ function horaEnLaManana(hora: string) {
   return hora.slice(0, 5)
 }
 
-export function HorariosScreen({ profile, editionId }: { profile: Profile; editionId: string }) {
+export function HorariosScreen({ profile, editionId, leagueId }: { profile: Profile; editionId: string; leagueId: string }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
   const [fecha, setFecha] = useState<string | null>(null)
@@ -259,6 +260,17 @@ export function HorariosScreen({ profile, editionId }: { profile: Profile; editi
             <FechaCampo value={fecha} onChange={setFecha} ariaLabel="Fecha" />
           </label>
           <button type="button" disabled={ocupado} onClick={filtrarProximaFecha}>FILTRAR PROXIMA FECHA</button>
+          <BotonDescargarImagen
+            leagueId={leagueId}
+            tipo="HORARIOS"
+            fecha={dias.length === 1 ? dias[0].dia : fecha}
+            horarios={asignados.map((partido) => ({
+              canchaNombre: partido.canchaNombre,
+              hora: partido.hora,
+              textoLocal: partido.textoLocal,
+              textoVisita: partido.textoVisita,
+            }))}
+          />
         </form>
       )}
       {editionId && writable && (

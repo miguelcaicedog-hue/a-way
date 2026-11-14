@@ -38,6 +38,7 @@ public class CompetitionService {
     private final SuspensionesService suspensiones;
     private final CriterioDesempateGoleadorService criteriosGoleador;
     private final CriterioDesempateEquipoService criteriosEquipo;
+    private final FormatoPublicacionService formatos;
     private final TarjetaService tarjetas;
 
     public CompetitionService(AppUserRepository users,
@@ -51,6 +52,7 @@ public class CompetitionService {
                               SuspensionesService suspensiones,
                               CriterioDesempateGoleadorService criteriosGoleador,
                               CriterioDesempateEquipoService criteriosEquipo,
+                              FormatoPublicacionService formatos,
                               TarjetaService tarjetas) {
         this.users = users;
         this.leagues = leagues;
@@ -63,6 +65,7 @@ public class CompetitionService {
         this.suspensiones = suspensiones;
         this.criteriosGoleador = criteriosGoleador;
         this.criteriosEquipo = criteriosEquipo;
+        this.formatos = formatos;
         this.tarjetas = tarjetas;
     }
 
@@ -95,6 +98,7 @@ public class CompetitionService {
         settings.save(defaults);
         suspensiones.crearDefecto(league.getId());
         tarjetas.sembrar(league.getId());
+        formatos.crear(league.getId());
         return leagueView(league);
     }
 
@@ -111,6 +115,7 @@ public class CompetitionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el master puede eliminar ligas");
         }
         League league = league(id);
+        formatos.eliminar(league.getId());
         settings.deleteById(league.getId());
         leagues.delete(league);
     }
@@ -562,6 +567,7 @@ public class CompetitionService {
         league.setValidFrom(request.getValidFrom());
         league.setValidUntil(request.getValidUntil());
         league.setActive(request.isActive());
+        league.setImagenPlantilla(imagenPlantilla(request.getImagenPlantilla()));
         if (request.isClearLogo()) {
             league.getLogo();
             league.setLogo(null);
@@ -570,6 +576,16 @@ public class CompetitionService {
         if (request.getLogoBase64() != null && !request.getLogoBase64().trim().isEmpty()) {
             applyLogo(league, request);
         }
+    }
+
+    private String imagenPlantilla(String nombre) {
+        String valor = nombre == null || nombre.trim().isEmpty() ? "fondo-estadio.jpg" : nombre.trim();
+        if (valor.contains("..") || valor.indexOf('/') >= 0 || valor.indexOf('\\') >= 0
+                || !valor.matches("(?i)[A-Za-z0-9][A-Za-z0-9._-]{0,70}\\.(jpg|jpeg|png|webp)")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La imagen plantilla debe ser un archivo jpg, png o webp, sin carpetas");
+        }
+        return valor;
     }
 
     private void applyLogo(League league, LeagueRequest request) {
@@ -718,7 +734,8 @@ public class CompetitionService {
 
     private LeagueView leagueView(League league) {
         byte[] logo = league.getLogo();
-        return new LeagueView(league.getId(), league.getName(), league.getValidFrom(), league.getValidUntil(), league.isActive(), logo != null && logo.length > 0);
+        return new LeagueView(league.getId(), league.getName(), league.getValidFrom(), league.getValidUntil(),
+                league.isActive(), logo != null && logo.length > 0, league.getImagenPlantilla());
     }
 
     private EditionView editionView(Edition edition) {

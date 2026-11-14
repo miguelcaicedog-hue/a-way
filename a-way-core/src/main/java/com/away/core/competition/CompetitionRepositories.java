@@ -17,6 +17,18 @@ interface LeagueRepository extends JpaRepository<League, UUID> {
 interface LeagueSettingsRepository extends JpaRepository<LeagueSettings, UUID> {
 }
 
+interface FormatoPublicacionRepository extends JpaRepository<FormatoPublicacion, UUID> {
+    Optional<FormatoPublicacion> findByIdLigaAndEstado(UUID idLiga, String estado);
+
+    void deleteByIdLiga(UUID idLiga);
+}
+
+interface FormatoPublicacionTablaRepository extends JpaRepository<FormatoPublicacionTabla, UUID> {
+    List<FormatoPublicacionTabla> findByIdLigaAndEstado(UUID idLiga, String estado);
+
+    void deleteByIdLiga(UUID idLiga);
+}
+
 interface ReglaSuspensionRepository extends JpaRepository<ReglaSuspension, UUID> {
     Optional<ReglaSuspension> findByIdLigaAndEstado(UUID idLiga, String estado);
 }

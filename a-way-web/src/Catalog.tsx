@@ -14,6 +14,7 @@ type League = {
   validUntil: string
   active: boolean
   hasLogo: boolean
+  imagenPlantilla: string
 }
 
 type Edition = {
@@ -101,6 +102,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
   const [logo, setLogo] = useState<string | null>(null)
   const [logoType, setLogoType] = useState<string | null>(null)
   const [clearLogo, setClearLogo] = useState(false)
+  const [imagenPlantilla, setImagenPlantilla] = useState('fondo-estadio.jpg')
   const [logoStamp, setLogoStamp] = useState(0)
   const [filtroNombre, setFiltroNombre] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVA')
@@ -140,6 +142,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
     setLogo(null)
     setLogoType(null)
     setClearLogo(false)
+    setImagenPlantilla('fondo-estadio.jpg')
   }
 
   function edit(row: League) {
@@ -151,6 +154,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
     setLogo(null)
     setLogoType(null)
     setClearLogo(false)
+    setImagenPlantilla(row.imagenPlantilla || 'fondo-estadio.jpg')
   }
 
   function onLogo(event: ChangeEvent<HTMLInputElement>) {
@@ -179,7 +183,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    const body = { name, validFrom, validUntil, active, logoBase64: logo, logoContentType: logoType, clearLogo }
+    const body = { name, validFrom, validUntil, active, logoBase64: logo, logoContentType: logoType, clearLogo, imagenPlantilla }
     try {
       const saved = editing
         ? await api<League>(`/api/leagues/${editing.id}`, { method: 'PUT', body: JSON.stringify(body) })
@@ -304,6 +308,10 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
               Quitar logo
             </label>
           )}
+          <label>
+            Imagen plantilla
+            <input value={imagenPlantilla} required onChange={(event) => setImagenPlantilla(event.target.value)} />
+          </label>
           <div className="actions">
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}

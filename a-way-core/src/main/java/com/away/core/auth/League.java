@@ -32,6 +32,9 @@ public class League {
     @Column(name = "logo_content_type")
     private String logoContentType;
 
+    @Column(name = "imagen_plantilla", nullable = false, length = 80)
+    private String imagenPlantilla = "fondo-estadio.jpg";
+
     public UUID getId() {
         return id;
     }
@@ -86,5 +89,13 @@ public class League {
 
     public void setLogoContentType(String logoContentType) {
         this.logoContentType = logoContentType;
+    }
+
+    public String getImagenPlantilla() {
+        return imagenPlantilla;
+    }
+
+    public void setImagenPlantilla(String imagenPlantilla) {
+        this.imagenPlantilla = imagenPlantilla;
     }
 }

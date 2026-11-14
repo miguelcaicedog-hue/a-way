@@ -1,0 +1,426 @@
+package com.away.core.competition;
+
+import java.util.List;
+import java.util.UUID;
+
+public class FormatoPublicacionViews {
+
+    private FormatoPublicacionViews() {
+    }
+
+    public static class FormatoView {
+        private final UUID id;
+        private final UUID leagueId;
+        private final String leagueName;
+        private final String imagenPlantilla;
+        private final boolean hasLogo;
+        private final String nombreLugar;
+        private final String descripcion;
+        private final int logoX;
+        private final int logoY;
+        private final int logoAncho;
+        private final int logoAlto;
+        private final int tituloX;
+        private final int tituloY;
+        private final int tituloTamano;
+        private final boolean tituloNegrita;
+        private final boolean tituloCursiva;
+        private final String tituloFamilia;
+        private final String tituloColorInicio;
+        private final String tituloColorFin;
+        private final String tituloContornoColor;
+        private final int tituloContornoGrosor;
+        private final boolean tituloSombra;
+        private final int subtituloX;
+        private final int subtituloY;
+        private final int subtituloTamano;
+        private final boolean subtituloNegrita;
+        private final boolean subtituloCursiva;
+        private final String subtituloFamilia;
+        private final String subtituloColor;
+        private final int lugarY;
+        private final int lugarTamano;
+        private final boolean lugarCursiva;
+        private final String lugarFamilia;
+        private final String lugarColor;
+        private final int lugarRayaAncho;
+        private final int lugarRayaGrosor;
+        private final int fechaX;
+        private final int fechaY;
+        private final int fechaAncho;
+        private final int fechaAlto;
+        private final int fechaRadio;
+        private final int fechaBordeGrosor;
+        private final String fechaBordeColor;
+        private final int fechaTamano;
+        private final boolean fechaNegrita;
+        private final String fechaFamilia;
+        private final String fechaColor;
+        private final int fechaIconoTamano;
+        private final List<TablaView> tablas;
+
+        FormatoView(FormatoPublicacion formato, String leagueName, String imagenPlantilla, boolean hasLogo,
+                    List<TablaView> tablas) {
+            this.id = formato.getId();
+            this.leagueId = formato.getIdLiga();
+            this.leagueName = leagueName;
+            this.imagenPlantilla = imagenPlantilla;
+            this.hasLogo = hasLogo;
+            this.nombreLugar = formato.getNombreLugar();
+            this.descripcion = formato.getDescripcion();
+            this.logoX = formato.getLogoX();
+            this.logoY = formato.getLogoY();
+            this.logoAncho = formato.getLogoAncho();
+            this.logoAlto = formato.getLogoAlto();
+            this.tituloX = formato.getTituloX();
+            this.tituloY = formato.getTituloY();
+            this.tituloTamano = formato.getTituloTamano();
+            this.tituloNegrita = formato.isTituloNegrita();
+            this.tituloCursiva = formato.isTituloCursiva();
+            this.tituloFamilia = formato.getTituloFamilia();
+            this.tituloColorInicio = formato.getTituloColorInicio();
+            this.tituloColorFin = formato.getTituloColorFin();
+            this.tituloContornoColor = formato.getTituloContornoColor();
+            this.tituloContornoGrosor = formato.getTituloContornoGrosor();
+            this.tituloSombra = formato.isTituloSombra();
+            this.subtituloX = formato.getSubtituloX();
+            this.subtituloY = formato.getSubtituloY();
+            this.subtituloTamano = formato.getSubtituloTamano();
+            this.subtituloNegrita = formato.isSubtituloNegrita();
+            this.subtituloCursiva = formato.isSubtituloCursiva();
+            this.subtituloFamilia = formato.getSubtituloFamilia();
+            this.subtituloColor = formato.getSubtituloColor();
+            this.lugarY = formato.getLugarY();
+            this.lugarTamano = formato.getLugarTamano();
+            this.lugarCursiva = formato.isLugarCursiva();
+            this.lugarFamilia = formato.getLugarFamilia();
+            this.lugarColor = formato.getLugarColor();
+            this.lugarRayaAncho = formato.getLugarRayaAncho();
+            this.lugarRayaGrosor = formato.getLugarRayaGrosor();
+            this.fechaX = formato.getFechaX();
+            this.fechaY = formato.getFechaY();
+            this.fechaAncho = formato.getFechaAncho();
+            this.fechaAlto = formato.getFechaAlto();
+            this.fechaRadio = formato.getFechaRadio();
+            this.fechaBordeGrosor = formato.getFechaBordeGrosor();
+            this.fechaBordeColor = formato.getFechaBordeColor();
+            this.fechaTamano = formato.getFechaTamano();
+            this.fechaNegrita = formato.isFechaNegrita();
+            this.fechaFamilia = formato.getFechaFamilia();
+            this.fechaColor = formato.getFechaColor();
+            this.fechaIconoTamano = formato.getFechaIconoTamano();
+            this.tablas = tablas;
+        }
+
+        public UUID getId() { return id; }
+        public UUID getLeagueId() { return leagueId; }
+        public String getLeagueName() { return leagueName; }
+        public String getImagenPlantilla() { return imagenPlantilla; }
+        public boolean isHasLogo() { return hasLogo; }
+        public String getNombreLugar() { return nombreLugar; }
+        public String getDescripcion() { return descripcion; }
+        public int getLogoX() { return logoX; }
+        public int getLogoY() { return logoY; }
+        public int getLogoAncho() { return logoAncho; }
+        public int getLogoAlto() { return logoAlto; }
+        public int getTituloX() { return tituloX; }
+        public int getTituloY() { return tituloY; }
+        public int getTituloTamano() { return tituloTamano; }
+        public boolean isTituloNegrita() { return tituloNegrita; }
+        public boolean isTituloCursiva() { return tituloCursiva; }
+        public String getTituloFamilia() { return tituloFamilia; }
+        public String getTituloColorInicio() { return tituloColorInicio; }
+        public String getTituloColorFin() { return tituloColorFin; }
+        public String getTituloContornoColor() { return tituloContornoColor; }
+        public int getTituloContornoGrosor() { return tituloContornoGrosor; }
+        public boolean isTituloSombra() { return tituloSombra; }
+        public int getSubtituloX() { return subtituloX; }
+        public int getSubtituloY() { return subtituloY; }
+        public int getSubtituloTamano() { return subtituloTamano; }
+        public boolean isSubtituloNegrita() { return subtituloNegrita; }
+        public boolean isSubtituloCursiva() { return subtituloCursiva; }
+        public String getSubtituloFamilia() { return subtituloFamilia; }
+        public String getSubtituloColor() { return subtituloColor; }
+        public int getLugarY() { return lugarY; }
+        public int getLugarTamano() { return lugarTamano; }
+        public boolean isLugarCursiva() { return lugarCursiva; }
+        public String getLugarFamilia() { return lugarFamilia; }
+        public String getLugarColor() { return lugarColor; }
+        public int getLugarRayaAncho() { return lugarRayaAncho; }
+        public int getLugarRayaGrosor() { return lugarRayaGrosor; }
+        public int getFechaX() { return fechaX; }
+        public int getFechaY() { return fechaY; }
+        public int getFechaAncho() { return fechaAncho; }
+        public int getFechaAlto() { return fechaAlto; }
+        public int getFechaRadio() { return fechaRadio; }
+        public int getFechaBordeGrosor() { return fechaBordeGrosor; }
+        public String getFechaBordeColor() { return fechaBordeColor; }
+        public int getFechaTamano() { return fechaTamano; }
+        public boolean isFechaNegrita() { return fechaNegrita; }
+        public String getFechaFamilia() { return fechaFamilia; }
+        public String getFechaColor() { return fechaColor; }
+        public int getFechaIconoTamano() { return fechaIconoTamano; }
+        public List<TablaView> getTablas() { return tablas; }
+    }
+
+    public static class TablaView {
+        private final String tipo;
+        private final int tablaX;
+        private final int tablaY;
+        private final int tablaAncho;
+        private final int bordeGrosor;
+        private final String bordeColor;
+        private final int cabeceraAlto;
+        private final String cabeceraFondo;
+        private final String cabeceraColor;
+        private final int cabeceraTamano;
+        private final int filaAlto;
+        private final String filaFondo;
+        private final String filaColor;
+        private final int filaTamano;
+        private final String numeroColor;
+        private final int numeroTamano;
+        private final String destacadaFondo;
+        private final String columnasTabla;
+        private final String titulo;
+
+        TablaView(FormatoPublicacionTabla tabla) {
+            this.tipo = tabla.getTipo();
+            this.tablaX = tabla.getTablaX();
+            this.tablaY = tabla.getTablaY();
+            this.tablaAncho = tabla.getTablaAncho();
+            this.bordeGrosor = tabla.getBordeGrosor();
+            this.bordeColor = tabla.getBordeColor();
+            this.cabeceraAlto = tabla.getCabeceraAlto();
+            this.cabeceraFondo = tabla.getCabeceraFondo();
+            this.cabeceraColor = tabla.getCabeceraColor();
+            this.cabeceraTamano = tabla.getCabeceraTamano();
+            this.filaAlto = tabla.getFilaAlto();
+            this.filaFondo = tabla.getFilaFondo();
+            this.filaColor = tabla.getFilaColor();
+            this.filaTamano = tabla.getFilaTamano();
+            this.numeroColor = tabla.getNumeroColor();
+            this.numeroTamano = tabla.getNumeroTamano();
+            this.destacadaFondo = tabla.getDestacadaFondo();
+            this.columnasTabla = tabla.getColumnasTabla();
+            this.titulo = tabla.getTitulo();
+        }
+
+        public String getTipo() { return tipo; }
+        public int getTablaX() { return tablaX; }
+        public int getTablaY() { return tablaY; }
+        public int getTablaAncho() { return tablaAncho; }
+        public int getBordeGrosor() { return bordeGrosor; }
+        public String getBordeColor() { return bordeColor; }
+        public int getCabeceraAlto() { return cabeceraAlto; }
+        public String getCabeceraFondo() { return cabeceraFondo; }
+        public String getCabeceraColor() { return cabeceraColor; }
+        public int getCabeceraTamano() { return cabeceraTamano; }
+        public int getFilaAlto() { return filaAlto; }
+        public String getFilaFondo() { return filaFondo; }
+        public String getFilaColor() { return filaColor; }
+        public int getFilaTamano() { return filaTamano; }
+        public String getNumeroColor() { return numeroColor; }
+        public int getNumeroTamano() { return numeroTamano; }
+        public String getDestacadaFondo() { return destacadaFondo; }
+        public String getColumnasTabla() { return columnasTabla; }
+        public String getTitulo() { return titulo; }
+    }
+
+    public static class FormatoRequest {
+        private String nombreLugar;
+        private String descripcion;
+        private Integer logoX;
+        private Integer logoY;
+        private Integer logoAncho;
+        private Integer logoAlto;
+        private Integer tituloX;
+        private Integer tituloY;
+        private Integer tituloTamano;
+        private boolean tituloNegrita;
+        private boolean tituloCursiva;
+        private String tituloFamilia;
+        private String tituloColorInicio;
+        private String tituloColorFin;
+        private String tituloContornoColor;
+        private Integer tituloContornoGrosor;
+        private boolean tituloSombra;
+        private Integer subtituloX;
+        private Integer subtituloY;
+        private Integer subtituloTamano;
+        private boolean subtituloNegrita;
+        private boolean subtituloCursiva;
+        private String subtituloFamilia;
+        private String subtituloColor;
+        private Integer lugarY;
+        private Integer lugarTamano;
+        private boolean lugarCursiva;
+        private String lugarFamilia;
+        private String lugarColor;
+        private Integer lugarRayaAncho;
+        private Integer lugarRayaGrosor;
+        private Integer fechaX;
+        private Integer fechaY;
+        private Integer fechaAncho;
+        private Integer fechaAlto;
+        private Integer fechaRadio;
+        private Integer fechaBordeGrosor;
+        private String fechaBordeColor;
+        private Integer fechaTamano;
+        private boolean fechaNegrita;
+        private String fechaFamilia;
+        private String fechaColor;
+        private Integer fechaIconoTamano;
+        private List<TablaRequest> tablas;
+
+        public String getNombreLugar() { return nombreLugar; }
+        public void setNombreLugar(String nombreLugar) { this.nombreLugar = nombreLugar; }
+        public String getDescripcion() { return descripcion; }
+        public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+        public Integer getLogoX() { return logoX; }
+        public void setLogoX(Integer logoX) { this.logoX = logoX; }
+        public Integer getLogoY() { return logoY; }
+        public void setLogoY(Integer logoY) { this.logoY = logoY; }
+        public Integer getLogoAncho() { return logoAncho; }
+        public void setLogoAncho(Integer logoAncho) { this.logoAncho = logoAncho; }
+        public Integer getLogoAlto() { return logoAlto; }
+        public void setLogoAlto(Integer logoAlto) { this.logoAlto = logoAlto; }
+        public Integer getTituloX() { return tituloX; }
+        public void setTituloX(Integer tituloX) { this.tituloX = tituloX; }
+        public Integer getTituloY() { return tituloY; }
+        public void setTituloY(Integer tituloY) { this.tituloY = tituloY; }
+        public Integer getTituloTamano() { return tituloTamano; }
+        public void setTituloTamano(Integer tituloTamano) { this.tituloTamano = tituloTamano; }
+        public boolean isTituloNegrita() { return tituloNegrita; }
+        public void setTituloNegrita(boolean tituloNegrita) { this.tituloNegrita = tituloNegrita; }
+        public boolean isTituloCursiva() { return tituloCursiva; }
+        public void setTituloCursiva(boolean tituloCursiva) { this.tituloCursiva = tituloCursiva; }
+        public String getTituloFamilia() { return tituloFamilia; }
+        public void setTituloFamilia(String tituloFamilia) { this.tituloFamilia = tituloFamilia; }
+        public String getTituloColorInicio() { return tituloColorInicio; }
+        public void setTituloColorInicio(String tituloColorInicio) { this.tituloColorInicio = tituloColorInicio; }
+        public String getTituloColorFin() { return tituloColorFin; }
+        public void setTituloColorFin(String tituloColorFin) { this.tituloColorFin = tituloColorFin; }
+        public String getTituloContornoColor() { return tituloContornoColor; }
+        public void setTituloContornoColor(String tituloContornoColor) { this.tituloContornoColor = tituloContornoColor; }
+        public Integer getTituloContornoGrosor() { return tituloContornoGrosor; }
+        public void setTituloContornoGrosor(Integer tituloContornoGrosor) { this.tituloContornoGrosor = tituloContornoGrosor; }
+        public boolean isTituloSombra() { return tituloSombra; }
+        public void setTituloSombra(boolean tituloSombra) { this.tituloSombra = tituloSombra; }
+        public Integer getSubtituloX() { return subtituloX; }
+        public void setSubtituloX(Integer subtituloX) { this.subtituloX = subtituloX; }
+        public Integer getSubtituloY() { return subtituloY; }
+        public void setSubtituloY(Integer subtituloY) { this.subtituloY = subtituloY; }
+        public Integer getSubtituloTamano() { return subtituloTamano; }
+        public void setSubtituloTamano(Integer subtituloTamano) { this.subtituloTamano = subtituloTamano; }
+        public boolean isSubtituloNegrita() { return subtituloNegrita; }
+        public void setSubtituloNegrita(boolean subtituloNegrita) { this.subtituloNegrita = subtituloNegrita; }
+        public boolean isSubtituloCursiva() { return subtituloCursiva; }
+        public void setSubtituloCursiva(boolean subtituloCursiva) { this.subtituloCursiva = subtituloCursiva; }
+        public String getSubtituloFamilia() { return subtituloFamilia; }
+        public void setSubtituloFamilia(String subtituloFamilia) { this.subtituloFamilia = subtituloFamilia; }
+        public String getSubtituloColor() { return subtituloColor; }
+        public void setSubtituloColor(String subtituloColor) { this.subtituloColor = subtituloColor; }
+        public Integer getLugarY() { return lugarY; }
+        public void setLugarY(Integer lugarY) { this.lugarY = lugarY; }
+        public Integer getLugarTamano() { return lugarTamano; }
+        public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
+        public boolean isLugarCursiva() { return lugarCursiva; }
+        public void setLugarCursiva(boolean lugarCursiva) { this.lugarCursiva = lugarCursiva; }
+        public String getLugarFamilia() { return lugarFamilia; }
+        public void setLugarFamilia(String lugarFamilia) { this.lugarFamilia = lugarFamilia; }
+        public String getLugarColor() { return lugarColor; }
+        public void setLugarColor(String lugarColor) { this.lugarColor = lugarColor; }
+        public Integer getLugarRayaAncho() { return lugarRayaAncho; }
+        public void setLugarRayaAncho(Integer lugarRayaAncho) { this.lugarRayaAncho = lugarRayaAncho; }
+        public Integer getLugarRayaGrosor() { return lugarRayaGrosor; }
+        public void setLugarRayaGrosor(Integer lugarRayaGrosor) { this.lugarRayaGrosor = lugarRayaGrosor; }
+        public Integer getFechaX() { return fechaX; }
+        public void setFechaX(Integer fechaX) { this.fechaX = fechaX; }
+        public Integer getFechaY() { return fechaY; }
+        public void setFechaY(Integer fechaY) { this.fechaY = fechaY; }
+        public Integer getFechaAncho() { return fechaAncho; }
+        public void setFechaAncho(Integer fechaAncho) { this.fechaAncho = fechaAncho; }
+        public Integer getFechaAlto() { return fechaAlto; }
+        public void setFechaAlto(Integer fechaAlto) { this.fechaAlto = fechaAlto; }
+        public Integer getFechaRadio() { return fechaRadio; }
+        public void setFechaRadio(Integer fechaRadio) { this.fechaRadio = fechaRadio; }
+        public Integer getFechaBordeGrosor() { return fechaBordeGrosor; }
+        public void setFechaBordeGrosor(Integer fechaBordeGrosor) { this.fechaBordeGrosor = fechaBordeGrosor; }
+        public String getFechaBordeColor() { return fechaBordeColor; }
+        public void setFechaBordeColor(String fechaBordeColor) { this.fechaBordeColor = fechaBordeColor; }
+        public Integer getFechaTamano() { return fechaTamano; }
+        public void setFechaTamano(Integer fechaTamano) { this.fechaTamano = fechaTamano; }
+        public boolean isFechaNegrita() { return fechaNegrita; }
+        public void setFechaNegrita(boolean fechaNegrita) { this.fechaNegrita = fechaNegrita; }
+        public String getFechaFamilia() { return fechaFamilia; }
+        public void setFechaFamilia(String fechaFamilia) { this.fechaFamilia = fechaFamilia; }
+        public String getFechaColor() { return fechaColor; }
+        public void setFechaColor(String fechaColor) { this.fechaColor = fechaColor; }
+        public Integer getFechaIconoTamano() { return fechaIconoTamano; }
+        public void setFechaIconoTamano(Integer fechaIconoTamano) { this.fechaIconoTamano = fechaIconoTamano; }
+        public List<TablaRequest> getTablas() { return tablas; }
+        public void setTablas(List<TablaRequest> tablas) { this.tablas = tablas; }
+    }
+
+    public static class TablaRequest {
+        private String tipo;
+        private Integer tablaX;
+        private Integer tablaY;
+        private Integer tablaAncho;
+        private Integer bordeGrosor;
+        private String bordeColor;
+        private Integer cabeceraAlto;
+        private String cabeceraFondo;
+        private String cabeceraColor;
+        private Integer cabeceraTamano;
+        private Integer filaAlto;
+        private String filaFondo;
+        private String filaColor;
+        private Integer filaTamano;
+        private String numeroColor;
+        private Integer numeroTamano;
+        private String destacadaFondo;
+        private String columnasTabla;
+        private String titulo;
+
+        public String getTipo() { return tipo; }
+        public void setTipo(String tipo) { this.tipo = tipo; }
+        public Integer getTablaX() { return tablaX; }
+        public void setTablaX(Integer tablaX) { this.tablaX = tablaX; }
+        public Integer getTablaY() { return tablaY; }
+        public void setTablaY(Integer tablaY) { this.tablaY = tablaY; }
+        public Integer getTablaAncho() { return tablaAncho; }
+        public void setTablaAncho(Integer tablaAncho) { this.tablaAncho = tablaAncho; }
+        public Integer getBordeGrosor() { return bordeGrosor; }
+        public void setBordeGrosor(Integer bordeGrosor) { this.bordeGrosor = bordeGrosor; }
+        public String getBordeColor() { return bordeColor; }
+        public void setBordeColor(String bordeColor) { this.bordeColor = bordeColor; }
+        public Integer getCabeceraAlto() { return cabeceraAlto; }
+        public void setCabeceraAlto(Integer cabeceraAlto) { this.cabeceraAlto = cabeceraAlto; }
+        public String getCabeceraFondo() { return cabeceraFondo; }
+        public void setCabeceraFondo(String cabeceraFondo) { this.cabeceraFondo = cabeceraFondo; }
+        public String getCabeceraColor() { return cabeceraColor; }
+        public void setCabeceraColor(String cabeceraColor) { this.cabeceraColor = cabeceraColor; }
+        public Integer getCabeceraTamano() { return cabeceraTamano; }
+        public void setCabeceraTamano(Integer cabeceraTamano) { this.cabeceraTamano = cabeceraTamano; }
+        public Integer getFilaAlto() { return filaAlto; }
+        public void setFilaAlto(Integer filaAlto) { this.filaAlto = filaAlto; }
+        public String getFilaFondo() { return filaFondo; }
+        public void setFilaFondo(String filaFondo) { this.filaFondo = filaFondo; }
+        public String getFilaColor() { return filaColor; }
+        public void setFilaColor(String filaColor) { this.filaColor = filaColor; }
+        public Integer getFilaTamano() { return filaTamano; }
+        public void setFilaTamano(Integer filaTamano) { this.filaTamano = filaTamano; }
+        public String getNumeroColor() { return numeroColor; }
+        public void setNumeroColor(String numeroColor) { this.numeroColor = numeroColor; }
+        public Integer getNumeroTamano() { return numeroTamano; }
+        public void setNumeroTamano(Integer numeroTamano) { this.numeroTamano = numeroTamano; }
+        public String getDestacadaFondo() { return destacadaFondo; }
+        public void setDestacadaFondo(String destacadaFondo) { this.destacadaFondo = destacadaFondo; }
+        public String getColumnasTabla() { return columnasTabla; }
+        public void setColumnasTabla(String columnasTabla) { this.columnasTabla = columnasTabla; }
+        public String getTitulo() { return titulo; }
+        public void setTitulo(String titulo) { this.titulo = titulo; }
+    }
+}

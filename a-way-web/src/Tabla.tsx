@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import { FechaCampo } from './Fecha'
+import { BotonDescargarImagen } from './DescargarImagen'
 
 type Category = {
   id: string
@@ -45,7 +46,7 @@ function reloj(ahora: Date) {
   })
 }
 
-export function TablaScreen({ editionId }: { editionId: string }) {
+export function TablaScreen({ editionId, leagueId }: { editionId: string; leagueId: string }) {
   const [ahora, setAhora] = useState(() => new Date())
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
@@ -174,6 +175,7 @@ export function TablaScreen({ editionId }: { editionId: string }) {
           </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
+          <BotonDescargarImagen leagueId={leagueId} tipo="POSICIONES" fecha={fecha} grupos={grupos} />
         </form>
       )}
       {editionId && categoryId && !fecha && <p>No hay fechas de partidos en esta categoría.</p>}

@@ -19,6 +19,7 @@ class LeagueRequest {
     private String logoBase64;
     private String logoContentType;
     private boolean clearLogo;
+    private String imagenPlantilla;
 
     public String getName() {
         return name;
@@ -74,6 +75,14 @@ class LeagueRequest {
 
     public void setClearLogo(boolean clearLogo) {
         this.clearLogo = clearLogo;
+    }
+
+    public String getImagenPlantilla() {
+        return imagenPlantilla;
+    }
+
+    public void setImagenPlantilla(String imagenPlantilla) {
+        this.imagenPlantilla = imagenPlantilla;
     }
 }
 
@@ -297,14 +306,17 @@ class LeagueView {
     private final LocalDate validUntil;
     private final boolean active;
     private final boolean hasLogo;
+    private final String imagenPlantilla;
 
-    LeagueView(UUID id, String name, LocalDate validFrom, LocalDate validUntil, boolean active, boolean hasLogo) {
+    LeagueView(UUID id, String name, LocalDate validFrom, LocalDate validUntil, boolean active, boolean hasLogo,
+               String imagenPlantilla) {
         this.id = id;
         this.name = name;
         this.validFrom = validFrom;
         this.validUntil = validUntil;
         this.active = active;
         this.hasLogo = hasLogo;
+        this.imagenPlantilla = imagenPlantilla;
     }
 
     public UUID getId() {
@@ -329,6 +341,10 @@ class LeagueView {
 
     public boolean isHasLogo() {
         return hasLogo;
+    }
+
+    public String getImagenPlantilla() {
+        return imagenPlantilla;
     }
 }
 

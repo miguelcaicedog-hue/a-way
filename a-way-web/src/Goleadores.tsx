@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import { aDia, FechaCampo } from './Fecha'
+import { BotonDescargarImagen } from './DescargarImagen'
 
 type Category = {
   id: string
@@ -70,7 +71,7 @@ function Foto({ goleador }: { goleador: Goleador }) {
   return <span className="player-photo vacio" aria-label="Sin foto" />
 }
 
-export function GoleadoresScreen({ editionId }: { editionId: string }) {
+export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; leagueId: string }) {
   const [ahora, setAhora] = useState(() => new Date())
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
@@ -222,6 +223,7 @@ export function GoleadoresScreen({ editionId }: { editionId: string }) {
           </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
+          <BotonDescargarImagen leagueId={leagueId} tipo="GOLEADORES" fecha={fecha} goleadores={goleadores} />
         </form>
       )}
       {editionId && categoryId && !fecha && <p>No hay fechas de partidos en esta categoría.</p>}

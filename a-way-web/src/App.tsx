@@ -18,6 +18,7 @@ import { SuspensionesJugadorScreen } from './SuspensionesJugador'
 import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 import { DesempateGoleadoresScreen } from './DesempateGoleadores'
 import { DesempateEquiposScreen } from './DesempateEquipos'
+import { PublicacionesScreen } from './Publicaciones'
 
 type Health = {
   service?: string
@@ -63,6 +64,7 @@ const sections = [
   { id: 'suspensiones-jugador', label: 'Suspensiones a jugador', summary: 'Suspensiones pendientes de cada jugador y altas o bajas manuales.' },
   { id: 'desempate-goleadores', label: 'Desempate goleadores', summary: 'Orden de los criterios de desempate de la tabla de goleadores de la edición.' },
   { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },
+  { id: 'publicaciones', label: 'Publicaciones', summary: 'Estilo del gráfico de la liga y descarga de goleadores, resultados, horarios y tabla de posiciones.' },
 ] as const
 
 const menuGroups = [
@@ -71,7 +73,7 @@ const menuGroups = [
   { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tabla'] },
   { label: 'Disciplina', ids: ['sanciones-jugador', 'suspensiones-jugador'] },
-  { label: 'Administración', ids: ['arbitros', 'canchas', 'catalogo-tarjetas', 'suspensiones', 'desempate-goleadores', 'desempate-equipos'] },
+  { label: 'Administración', ids: ['arbitros', 'canchas', 'catalogo-tarjetas', 'suspensiones', 'desempate-goleadores', 'desempate-equipos', 'publicaciones'] },
 ] as const
 
 type SectionId = (typeof sections)[number]['id']
@@ -423,10 +425,10 @@ function App() {
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
-        {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} />}
-        {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} />}
-        {section === 'goles' && <GoleadoresScreen key={editionId} editionId={editionId} />}
-        {section === 'tabla' && <TablaScreen key={editionId} editionId={editionId} />}
+        {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} leagueId={leagueId} />}
+        {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} leagueId={leagueId} />}
+        {section === 'goles' && <GoleadoresScreen key={editionId} editionId={editionId} leagueId={leagueId} />}
+        {section === 'tabla' && <TablaScreen key={editionId} editionId={editionId} leagueId={leagueId} />}
         {section === 'arbitros' && <ArbitrosScreen profile={profile} leagueId={leagueId} />}
         {section === 'catalogo-tarjetas' && <TarjetasCatalogoScreen profile={profile} leagueId={leagueId} />}
         {section === 'sanciones-jugador' && <SancionesJugadorScreen profile={profile} leagueId={leagueId} />}
@@ -435,6 +437,7 @@ function App() {
         {section === 'canchas' && <CanchasScreen profile={profile} leagueId={leagueId} />}
         {section === 'desempate-goleadores' && <DesempateGoleadoresScreen key={editionId} profile={profile} editionId={editionId} />}
         {section === 'desempate-equipos' && <DesempateEquiposScreen key={editionId} profile={profile} editionId={editionId} />}
+        {section === 'publicaciones' && <PublicacionesScreen key={leagueId} profile={profile} leagueId={leagueId} editionId={editionId} />}
       </main>
       </div>
     </div>

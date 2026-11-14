@@ -3,6 +3,7 @@ import { api } from './api'
 import { FechaCampo } from './Fecha'
 import { PartidoModal } from './PartidoModal'
 import { CobroModal } from './CobroModal'
+import { BotonDescargarImagen } from './DescargarImagen'
 
 type Profile = {
   master: boolean
@@ -53,7 +54,7 @@ function textoGol(valor: number | null) {
   return valor == null ? '' : String(valor)
 }
 
-export function ResultadosScreen({ profile, editionId }: { profile: Profile; editionId: string }) {
+export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Profile; editionId: string; leagueId: string }) {
   const [ahora, setAhora] = useState(() => new Date())
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
@@ -248,6 +249,7 @@ export function ResultadosScreen({ profile, editionId }: { profile: Profile; edi
           </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
+          <BotonDescargarImagen leagueId={leagueId} tipo="RESULTADOS" fecha={fecha} resultados={panel?.partidos ?? []} />
         </form>
       )}
       {editionId && fecha && (panel?.partidos.length ?? 0) === 0 && <p>No hay partidos en esta fecha.</p>}
