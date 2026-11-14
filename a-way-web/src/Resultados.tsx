@@ -3,7 +3,7 @@ import { api } from './api'
 import { FechaCampo } from './Fecha'
 import { PartidoModal } from './PartidoModal'
 import { CobroModal } from './CobroModal'
-import { BotonDescargarImagen } from './DescargarImagen'
+import { BotonDescargarImagen, IconoPdf } from './DescargarImagen'
 
 type Profile = {
   master: boolean
@@ -88,6 +88,32 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
   const [revisionCierre, setRevisionCierre] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const esperas = useRef<Record<string, number>>({})
+  async function descargarAmonestados() {
+    if (!editionId || !fecha) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, fecha })
+      if (categoryId) params.set('categoryId', categoryId)
+      const response = await fetch(`/api/reportes/tarjetas-suspensiones?${params.toString()}`, { credentials: 'include' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
+        throw new Error(body.error ?? 'No se pudo descargar el PDF')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `AMONESTADOS-Y-SUSPENDIDOS-${fecha}.pdf`
+      enlace.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo descargar el PDF')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   const puedeCualquierFecha = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
   const esAsistente = profile.memberships.some((item) => item.role === 'ASISTENTE')
 
@@ -248,7 +274,16 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
 
   return (
     <section className="catalog">
-      <p className="reloj">{reloj(ahora)}</p>
+      <div className="reloj-descargas">
+        <p className="reloj">{reloj(ahora)}</p>
+        <span className="reloj-botones">
+          <BotonDescargarImagen leagueId={leagueId} tipo="RESULTADOS" fecha={fecha} etiqueta="DESCARGAR RESULTADOS" resultados={panel?.partidos ?? []} />
+          <button type="button" className="con-icono descarga-pdf" disabled={!fecha || ocupado} onClick={() => void descargarAmonestados()}>
+            <IconoPdf />
+            AMONESTADOS Y SUSPENDIDOS
+          </button>
+        </span>
+      </div>
       {jornadaCerrada && <p className="jornada-cerrada">JORNADA CERRADA</p>}
       {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
@@ -269,7 +304,6 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
           </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
-          <BotonDescargarImagen leagueId={leagueId} tipo="RESULTADOS" fecha={fecha} etiqueta="Descargar resultados" resultados={panel?.partidos ?? []} />
         </form>
       )}
       {editionId && fecha && (panel?.partidos.length ?? 0) === 0 && <p>No hay partidos en esta fecha.</p>}

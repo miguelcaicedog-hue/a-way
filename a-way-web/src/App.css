@@ -497,9 +497,73 @@ button.ghost {
 }
 
 .reloj {
-  margin: 0 0 12px;
+  margin: 0;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.workspace {
+  overflow: visible;
+}
+
+.reloj-descargas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 12px;
+}
+
+.reloj-descargas .reloj {
+  flex: 0 0 auto;
+}
+
+.reloj-botones {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.reloj-descargas button {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+.reloj-descargas button {
+  margin-top: 0;
+}
+
+.reloj-descargas .descarga-imagen button {
+  background: #6eaa96;
+}
+
+.reloj-descargas button.descarga-pdf {
+  background: #d08984;
+}
+
+button.con-icono {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+button.con-icono svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .jornada-proxima {
