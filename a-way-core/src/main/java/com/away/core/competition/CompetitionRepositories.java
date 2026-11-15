@@ -94,6 +94,11 @@ interface PlayerRepository extends JpaRepository<Player, UUID> {
             + "and player.estado = 'ACTIVO' "
             + "group by player.teamEntry.team.id")
     List<Object[]> contarPorEquipo(@Param("editionId") UUID editionId, @Param("teamIds") Collection<UUID> teamIds);
+
+    @Query("select player from Player player join fetch player.teamEntry entry join fetch entry.team team "
+            + "where entry.category.id = :categoryId and player.estado = 'ACTIVO' "
+            + "order by team.name asc, player.numeroCamisa asc, player.alias asc")
+    List<Player> activosDeCategoria(@Param("categoryId") UUID categoryId);
 }
 
 interface GrupoRepository extends JpaRepository<Grupo, UUID> {

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api'
+import { IconoPdf } from './DescargarImagen'
 import { aDia, FechaCampo } from './Fecha'
 
 type Profile = {
@@ -923,6 +924,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const [estado, setEstado] = useState('ACTIVO')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
+  const [ocupado, setOcupado] = useState(false)
   const writable = canWrite(profile)
   const category = categories.find((item) => item.id === categoryId)
 
@@ -1149,8 +1151,41 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const preview = photo ?? (editing?.hasPhoto && !clearPhoto ? `/api/players/${editing.id}/photo?v=${photoStamp}` : null)
   const visibles = filtroEstado ? rows.filter((row) => row.estado === filtroEstado) : rows
 
+  async function descargarJugadores() {
+    if (!editionId || !categoryId) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, categoryId })
+      const response = await fetch(`/api/reportes/jugadores-por-equipo?${params.toString()}`, { credentials: 'include' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
+        throw new Error(body.error ?? 'No se pudo descargar el PDF')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = 'JUGADORES-POR-EQUIPO.pdf'
+      enlace.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo descargar el PDF')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   return (
     <section className="catalog">
+      <div className="reloj-descargas">
+        <span className="reloj-botones">
+          <button type="button" className="con-icono descarga-pdf" disabled={!editionId || !categoryId || ocupado} onClick={() => void descargarJugadores()}>
+            <IconoPdf />
+            JUGADORES POR EQUIPO
+          </button>
+        </span>
+      </div>
       {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
       <label>

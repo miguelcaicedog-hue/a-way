@@ -11,10 +11,14 @@ final class ReportePdf {
     }
 
     static byte[] deHtml(String html) {
+        return deHtml(html, 297, 210);
+    }
+
+    static byte[] deHtml(String html, float anchoMm, float altoMm) {
         try (ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.useDefaultPageSize(297, 210, PdfRendererBuilder.PageSizeUnits.MM);
+            builder.useDefaultPageSize(anchoMm, altoMm, PdfRendererBuilder.PageSizeUnits.MM);
             builder.withHtmlContent(html, null);
             builder.toStream(salida);
             builder.run();

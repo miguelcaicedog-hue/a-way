@@ -16,9 +16,11 @@ import java.util.UUID;
 public class ReporteController {
 
     private final ReporteTarjetasService tarjetas;
+    private final ReporteJugadoresService jugadores;
 
-    public ReporteController(ReporteTarjetasService tarjetas) {
+    public ReporteController(ReporteTarjetasService tarjetas, ReporteJugadoresService jugadores) {
         this.tarjetas = tarjetas;
+        this.jugadores = jugadores;
     }
 
     @GetMapping(value = "/tarjetas-suspensiones", produces = MediaType.APPLICATION_PDF_VALUE)
@@ -28,6 +30,14 @@ public class ReporteController {
         byte[] pdf = tarjetas.tarjetasYSuspensiones(editionId, categoryId, LocalDate.parse(fecha));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"amonestados-suspendidos.pdf\"")
+                .body(pdf);
+    }
+
+    @GetMapping(value = "/jugadores-por-equipo", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> jugadores(@RequestParam UUID editionId, @RequestParam UUID categoryId) {
+        byte[] pdf = jugadores.jugadoresPorEquipo(editionId, categoryId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"jugadores-por-equipo.pdf\"")
                 .body(pdf);
     }
 }
