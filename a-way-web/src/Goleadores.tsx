@@ -24,6 +24,7 @@ type Goleador = {
   jugadorId: string
   alias: string
   nombre: string
+  numeroCamisa: number
   equipoId: string
   equipo: string
   goles: number
@@ -77,6 +78,8 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
   const [categoryId, setCategoryId] = useState('')
   const [fecha, setFecha] = useState<string | null>(null)
   const [teamId, setTeamId] = useState('')
+  const [filtroCamisa, setFiltroCamisa] = useState('')
+  const [filtroNombre, setFiltroNombre] = useState('')
   const [panel, setPanel] = useState<Panel | null>(null)
   const [pagina, setPagina] = useState(1)
   const [detalle, setDetalle] = useState<Goleador | null>(null)
@@ -93,6 +96,8 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
     setCategoryId('')
     setFecha(null)
     setTeamId('')
+    setFiltroCamisa('')
+    setFiltroNombre('')
     setPanel(null)
     setPagina(1)
   }, [editionId])
@@ -136,7 +141,7 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
 
   useEffect(() => {
     setPagina(1)
-  }, [categoryId, fecha, teamId])
+  }, [categoryId, fecha, teamId, filtroCamisa, filtroNombre])
 
   useEffect(() => {
     if (!editionId || !categoryId || !fecha) {
@@ -185,7 +190,14 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
     }
   }
 
-  const goleadores = panel?.goleadores ?? []
+  const camisaBuscada = filtroCamisa.trim()
+  const nombreBuscado = filtroNombre.trim().toLowerCase()
+  const goleadores = (panel?.goleadores ?? []).filter((goleador) => {
+    if (camisaBuscada && !String(goleador.numeroCamisa).includes(camisaBuscada)) return false
+    if (nombreBuscado && !etiqueta(goleador).toLowerCase().includes(nombreBuscado)
+        && !goleador.nombre.toLowerCase().includes(nombreBuscado)) return false
+    return true
+  })
   const paginas = Math.max(1, Math.ceil(goleadores.length / TAMANO))
   const paginaVisible = Math.min(pagina, paginas)
   const desde = (paginaVisible - 1) * TAMANO
@@ -221,20 +233,31 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
               ))}
             </select>
           </label>
+          <label>
+            Nº de camisa
+            <input value={filtroCamisa} onChange={(event) => setFiltroCamisa(event.target.value)} />
+          </label>
+          <label>
+            Nombre
+            <input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} />
+          </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
           <BotonDescargarImagen leagueId={leagueId} tipo="GOLEADORES" fecha={fecha} goleadores={goleadores} />
         </form>
       )}
       {editionId && categoryId && !fecha && <p>No hay fechas de partidos en esta categoría.</p>}
-      {editionId && fecha && panel && goleadores.length === 0 && <p>No hay goleadores en este corte.</p>}
+      {editionId && fecha && panel && (panel.goleadores.length === 0 || goleadores.length === 0) && (
+        <p>{panel.goleadores.length === 0 ? 'No hay goleadores en este corte.' : 'No hay goleadores con ese filtro.'}</p>
+      )}
       {paginaActual.length > 0 && (
         <section className="goleadores">
           <table>
             <thead>
               <tr>
                 <th>Foto</th>
-                <th>Alias</th>
+                <th>Nº</th>
+                <th>Nombre</th>
                 <th>Equipo</th>
                 <th>Goles</th>
                 <th></th>
@@ -244,6 +267,7 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
               {paginaActual.map((goleador) => (
                 <tr key={goleador.jugadorId}>
                   <td><Foto goleador={goleador} /></td>
+                  <td className="numero">{goleador.numeroCamisa}</td>
                   <td>{etiqueta(goleador)}</td>
                   <td>{goleador.equipo}</td>
                   <td className="numero">{goleador.goles}</td>

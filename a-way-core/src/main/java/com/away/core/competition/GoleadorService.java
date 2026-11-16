@@ -157,6 +157,7 @@ public class GoleadorService {
                         jugador.getId(),
                         alias,
                         jugador.getName(),
+                        jugador.getNumeroCamisa(),
                         equipo.getId(),
                         equipo.getName(),
                         fila.goles,

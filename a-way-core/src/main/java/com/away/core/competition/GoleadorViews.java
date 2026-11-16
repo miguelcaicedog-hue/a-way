@@ -55,6 +55,7 @@ public class GoleadorViews {
         private final UUID jugadorId;
         private final String alias;
         private final String nombre;
+        private final int numeroCamisa;
         private final UUID equipoId;
         private final String equipo;
         private final int goles;
@@ -62,11 +63,12 @@ public class GoleadorViews {
         private final int rotationDegrees;
         private final List<DetalleView> detalle;
 
-        public GoleadorView(UUID jugadorId, String alias, String nombre, UUID equipoId, String equipo, int goles,
+        public GoleadorView(UUID jugadorId, String alias, String nombre, int numeroCamisa, UUID equipoId, String equipo, int goles,
                             boolean hasPhoto, int rotationDegrees, List<DetalleView> detalle) {
             this.jugadorId = jugadorId;
             this.alias = alias;
             this.nombre = nombre;
+            this.numeroCamisa = numeroCamisa;
             this.equipoId = equipoId;
             this.equipo = equipo;
             this.goles = goles;
@@ -85,6 +87,10 @@ public class GoleadorViews {
 
         public String getNombre() {
             return nombre;
+        }
+
+        public int getNumeroCamisa() {
+            return numeroCamisa;
         }
 
         public UUID getEquipoId() {

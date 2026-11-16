@@ -266,6 +266,9 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
   }
   const jornadaCerrada = Boolean(panel?.cerrada)
     || ((panel?.partidos.length ?? 0) > 0 && (panel?.partidos.every((partido) => partido.cerrada) ?? false))
+  const partidosDelDia = panel?.partidos ?? []
+  const todosConResultado = partidosDelDia.length > 0
+    && partidosDelDia.every((partido) => partido.golesLocal != null && partido.golesVisita != null)
   const grupos = [...porHora.entries()].sort(([a], [b]) => {
     if (a === 'Sin hora') return 1
     if (b === 'Sin hora') return -1
@@ -412,8 +415,13 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
           </button>
         </div>
       )}
-      {editionId && !categoryId && !jornadaCerrada && (
-        <p className="down">Selecciona una categoría para cerrar la jornada.</p>
+      {editionId && !categoryId && !jornadaCerrada && todosConResultado && (
+        <p className="aviso-cierre">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M12 3.2 1.8 21h20.4L12 3.2zm0 6.2c.5 0 .9.4.9.9v4.6a.9.9 0 0 1-1.8 0v-4.6c0-.5.4-.9.9-.9zm0 9.1a1.15 1.15 0 1 1 0-2.3 1.15 1.15 0 0 1 0 2.3z" />
+          </svg>
+          Selecciona una categoría para cerrar la jornada.
+        </p>
       )}
       {partidoCobro && (
         <CobroModal

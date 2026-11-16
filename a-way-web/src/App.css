@@ -1394,6 +1394,21 @@ button.silbato.sin-cobro {
   margin-top: 1.5rem;
 }
 
+.aviso-cierre {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0;
+  color: #ea580c;
+  font-weight: 600;
+}
+
+.aviso-cierre svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+}
+
 .catalog form.formato {
   max-width: none;
 }
