@@ -412,6 +412,9 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
           </button>
         </div>
       )}
+      {editionId && !categoryId && !jornadaCerrada && (
+        <p className="down">Selecciona una categoría para cerrar la jornada.</p>
+      )}
       {partidoCobro && (
         <CobroModal
           partidoId={partidoCobro}
