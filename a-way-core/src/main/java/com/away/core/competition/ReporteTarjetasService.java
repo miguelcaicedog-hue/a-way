@@ -88,7 +88,7 @@ public class ReporteTarjetasService {
             cuerpo.append(htmlBloque(bloque));
         }
         if (!alguna) {
-            cuerpo.append("<p class=\"vacio\">No hay tarjetas en esta fecha.</p>");
+            cuerpo.append("<p class=\"vacio\">No hay tarjetas hasta esta fecha.</p>");
         }
         return ReportePdf.deHtml(documento(liga, cuerpo.toString()));
     }
@@ -113,7 +113,8 @@ public class ReporteTarjetasService {
                 continue;
             }
             Partido partido = porPartido.get(tarjeta.getIdPartido());
-            if (partido == null || !fecha.equals(fechaDe(partido, porJornada))) {
+            LocalDate dia = partido == null ? null : fechaDe(partido, porJornada);
+            if (dia == null || dia.isAfter(fecha)) {
                 continue;
             }
             Player jugador = jugadores.findById(tarjeta.getIdJugador()).orElse(null);
@@ -123,17 +124,21 @@ public class ReporteTarjetasService {
             Fila fila = new Fila();
             fila.equipo = jugador.getTeamEntry() == null || jugador.getTeamEntry().getTeam() == null
                     ? "" : jugador.getTeamEntry().getTeam().getName();
+            fila.idJugador = jugador.getId();
             fila.jugador = jugador.getAlias() == null ? "" : jugador.getAlias();
             fila.numero = jugador.getNumeroCamisa();
             fila.idJornadaTarjeta = partido.getIdJornada();
             fila.amarillas = tarjeta.getAmarillas() == null ? 0 : tarjeta.getAmarillas();
             fila.rojas = tarjeta.getRojas() == null ? 0 : tarjeta.getRojas();
+            fila.puntos = fila.amarillas * colores.pesoAmarilla + fila.rojas * colores.pesoRoja;
             fila.pagada = pagadas.contains(tarjeta.getId());
-            fila.marcadas.addAll(jornadasSuspendidas(activas, tarjeta.getIdJugador(), orden, indice));
+            fila.marcadas.addAll(jornadasSuspendidas(activas, tarjeta.getIdJugador(), orden, indice, fecha));
             fila.marcadas.remove(fila.idJornadaTarjeta);
             filas.add(fila);
         }
-        filas.sort(Comparator.comparing((Fila fila) -> fila.equipo).thenComparing(fila -> fila.jugador));
+        filas.sort(Comparator.comparing((Fila fila) -> fila.equipo)
+                .thenComparing(fila -> fila.jugador)
+                .thenComparing(fila -> fila.idJugador));
         Set<UUID> usadas = new HashSet<>();
         for (Fila fila : filas) {
             if (fila.idJornadaTarjeta != null) {
@@ -155,28 +160,23 @@ public class ReporteTarjetasService {
     }
 
     private List<UUID> jornadasSuspendidas(List<SuspensionJugador> activas, UUID jugadorId, List<Jornada> orden,
-                                           Map<UUID, Integer> indice) {
+                                           Map<UUID, Integer> indice, LocalDate fecha) {
         List<UUID> marcas = new ArrayList<>();
         for (SuspensionJugador suspension : activas) {
             if (!jugadorId.equals(suspension.getIdJugador())) {
-                continue;
-            }
-            if ("FALTA_GRAVE".equals(suspension.getMotivo())) {
-                Integer inicio = indice.get(suspension.getIdJornadaInicio());
-                if (inicio == null) {
-                    continue;
-                }
-                for (int i = inicio; i < orden.size(); i++) {
-                    marcas.add(orden.get(i).getId());
-                }
                 continue;
             }
             Integer inicio = indice.get(suspension.getIdJornadaInicio());
             if (inicio == null) {
                 continue;
             }
-            for (int i = inicio; i < orden.size() && i < inicio + suspension.getJornadas(); i++) {
-                marcas.add(orden.get(i).getId());
+            int fin = "FALTA_GRAVE".equals(suspension.getMotivo()) ? orden.size() : inicio + suspension.getJornadas();
+            for (int i = inicio; i < orden.size() && i < fin; i++) {
+                Jornada jornada = orden.get(i);
+                if (jornada.getFecha() != null && jornada.getFecha().isAfter(fecha)) {
+                    continue;
+                }
+                marcas.add(jornada.getId());
             }
         }
         return marcas;
@@ -198,7 +198,7 @@ public class ReporteTarjetasService {
                     .append(dia == null ? "" : fechaCorta(dia)).append("</th>");
             indice += ancho;
         }
-        html.append("</tr><tr>");
+        html.append("<th class=\"puntos\" rowspan=\"3\">Fair Play</th></tr><tr>");
         for (Jornada jornada : bloque.columnas) {
             html.append("<th class=\"jornada\" colspan=\"2\"><div class=\"giro\">")
                     .append(esc(nombrePropio(jornada.getNombre()))).append("</div></th>");
@@ -217,39 +217,58 @@ public class ReporteTarjetasService {
                     && java.util.Objects.equals(primera.equipo, bloque.filas.get(filaIndice + grupo).equipo)) {
                 grupo++;
             }
+            int totalEquipo = 0;
+            for (int desplazamiento = 0; desplazamiento < grupo; desplazamiento++) {
+                totalEquipo += bloque.filas.get(filaIndice + desplazamiento).puntos;
+            }
             for (int desplazamiento = 0; desplazamiento < grupo; desplazamiento++) {
                 Fila fila = bloque.filas.get(filaIndice + desplazamiento);
                 html.append("<tr>");
                 if (desplazamiento == 0) {
-                    html.append("<td class=\"equipo\" rowspan=\"").append(grupo).append("\">")
+                    html.append("<td class=\"equipo\" rowspan=\"").append(grupo + 1).append("\">")
                             .append(esc(fila.equipo)).append("</td>");
                 }
                 html.append("<td class=\"numero\">").append(fila.numero).append("</td>");
                 html.append("<td class=\"jugador\">").append(esc(nombrePropio(fila.jugador))).append("</td>");
-            int columna = 0;
-            while (columna < bloque.columnas.size()) {
-                Jornada jornada = bloque.columnas.get(columna);
-                if (jornada.getId().equals(fila.idJornadaTarjeta)) {
-                    celda(html, fila.amarillas, fila.pagada, bloque.colores.amarilla);
-                    celda(html, fila.rojas, fila.pagada, bloque.colores.roja);
-                    columna++;
-                    continue;
-                }
-                if (fila.marcadas.contains(jornada.getId())) {
-                    int ancho = 1;
-                    while (columna + ancho < bloque.columnas.size()
-                            && fila.marcadas.contains(bloque.columnas.get(columna + ancho).getId())) {
-                        ancho++;
+                int columna = 0;
+                while (columna < bloque.columnas.size()) {
+                    Jornada jornada = bloque.columnas.get(columna);
+                    if (jornada.getId().equals(fila.idJornadaTarjeta)) {
+                        celda(html, fila.amarillas, fila.pagada, bloque.colores.amarilla);
+                        celda(html, fila.rojas, fila.pagada, bloque.colores.roja);
+                        columna++;
+                        continue;
                     }
-                    html.append("<td class=\"cuadro susp\" colspan=\"").append(ancho * 2).append("\">SUSP</td>");
-                    columna += ancho;
-                    continue;
+                    if (fila.marcadas.contains(jornada.getId())) {
+                        int ancho = 1;
+                        while (columna + ancho < bloque.columnas.size()
+                                && fila.marcadas.contains(bloque.columnas.get(columna + ancho).getId())) {
+                            ancho++;
+                        }
+                        html.append("<td class=\"cuadro susp\" colspan=\"").append(ancho * 2).append("\">SUSP</td>");
+                        columna += ancho;
+                        continue;
+                    }
+                    html.append("<td class=\"cuadro\"></td><td class=\"cuadro\"></td>");
+                    columna++;
                 }
-                html.append("<td class=\"cuadro\"></td><td class=\"cuadro\"></td>");
-                columna++;
+                if (desplazamiento == 0 || !fila.idJugador.equals(bloque.filas.get(filaIndice + desplazamiento - 1).idJugador)) {
+                    int mismas = 1;
+                    int puntos = fila.puntos;
+                    while (desplazamiento + mismas < grupo
+                            && fila.idJugador.equals(bloque.filas.get(filaIndice + desplazamiento + mismas).idJugador)) {
+                        puntos += bloque.filas.get(filaIndice + desplazamiento + mismas).puntos;
+                        mismas++;
+                    }
+                    html.append("<td class=\"puntos\" rowspan=\"").append(mismas).append("\">").append(puntos).append("</td>");
+                }
+                html.append("</tr>");
             }
-            html.append("</tr>");
+            html.append("<tr><td class=\"total\" colspan=\"2\">Total</td>");
+            if (!bloque.columnas.isEmpty()) {
+                html.append("<td class=\"cuadro\" colspan=\"").append(bloque.columnas.size() * 2).append("\"></td>");
             }
+            html.append("<td class=\"puntos\">").append(totalEquipo).append("</td></tr>");
             filaIndice += grupo;
         }
         html.append("</tbody></table>");
@@ -272,6 +291,7 @@ public class ReporteTarjetasService {
         for (int i = 0; i < bloque.columnas.size(); i++) {
             grupo.append("<col style=\"width:5.6mm\"/><col style=\"width:5.6mm\"/>");
         }
+        grupo.append("<col style=\"width:").append(milimetros("Fair Play".length())).append("mm\"/>");
         grupo.append("</colgroup>");
         return grupo.toString();
     }
@@ -314,16 +334,28 @@ public class ReporteTarjetasService {
     private Colores colores(UUID ligaId) {
         String amarilla = "#FFFF00";
         String roja = "#FF0000";
+        int pesoAmarilla = 1;
+        int pesoRoja = 1;
         for (Tarjeta tarjeta : catalogo.buscar(ligaId, "", "ACTIVO")) {
             String nombre = tarjeta.getDescripcion() == null ? "" : tarjeta.getDescripcion().toUpperCase(java.util.Locale.ROOT);
-            if (nombre.contains("AMARILL") && tarjeta.getColor() != null) {
-                amarilla = tarjeta.getColor();
+            if (nombre.contains("AMARILL")) {
+                if (tarjeta.getColor() != null) {
+                    amarilla = tarjeta.getColor();
+                }
+                pesoAmarilla = peso(tarjeta.getPesoFairPlay());
             }
-            if (nombre.contains("ROJA") && tarjeta.getColor() != null) {
-                roja = tarjeta.getColor();
+            if (nombre.contains("ROJA")) {
+                if (tarjeta.getColor() != null) {
+                    roja = tarjeta.getColor();
+                }
+                pesoRoja = peso(tarjeta.getPesoFairPlay());
             }
         }
-        return new Colores(amarilla, roja);
+        return new Colores(amarilla, roja, pesoAmarilla, pesoRoja);
+    }
+
+    private int peso(int valor) {
+        return valor < 0 ? 1 : valor;
     }
 
     private void celda(StringBuilder html, int cantidad, boolean pagada, String color) {
@@ -380,6 +412,8 @@ public class ReporteTarjetasService {
                 + "td.equipo, td.jugador { white-space: nowrap; }"
                 + "td.cuadro { text-align: center; font-weight: 700; font-size: 8px; }"
                 + "td.susp { background: #f3c98b; color: #163a5f; }"
+                + "th.puntos, td.puntos { text-align: center; font-weight: 700; }"
+                + "td.total { font-weight: 700; }"
                 + "</style></head><body><div class=\"cabeza\">" + logo
                 + "<h1>" + esc(liga.getName()) + "</h1>"
                 + "<p class=\"sub\">DETALLE DE TARJETAS Y SUSPENSIONES</p>"
@@ -422,20 +456,26 @@ public class ReporteTarjetasService {
     private static final class Colores {
         private final String amarilla;
         private final String roja;
+        private final int pesoAmarilla;
+        private final int pesoRoja;
 
-        private Colores(String amarilla, String roja) {
+        private Colores(String amarilla, String roja, int pesoAmarilla, int pesoRoja) {
             this.amarilla = amarilla;
             this.roja = roja;
+            this.pesoAmarilla = pesoAmarilla;
+            this.pesoRoja = pesoRoja;
         }
     }
 
     private static final class Fila {
         private String equipo;
+        private UUID idJugador;
         private int numero;
         private String jugador;
         private UUID idJornadaTarjeta;
         private int amarillas;
         private int rojas;
+        private int puntos;
         private boolean pagada;
         private final Set<UUID> marcadas = new HashSet<>();
     }
