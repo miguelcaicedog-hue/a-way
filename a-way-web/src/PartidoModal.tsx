@@ -79,6 +79,42 @@ function FotoJugador({ jugador }: { jugador: Jugador }) {
   return <span className="player-photo vacio" aria-label="Sin foto" />
 }
 
+function firmaArbitros(lista: Asignado[]) {
+  return [...lista]
+    .map((item) => ({ arbitroId: item.arbitroId, pito: item.pito }))
+    .sort((izquierda, derecha) => izquierda.arbitroId.localeCompare(derecha.arbitroId))
+}
+
+function firmaGoles(mapa: Record<string, string>) {
+  return Object.entries(mapa)
+    .filter(([, cantidad]) => cantidad !== '' && Number(cantidad) > 0)
+    .map(([jugadorId, cantidad]) => ({ jugadorId, cantidad: Number(cantidad) }))
+    .sort((izquierda, derecha) => izquierda.jugadorId.localeCompare(derecha.jugadorId))
+}
+
+function firmaTarjetas(mapa: Record<string, Tarjeta>) {
+  return Object.entries(mapa)
+    .filter(([, tarjeta]) => tarjeta.amarilla !== '' || tarjeta.roja !== '' || tarjeta.observacion.trim() !== '')
+    .map(([jugadorId, tarjeta]) => ({
+      jugadorId,
+      amarillas: tarjeta.amarilla === '' ? null : Number(tarjeta.amarilla),
+      rojas: tarjeta.roja === '' ? null : Number(tarjeta.roja),
+      observacion: tarjeta.observacion.trim() || null,
+    }))
+    .sort((izquierda, derecha) => izquierda.jugadorId.localeCompare(derecha.jugadorId))
+}
+
+function firmaSanciones(mapa: Record<string, SancionJugador>) {
+  return Object.entries(mapa)
+    .filter(([, sancion]) => sancion.sancionIds.length > 0 || sancion.observacion.trim() !== '')
+    .map(([jugadorId, sancion]) => ({
+      jugadorId,
+      observacion: sancion.observacion.trim() || null,
+      sancionIds: [...sancion.sancionIds].sort(),
+    }))
+    .sort((izquierda, derecha) => izquierda.jugadorId.localeCompare(derecha.jugadorId))
+}
+
 function textoBalance(detalle: Detalle | null, equipoId: string, idsPlantilla: string[], goles: Record<string, string>) {
   if (!detalle || !equipoId) return ''
   const marcador = equipoId === detalle.equipoLocal?.id ? detalle.golesLocal : detalle.golesVisita
@@ -105,6 +141,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
   const [grabado, setGrabado] = useState(false)
+  const [confirmarCierre, setConfirmarCierre] = useState(false)
 
   function golesDe(respuesta: Detalle) {
     const cargados: Record<string, string> = {}
@@ -250,12 +287,41 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
       setTarjetas(tarjetasDe(respuesta))
       setSanciones(sancionesDe(respuesta))
       setGrabado(true)
+      setConfirmarCierre(false)
     } catch (caught) {
       setGrabado(false)
       setError(caught instanceof Error ? caught.message : 'No se pudo grabar el partido')
     } finally {
       setOcupado(false)
     }
+  }
+
+  function hayCambios() {
+    if (!detalle) return false
+    const actual = JSON.stringify({
+      arbitros: firmaArbitros(asignados),
+      goles: firmaGoles(goles),
+      tarjetas: firmaTarjetas(tarjetas),
+      sanciones: firmaSanciones(sanciones),
+    })
+    const guardado = JSON.stringify({
+      arbitros: firmaArbitros(detalle.asignados),
+      goles: detalle.goles
+        .filter((gol) => gol.cantidad > 0)
+        .map((gol) => ({ jugadorId: gol.jugadorId, cantidad: gol.cantidad }))
+        .sort((izquierda, derecha) => izquierda.jugadorId.localeCompare(derecha.jugadorId)),
+      tarjetas: firmaTarjetas(tarjetasDe(detalle)),
+      sanciones: firmaSanciones(sancionesDe(detalle)),
+    })
+    return actual !== guardado
+  }
+
+  function intentarCerrar() {
+    if (hayCambios()) {
+      setConfirmarCierre(true)
+      return
+    }
+    onClose()
   }
 
   const visibles = (detalle?.arbitros ?? []).filter((arbitro) =>
@@ -280,10 +346,17 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
           </h2>
           <div className="actions">
             {grabado && <span className="aviso-grabado">Grabado</span>}
-            <button type="button" className="ghost" onClick={onClose}>Cerrar</button>
+            <button type="button" className="ghost" onClick={intentarCerrar}>Cerrar</button>
             {detalle?.editable && <button type="button" disabled={ocupado} onClick={() => void grabar()}>Grabar</button>}
           </div>
         </div>
+        {confirmarCierre && (
+          <p className="aviso-sin-grabar">
+            Hay cambios sin grabar.
+            <button type="button" className="ghost" onClick={onClose}>Cerrar</button>
+            <button type="button" onClick={() => setConfirmarCierre(false)}>Continuar</button>
+          </p>
+        )}
         {error && <p className="down">{error}</p>}
         <div className="partido-cuerpo">
         <div className="pestanas">

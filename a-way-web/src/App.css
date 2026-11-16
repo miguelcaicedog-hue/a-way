@@ -1409,6 +1409,16 @@ button.silbato.sin-cobro {
   flex: none;
 }
 
+.aviso-sin-grabar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin: 0.5rem 0 0;
+  color: #ea580c;
+  font-weight: 600;
+}
+
 .catalog form.formato {
   max-width: none;
 }
