@@ -92,7 +92,6 @@ export function CanchasScreen({ profile, leagueId }: { profile: Profile; leagueI
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       {!leagueId && <p>Selecciona una liga.</p>}
       {leagueId && (
         <form className="filtros" onSubmit={consultar}>
@@ -153,6 +152,7 @@ export function CanchasScreen({ profile, leagueId }: { profile: Profile; leagueI
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>

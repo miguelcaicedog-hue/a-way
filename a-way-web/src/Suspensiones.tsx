@@ -132,7 +132,6 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       {aviso && <p>{aviso}</p>}
       {!leagueId && <p>Selecciona una liga.</p>}
       {leagueId && (
@@ -194,6 +193,7 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           <Estado valor={estadoFaltaGrave} writable={writable} onChange={setEstadoFaltaGrave} />
           <p>Eliminación del campeonato.</p>
           {writable && <button type="submit">Guardar</button>}
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>

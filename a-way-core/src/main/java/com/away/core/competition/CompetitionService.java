@@ -370,7 +370,9 @@ public class CompetitionService {
         Player player = new Player();
         player.setId(UUID.randomUUID());
         player.setTeamEntry(entry);
-        assertRosterRoom(entry, null);
+        if ("ACTIVO".equals(estadoJugador(request.getEstado()))) {
+            assertRosterRoom(entry, null);
+        }
         applyPlayer(player, request, true);
         return playerView(players.save(player));
     }
@@ -381,7 +383,9 @@ public class CompetitionService {
         assertWrite(player.getTeamEntry().getTeam().getLeague().getId());
         assertWrite(entry.getTeam().getLeague().getId());
         player.setTeamEntry(entry);
-        assertRosterRoom(entry, player.getId());
+        if ("ACTIVO".equals(estadoJugador(request.getEstado()))) {
+            assertRosterRoom(entry, player.getId());
+        }
         applyPlayer(player, request, false);
         return playerView(player);
     }

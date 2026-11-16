@@ -373,7 +373,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
   return (
     <section className="catalog">
       {mensaje && <p className="ok">{mensaje}</p>}
-      {error && <p className="down">{error}</p>}
+      {!editor && error && <p className="down">{error}</p>}
       {writable && (
         <label>
           Archivo de inscripciones
@@ -554,6 +554,7 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
                     <button type="submit" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
                     <button type="button" className="ghost" onClick={() => setEditor(null)}>Cancelar</button>
                   </div>
+                  {error && <p className="down">{error}</p>}
                 </form>
                 </div>
               </div>

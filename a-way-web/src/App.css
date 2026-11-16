@@ -316,6 +316,11 @@ ul {
   color: #b42318;
 }
 
+.actions + .down,
+button + .down {
+  margin: 0.35rem 0 0;
+}
+
 .equipos-sin-match {
   margin-top: 0;
 }

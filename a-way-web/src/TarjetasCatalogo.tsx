@@ -127,7 +127,6 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       {!leagueId && <p>Selecciona una liga.</p>}
       {leagueId && (
         <form className="filtros" onSubmit={consultar}>
@@ -212,6 +211,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>

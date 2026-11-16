@@ -541,7 +541,8 @@ public class InscripcionService {
                 .anyMatch(item -> (existenteId == null || !item.getId().equals(existenteId)) && item.getCedula().equalsIgnoreCase(jugador.getCedula()));
         Integer numero = camisa(jugador.getNumeroCamisa());
         boolean camisaRepetida = numero != null && plantel.stream()
-                .anyMatch(item -> (existenteId == null || !item.getId().equals(existenteId)) && item.getNumeroCamisa() == numero);
+                .anyMatch(item -> (existenteId == null || !item.getId().equals(existenteId))
+                        && "ACTIVO".equals(item.getEstado()) && item.getNumeroCamisa() == numero);
         if (cedulaRepetida) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La cédula ya está registrada en el equipo");
         }

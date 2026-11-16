@@ -63,26 +63,50 @@ public class ReporteJugadoresService {
         if (porEquipo.isEmpty()) {
             cuerpo.append("<p class=\"vacio\">No hay jugadores activos en esta categoría.</p>");
         } else {
+            int equipos = 0;
             for (Map.Entry<UUID, List<Player>> grupo : porEquipo.entrySet()) {
-                cuerpo.append(htmlEquipo(nombres.get(grupo.getKey()), grupo.getValue()));
+                cuerpo.append(htmlEquipo(nombres.get(grupo.getKey()), grupo.getValue(), equipos > 0 && equipos % 2 == 0));
+                equipos++;
             }
         }
         return ReportePdf.deHtml(documento(liga, cuerpo.toString()), 210, 297);
     }
 
-    private String htmlEquipo(String equipo, List<Player> jugadoresEquipo) {
+    private String htmlEquipo(String equipo, List<Player> jugadoresEquipo, boolean salto) {
         StringBuilder html = new StringBuilder();
-        html.append("<table class=\"equipo\"><colgroup>")
-                .append("<col style=\"width:20mm\"/><col/><col style=\"width:16mm\"/>")
-                .append("</colgroup><thead><tr><th colspan=\"3\">").append(esc(equipo)).append("</th></tr>")
-                .append("<tr><th>Foto</th><th>Alias</th><th>Nº</th></tr></thead><tbody>");
-        for (Player jugador : jugadoresEquipo) {
-            html.append("<tr><td class=\"foto\">").append(foto(jugador)).append("</td>")
-                    .append("<td class=\"alias\">").append(esc(nombrePropio(jugador.getAlias()))).append("</td>")
-                    .append("<td class=\"numero\">").append(jugador.getNumeroCamisa()).append("</td></tr>");
+        html.append("<table class=\"equipo");
+        if (salto) {
+            html.append(" corte");
+        }
+        html.append("\"><colgroup>");
+        for (int grupo = 0; grupo < 3; grupo++) {
+            html.append("<col style=\"width:27mm\"/><col/><col style=\"width:12mm\"/>");
+        }
+        html.append("</colgroup><thead><tr><th class=\"equipo\" colspan=\"9\">").append(esc(equipo)).append("</th></tr><tr>");
+        for (int grupo = 0; grupo < 3; grupo++) {
+            html.append("<th>Foto</th><th>NOMBRE</th><th>Nº</th>");
+        }
+        html.append("</tr></thead><tbody>");
+        for (int inicio = 0; inicio < jugadoresEquipo.size(); inicio += 3) {
+            html.append("<tr>");
+            for (int columna = 0; columna < 3; columna++) {
+                int indice = inicio + columna;
+                if (indice < jugadoresEquipo.size()) {
+                    jugador(html, jugadoresEquipo.get(indice));
+                } else {
+                    html.append("<td class=\"foto\"></td><td class=\"nombre\"></td><td class=\"numero\"></td>");
+                }
+            }
+            html.append("</tr>");
         }
         html.append("</tbody></table>");
         return html.toString();
+    }
+
+    private void jugador(StringBuilder html, Player jugador) {
+        html.append("<td class=\"foto\">").append(foto(jugador)).append("</td>")
+                .append("<td class=\"nombre\">").append(esc(nombrePropio(jugador.getAlias()))).append("</td>")
+                .append("<td class=\"numero\">").append(jugador.getNumeroCamisa()).append("</td>");
     }
 
     private String foto(Player jugador) {
@@ -146,25 +170,27 @@ public class ReporteJugadoresService {
                 + "body { font-family: sans-serif; font-size: 10px; color: #163a5f; }"
                 + "table.cabecera { width: 100%; border: none; margin-bottom: 10px; }"
                 + "table.cabecera td { border: none; vertical-align: middle; padding: 0; }"
-                + "td.marca { width: 22mm; text-align: right; }"
+                + "td.marca { width: 28mm; text-align: left; }"
+                + "td.textos { text-align: center; }"
                 + ".logo { height: 18mm; }"
-                + "h1 { font-size: 14px; margin: 0; }"
-                + "p.sub { margin: 2px 0 0; font-weight: 700; }"
-                + "p.generado { margin: 2px 0 0; font-size: 9px; }"
-                + "table.equipo { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0 0 8px; }"
+                + "h1 { font-size: 20px; margin: 0; text-align: center; }"
+                + "p.sub { margin: 2px 0 0; font-size: 14px; font-weight: 700; text-align: center; }"
+                + "p.generado { margin: 2px 0 0; font-size: 9px; text-align: center; }"
+                + "table.equipo { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0 0 6px; page-break-inside: avoid; }"
+                + "table.corte { page-break-before: always; }"
                 + "th, td { border: 1px solid #163a5f; padding: 3px 4px; }"
-                + "th { background: #163a5f; color: white; }"
-                + "td.foto { text-align: center; height: 18mm; }"
-                + "img.retrato { max-height: 16mm; max-width: 16mm; }"
-                + "td.alias { white-space: nowrap; }"
-                + "td.numero { text-align: center; }"
+                + "th { background: #163a5f; color: white; text-align: center; }"
+                + "td.foto { text-align: center; height: 27mm; }"
+                + "img.retrato { max-height: 25mm; max-width: 25mm; }"
+                + "td.nombre { font-size: 11px; text-align: center; }"
+                + "td.numero { text-align: center; font-size: 14px; font-weight: 700; }"
                 + "tr { page-break-inside: avoid; }"
                 + "</style></head><body>"
-                + "<table class=\"cabecera\"><tr><td>"
+                + "<table class=\"cabecera\"><tr><td class=\"marca\">" + logo + "</td><td class=\"textos\">"
                 + "<h1>REPORTE DE JUGADORES POR EQUIPO</h1>"
                 + "<p class=\"sub\">" + esc(liga.getName()) + "</p>"
                 + "<p class=\"generado\">" + ZonedDateTime.now(ZONA).format(GENERADO) + "</p>"
-                + "</td><td class=\"marca\">" + logo + "</td></tr></table>"
+                + "</td><td class=\"marca\"></td></tr></table>"
                 + cuerpo + "</body></html>";
     }
 

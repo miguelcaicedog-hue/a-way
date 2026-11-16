@@ -219,7 +219,6 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       <form className="filtros" onSubmit={consultar}>
         <label>
           Nombre
@@ -317,6 +316,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>
@@ -378,7 +378,6 @@ export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: P
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       <table>
         <thead>
           <tr>
@@ -415,6 +414,7 @@ export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: P
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>
@@ -500,7 +500,6 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
       {editionId && (
         <form className="filtros" onSubmit={(event) => event.preventDefault()}>
@@ -565,6 +564,7 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>
@@ -736,7 +736,6 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
       <form className="filtros" onSubmit={consultar}>
         <label>Nombre<input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} /></label>
@@ -863,6 +862,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>
@@ -922,6 +922,9 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const [clearPhoto, setClearPhoto] = useState(false)
   const [photoStamp, setPhotoStamp] = useState(0)
   const [estado, setEstado] = useState('ACTIVO')
+  const [filtroCedula, setFiltroCedula] = useState('')
+  const [filtroNombre, setFiltroNombre] = useState('')
+  const [filtroCamisa, setFiltroCamisa] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -1149,7 +1152,16 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   }
 
   const preview = photo ?? (editing?.hasPhoto && !clearPhoto ? `/api/players/${editing.id}/photo?v=${photoStamp}` : null)
-  const visibles = filtroEstado ? rows.filter((row) => row.estado === filtroEstado) : rows
+  const cedulaBuscada = filtroCedula.trim().toLowerCase()
+  const nombreBuscado = filtroNombre.trim().toLowerCase()
+  const camisaBuscada = filtroCamisa.trim()
+  const visibles = rows.filter((row) => {
+    if (filtroEstado && row.estado !== filtroEstado) return false
+    if (cedulaBuscada && !row.cedula.toLowerCase().includes(cedulaBuscada)) return false
+    if (nombreBuscado && !row.name.toLowerCase().includes(nombreBuscado)) return false
+    if (camisaBuscada && !String(row.numeroCamisa).includes(camisaBuscada)) return false
+    return true
+  })
 
   async function descargarJugadores() {
     if (!editionId || !categoryId) return
@@ -1186,7 +1198,6 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
           </button>
         </span>
       </div>
-      {error && <p className="down">{error}</p>}
       {!editionId && <p>Selecciona una edición.</p>}
       <label>
         Categoría
@@ -1199,6 +1210,18 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
         <select value={teamId} onChange={(event) => { setTeamId(event.target.value); reset() }}>
           {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
         </select>
+      </label>
+      <label>
+        Cédula
+        <input value={filtroCedula} onChange={(event) => setFiltroCedula(event.target.value)} />
+      </label>
+      <label>
+        Nombre
+        <input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} />
+      </label>
+      <label>
+        Nº de camisa
+        <input value={filtroCamisa} onChange={(event) => setFiltroCamisa(event.target.value)} />
       </label>
       <label>
         Estado
@@ -1309,6 +1332,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
             <button type="submit">Guardar</button>
             {editing && <button type="button" className="ghost" onClick={reset}>Cancelar</button>}
           </div>
+          {error && <p className="down">{error}</p>}
         </form>
       )}
     </section>

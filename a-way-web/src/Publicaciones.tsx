@@ -461,7 +461,6 @@ export function PublicacionesScreen({
 
   return (
     <section className="catalog">
-      {error && <p className="down">{error}</p>}
       {aviso && <p className="ok">{aviso}</p>}
       {!leagueId && <p>Selecciona una liga.</p>}
       {formato && (
@@ -609,6 +608,7 @@ export function PublicacionesScreen({
               <button type="submit" disabled={guardando}>Guardar formato</button>
             </div>
           )}
+          {error && <p className="down">{error}</p>}
         </form>
       )}
       {formato && (
