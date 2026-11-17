@@ -72,7 +72,6 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
   const [observacion, setObservacion] = useState('')
   const [efectivo, setEfectivo] = useState('0.00')
   const [transferencia, setTransferencia] = useState('0.00')
-  const [efectivoManual, setEfectivoManual] = useState(false)
   const [verTarjetas, setVerTarjetas] = useState(false)
   const [verSanciones, setVerSanciones] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +86,6 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
     setObservacion(respuesta.observacion ?? '')
     setEfectivo(dinero(respuesta.valorCobroEfectivo))
     setTransferencia(dinero(respuesta.valorCobroTransferencia))
-    setEfectivoManual(Math.abs(Number(respuesta.valorCobroEfectivo) - Number(respuesta.total)) > 0.001)
   }
 
   function cargar(equipo?: string) {
@@ -109,16 +107,11 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
     cargar(id).catch((reason: Error) => setError(reason.message))
   }
 
-  function alternar(ids: Set<string>, id: string, asignar: (valor: Set<string>) => void, lado: 'tarjetas' | 'sanciones') {
+  function alternar(ids: Set<string>, id: string, asignar: (valor: Set<string>) => void) {
     const siguiente = new Set(ids)
     if (siguiente.has(id)) siguiente.delete(id)
     else siguiente.add(id)
     asignar(siguiente)
-    if (!efectivoManual && cobro) {
-      const valorTarjetasSiguiente = lado === 'tarjetas' ? suma(cobro.tarjetas, siguiente) : suma(cobro.tarjetas, tarjetas)
-      const valorSancionesSiguiente = lado === 'sanciones' ? suma(cobro.sanciones, siguiente) : suma(cobro.sanciones, sanciones)
-      setEfectivo(dinero(Number(cobro.arbitraje) + valorTarjetasSiguiente + valorSancionesSiguiente))
-    }
     setGrabado(false)
   }
 
@@ -217,7 +210,7 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                         type="checkbox"
                         checked={tarjetas.has(cargo.id)}
                         disabled={!cobro?.editable}
-                        onChange={() => alternar(tarjetas, cargo.id, setTarjetas, 'tarjetas')}
+                        onChange={() => alternar(tarjetas, cargo.id, setTarjetas)}
                       />
                     </label>
                     <Foto cargo={cargo} />
@@ -253,7 +246,7 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                         type="checkbox"
                         checked={sanciones.has(cargo.id)}
                         disabled={!cobro?.editable}
-                        onChange={() => alternar(sanciones, cargo.id, setSanciones, 'sanciones')}
+                        onChange={() => alternar(sanciones, cargo.id, setSanciones)}
                       />
                     </label>
                     <Foto cargo={cargo} />
@@ -283,7 +276,6 @@ export function CobroModal({ partidoId, onClose }: { partidoId: string; onClose:
                   disabled={!cobro?.editable}
                   onChange={(event) => {
                     setEfectivo(event.target.value)
-                    setEfectivoManual(Number(event.target.value) !== Number(total.toFixed(2)))
                     setGrabado(false)
                   }}
                 />

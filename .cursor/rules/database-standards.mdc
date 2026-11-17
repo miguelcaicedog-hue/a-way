@@ -1,0 +1,91 @@
+---
+description: Estándares obligatorios de diseño de bases de datos PostgreSQL, tablas, columnas, claves primarias, auditoría, estados, índices y tablespaces.
+globs:
+alwaysApply: true
+---
+
+# REGLAS OBLIGATORIAS DE BASE DE DATOS POSTGRESQL
+
+Estas reglas deben cumplirse siempre que se diseñen, creen o modifiquen estructuras de PostgreSQL.
+
+## 1. TABLESPACES
+
+- Todas las tablas e índices de la aplicación deben crearse en el tablespace `ts_away`.
+- No utilizar el tablespace predeterminado para objetos de la aplicación.
+- Incluir explícitamente `TABLESPACE ts_away` en las instrucciones SQL correspondientes.
+- Antes de crear estructuras, verificar que `ts_away` exista.
+- Si el tablespace no existe, detener la creación y solicitar su configuración.
+- Nunca crear un tablespace suponiendo rutas del sistema operativo.
+- No modificar ni eliminar tablespaces existentes sin autorización.
+
+## 2. NOMBRES DE TABLAS Y COLUMNAS
+
+- Utilizar nombres en español.
+- Utilizar snake_case.
+- Utilizar siempre mayusculas.
+- No utilizar espacios, tildes ni caracteres especiales.
+- Los nombres deben ser descriptivos y representar su contenido.
+- No utilizar identificadores entre comillas dobles innecesariamente.
+
+Ejemplos:
+- equipos
+- jugadores
+- partidos
+- resultados_partidos
+- usuarios
+- roles
+- grupo_rol
+- roles_x_usuario
+- roles_x_grupo_rol
+
+## 3. CLAVES PRIMARIAS (PRIMARY KEY)
+
+- Todas las tablas deben tener una clave primaria.
+- La columna de clave primaria debe comenzar obligatoriamente con `id_`.
+- El nombre debe identificar la tabla.
+
+Ejemplos:
+- equipos: id_equipo
+- jugadores: id_jugador
+- partidos: id_partido
+- usuarios_sistema: id_usuario
+
+- Utilizar UUID como tipo preferido para nuevas claves primarias.
+- No crear tablas sin PRIMARY KEY.
+
+## 4. CAMPOS OBLIGATORIOS DE AUDITORÍA
+
+TODAS las tablas deben incluir obligatoriamente:
+
+- fecha_creacion: TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+- fecha_modificacion: TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+- usuario_creacion: Identificador del usuario que crea el registro.
+- usuario_modificacion: Identificador del usuario que modifica el registro.
+- estado: VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+
+Reglas:
+- fecha_creacion se establece automáticamente al insertar.
+- fecha_creacion nunca debe modificarse después de la creación.
+- fecha_modificacion debe actualizarse automáticamente en cada modificación.
+- usuario_creacion debe registrar al usuario que crea el registro.
+- usuario_modificacion debe registrar al último usuario que modifica el registro.
+- Los usuarios de auditoría deben corresponder al sistema de autenticación.
+- No inventar identificadores de usuarios.
+
+## 5. ESTADOS DE LOS REGISTROS
+
+- Todas las tablas deben manejar el campo estado.
+- Los valores iniciales serán:
+  - ACTIVO
+  - INACTIVO
+  - ELIMINADO
+
+- No eliminar físicamente registros de negocio por defecto.
+- Utilizar eliminación lógica mediante estado.
+- Validar los valores permitidos mediante CHECK o un mecanismo equivalente.
+
+
+## 5. backup
+-  alamacena todos los script que ejecutes en dos directorios 
+   - OBJETOS_DB
+   - DML 

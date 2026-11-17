@@ -47,6 +47,11 @@ public class SuspensionesViews {
         private String estadoFaltaMedia;
         @NotBlank
         private String estadoFaltaGrave;
+        @NotBlank
+        private String estadoSancion;
+        @NotNull
+        @Min(0)
+        private Integer sancionJornadas;
 
         public UUID getLeagueId() {
             return leagueId;
@@ -167,6 +172,22 @@ public class SuspensionesViews {
         public void setEstadoFaltaGrave(String estadoFaltaGrave) {
             this.estadoFaltaGrave = estadoFaltaGrave;
         }
+
+        public String getEstadoSancion() {
+            return estadoSancion;
+        }
+
+        public void setEstadoSancion(String estadoSancion) {
+            this.estadoSancion = estadoSancion;
+        }
+
+        public Integer getSancionJornadas() {
+            return sancionJornadas;
+        }
+
+        public void setSancionJornadas(Integer sancionJornadas) {
+            this.sancionJornadas = sancionJornadas;
+        }
     }
 
     public static class ReglaView {
@@ -186,11 +207,13 @@ public class SuspensionesViews {
         private final String estadoRojas;
         private final String estadoFaltaMedia;
         private final String estadoFaltaGrave;
+        private final String estadoSancion;
+        private final int sancionJornadas;
 
         public ReglaView(UUID leagueId, String momento, int rojaJornadas, int amarillasAcumuladas, int amarillasJornadas,
                          String amarillasMomento, int rojasAcumuladas, int rojasJornadas, String rojasMomento,
                          int faltaMediaJornadas, String estadoRoja, String estadoAmarillas, String estadoRojas,
-                         String estadoFaltaMedia, String estadoFaltaGrave) {
+                         String estadoFaltaMedia, String estadoFaltaGrave, String estadoSancion, int sancionJornadas) {
             this.leagueId = leagueId;
             this.momento = momento;
             this.rojaJornadas = rojaJornadas;
@@ -207,6 +230,8 @@ public class SuspensionesViews {
             this.estadoRojas = estadoRojas;
             this.estadoFaltaMedia = estadoFaltaMedia;
             this.estadoFaltaGrave = estadoFaltaGrave;
+            this.estadoSancion = estadoSancion;
+            this.sancionJornadas = sancionJornadas;
         }
 
         public UUID getLeagueId() {
@@ -271,6 +296,14 @@ public class SuspensionesViews {
 
         public String getEstadoFaltaGrave() {
             return estadoFaltaGrave;
+        }
+
+        public String getEstadoSancion() {
+            return estadoSancion;
+        }
+
+        public int getSancionJornadas() {
+            return sancionJornadas;
         }
     }
 }

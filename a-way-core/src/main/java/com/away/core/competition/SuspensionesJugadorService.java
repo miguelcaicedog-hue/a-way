@@ -140,11 +140,24 @@ public class SuspensionesJugadorService {
         if (cantidad <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esa suspensión no tiene jornadas configuradas");
         }
-        int preferido = "FALTA_MEDIA".equals(motivo)
+        int preferido = "FALTA_MEDIA".equals(motivo) || "SANCION".equals(motivo)
                 ? indiceDe(orden, request.getJornadaInicioId())
                 : inicio(orden, momento(regla, motivo), LocalDate.now());
         if (preferido < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay una jornada donde iniciar la suspensión");
+        }
+        if ("SANCION".equals(motivo)) {
+            if (preferido + cantidad > orden.size()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay jornadas suficientes desde la jornada elegida");
+            }
+            Set<Integer> tomadas = ocupadas(activas, orden);
+            for (int paso = 0; paso < cantidad; paso++) {
+                if (tomadas.contains(preferido + paso)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La sanción pisa otra suspensión del jugador");
+                }
+            }
+            guardar(categoria, jugador.getId(), orden.get(preferido).getId(), orden.get(preferido).getId(), cantidad, motivo);
+            return detalle(jugador.getId(), categoria.getId());
         }
         int cursor = libre(orden, ocupadas(activas, orden), preferido, cantidad);
         if (cursor < 0) {

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/postgres-mcp",
+        "run"
+      ],
+      "env": {
+        "POSTGRES_MCP_CONNECTION_STRING": "postgresql://away:away@127.0.0.1:5432/away"
+      }
+    }
+  }
+}

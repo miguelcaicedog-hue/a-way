@@ -208,7 +208,7 @@ public class CobroPartidoService {
         String observacion = contexto.cobro == null ? null : contexto.cobro.getObservacion();
         BigDecimal total = arbitraje.add(tarjetas).add(sanciones).setScale(2);
         BigDecimal efectivo = contexto.cobro == null || contexto.cobro.getValorCobroEfectivo() == null
-                ? total : contexto.cobro.getValorCobroEfectivo().setScale(2);
+                ? BigDecimal.ZERO.setScale(2) : contexto.cobro.getValorCobroEfectivo().setScale(2);
         BigDecimal transferencia = contexto.cobro == null || contexto.cobro.getValorCobroTransferencia() == null
                 ? BigDecimal.ZERO.setScale(2) : contexto.cobro.getValorCobroTransferencia().setScale(2);
         Jornada jornada = jornadas.findById(partido.getIdJornada()).orElse(null);

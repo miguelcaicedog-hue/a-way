@@ -66,6 +66,8 @@ public class SuspensionesService {
         regla.setEstadoRojas(estadoRegla(request.getEstadoRojas()));
         regla.setEstadoFaltaMedia(estadoRegla(request.getEstadoFaltaMedia()));
         regla.setEstadoFaltaGrave(estadoRegla(request.getEstadoFaltaGrave()));
+        regla.setEstadoSancion(estadoRegla(request.getEstadoSancion()));
+        regla.setSancionJornadas(request.getSancionJornadas());
         auditar(regla, usuario(), nueva);
         reglas.save(regla);
         LeagueSettings ajuste = ajustes.findById(league.getId()).orElseGet(() -> {
@@ -97,6 +99,7 @@ public class SuspensionesService {
         regla.setRojasJornadas(2);
         regla.setRojasMomento(JORNADA_SIGUIENTE);
         regla.setFaltaMediaJornadas(3);
+        regla.setSancionJornadas(1);
         activar(regla);
         auditar(regla, usuario(), true);
         reglas.save(regla);
@@ -105,7 +108,7 @@ public class SuspensionesService {
     private SuspensionesViews.ReglaView vista(UUID leagueId, ReglaSuspension regla, String momento) {
         if (regla == null) {
             return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, JORNADA_SIGUIENTE, 2, 2, JORNADA_SIGUIENTE, 3,
-                    "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO");
+                    "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", 1);
         }
         return new SuspensionesViews.ReglaView(
                 leagueId,
@@ -122,7 +125,9 @@ public class SuspensionesService {
                 regla.getEstadoAmarillas(),
                 regla.getEstadoRojas(),
                 regla.getEstadoFaltaMedia(),
-                regla.getEstadoFaltaGrave());
+                regla.getEstadoFaltaGrave(),
+                regla.getEstadoSancion(),
+                regla.getSancionJornadas());
     }
 
     private void activar(ReglaSuspension regla) {
@@ -131,6 +136,7 @@ public class SuspensionesService {
         regla.setEstadoRojas("ACTIVO");
         regla.setEstadoFaltaMedia("ACTIVO");
         regla.setEstadoFaltaGrave("ACTIVO");
+        regla.setEstadoSancion("ACTIVO");
     }
 
     private String estadoRegla(String valor) {

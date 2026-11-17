@@ -57,6 +57,12 @@ public class ReglaSuspension {
     @Column(name = "estado_falta_grave", nullable = false)
     private String estadoFaltaGrave;
 
+    @Column(name = "estado_sancion", nullable = false)
+    private String estadoSancion;
+
+    @Column(name = "sancion_jornadas", nullable = false)
+    private int sancionJornadas;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -190,6 +196,22 @@ public class ReglaSuspension {
 
     public void setEstadoFaltaGrave(String estadoFaltaGrave) {
         this.estadoFaltaGrave = estadoFaltaGrave;
+    }
+
+    public String getEstadoSancion() {
+        return estadoSancion;
+    }
+
+    public void setEstadoSancion(String estadoSancion) {
+        this.estadoSancion = estadoSancion;
+    }
+
+    public int getSancionJornadas() {
+        return sancionJornadas;
+    }
+
+    public void setSancionJornadas(int sancionJornadas) {
+        this.sancionJornadas = sancionJornadas;
     }
 
     public OffsetDateTime getFechaCreacion() {

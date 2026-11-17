@@ -84,8 +84,8 @@ public class ReporteTarjetasService {
             if (bloque.filas.isEmpty()) {
                 continue;
             }
+            cuerpo.append(htmlBloque(bloque, alguna));
             alguna = true;
-            cuerpo.append(htmlBloque(bloque));
         }
         if (!alguna) {
             cuerpo.append("<p class=\"vacio\">No hay tarjetas hasta esta fecha.</p>");
@@ -145,7 +145,16 @@ public class ReporteTarjetasService {
             enJornada.amarillas += amarillas;
             enJornada.rojas += rojas;
             fila.puntos += amarillas * colores.pesoAmarilla + rojas * colores.pesoRoja;
-            fila.marcadas.remove(partido.getIdJornada());
+            boolean quitoSuspension = fila.marcadas.remove(partido.getIdJornada());
+            // #region agent log
+            if (rojas > 0) {
+                Jornada jornadaTarjeta = porJornada.get(partido.getIdJornada());
+                debugSuspension("C", "red card row",
+                        "{\"numero\":" + (jornadaTarjeta == null ? -1 : jornadaTarjeta.getNumero())
+                                + ",\"quitoMarca\":" + quitoSuspension
+                                + ",\"marcas\":" + fila.marcadas.size() + ",\"filtro\":\"" + fecha + "\"}");
+            }
+            // #endregion
         }
         List<Fila> filas = new ArrayList<>(porJugador.values());
         filas.sort(Comparator.comparing((Fila fila) -> fila.equipo)
@@ -184,17 +193,66 @@ public class ReporteTarjetasService {
             for (int i = inicio; i < orden.size() && i < fin; i++) {
                 Jornada jornada = orden.get(i);
                 if (jornada.getFecha() != null && jornada.getFecha().isAfter(fecha)) {
+                    // #region agent log
+                    debugSuspension("A", "suspension skipped, jornada after filter",
+                            "{\"numero\":" + jornada.getNumero() + ",\"fechaJornada\":\"" + jornada.getFecha()
+                                    + "\",\"filtro\":\"" + fecha + "\",\"motivo\":\"" + suspension.getMotivo()
+                                    + "\",\"jornadas\":" + suspension.getJornadas() + "}");
+                    // #endregion
                     continue;
                 }
+                // #region agent log
+                debugSuspension("B", "suspension included",
+                        "{\"numero\":" + jornada.getNumero() + ",\"fechaJornada\":\"" + jornada.getFecha()
+                                + "\",\"filtro\":\"" + fecha + "\",\"motivo\":\"" + suspension.getMotivo() + "}");
+                // #endregion
                 marcas.add(jornada.getId());
             }
         }
         return marcas;
     }
 
-    private String htmlBloque(Bloque bloque) {
+    // #region agent log
+    private void debugSuspension(String hypothesisId, String message, String data) {
+        try (java.io.FileWriter salida = new java.io.FileWriter("c:\\Users\\Usuario\\Projects\\a-way\\.cursor\\debug-677a93.log", true)) {
+            salida.write("{\"sessionId\":\"677a93\",\"hypothesisId\":\"" + hypothesisId
+                    + "\",\"location\":\"ReporteTarjetasService\",\"message\":\"" + message
+                    + "\",\"data\":" + data + ",\"timestamp\":" + System.currentTimeMillis() + "}\n");
+        } catch (java.io.IOException ignored) {
+        }
+    }
+    // #endregion
+
+    private String htmlBloque(Bloque bloque, boolean continuar) {
+        List<int[]> equipos = new ArrayList<>();
+        int filaIndice = 0;
+        while (filaIndice < bloque.filas.size()) {
+            Fila primera = bloque.filas.get(filaIndice);
+            int grupo = 1;
+            while (filaIndice + grupo < bloque.filas.size()
+                    && java.util.Objects.equals(primera.equipo, bloque.filas.get(filaIndice + grupo).equipo)) {
+                grupo++;
+            }
+            equipos.add(new int[] {filaIndice, grupo});
+            filaIndice += grupo;
+        }
         StringBuilder html = new StringBuilder();
-        html.append("<table>").append(columnas(bloque));
+        String cols = columnas(bloque);
+        String cabeza = cabeza(bloque);
+        for (int inicio = 0; inicio < equipos.size(); inicio += 3) {
+            int fin = Math.min(inicio + 3, equipos.size());
+            html.append(inicio == 0 && !continuar ? "<table>" : "<table class=\"corte\">");
+            html.append(cols).append(cabeza).append("<tbody>");
+            for (int equipo = inicio; equipo < fin; equipo++) {
+                filasEquipo(html, bloque, equipos.get(equipo)[0], equipos.get(equipo)[1]);
+            }
+            html.append("</tbody></table>");
+        }
+        return html.toString();
+    }
+
+    private String cabeza(Bloque bloque) {
+        StringBuilder html = new StringBuilder();
         html.append("<thead><tr><th class=\"equipo\" rowspan=\"3\">Equipo</th><th class=\"numero\" rowspan=\"3\">Nº</th><th class=\"jugador\" rowspan=\"3\">Jugador</th>");
         int indice = 0;
         while (indice < bloque.columnas.size()) {
@@ -218,61 +276,53 @@ public class ReporteTarjetasService {
             html.append("<th class=\"muestra\" style=\"background:").append(cssColor(bloque.colores.amarilla)).append("\"></th>");
             html.append("<th class=\"muestra\" style=\"background:").append(cssColor(bloque.colores.roja)).append("\"></th>");
         }
-        html.append("</tr></thead><tbody>");
-        int filaIndice = 0;
-        while (filaIndice < bloque.filas.size()) {
-            Fila primera = bloque.filas.get(filaIndice);
-            int grupo = 1;
-            while (filaIndice + grupo < bloque.filas.size()
-                    && java.util.Objects.equals(primera.equipo, bloque.filas.get(filaIndice + grupo).equipo)) {
-                grupo++;
-            }
-            int totalEquipo = 0;
-            for (int desplazamiento = 0; desplazamiento < grupo; desplazamiento++) {
-                totalEquipo += bloque.filas.get(filaIndice + desplazamiento).puntos;
-            }
-            for (int desplazamiento = 0; desplazamiento < grupo; desplazamiento++) {
-                Fila fila = bloque.filas.get(filaIndice + desplazamiento);
-                html.append("<tr>");
-                if (desplazamiento == 0) {
-                    html.append("<td class=\"equipo\" rowspan=\"").append(grupo + 1).append("\">")
-                            .append(esc(fila.equipo)).append("</td>");
-                }
-                html.append("<td class=\"numero\">").append(fila.numero).append("</td>");
-                html.append("<td class=\"jugador\">").append(esc(nombrePropio(fila.jugador))).append("</td>");
-                int columna = 0;
-                while (columna < bloque.columnas.size()) {
-                    Jornada jornada = bloque.columnas.get(columna);
-                    TarjetaEnJornada enJornada = fila.porJornada.get(jornada.getId());
-                    if (enJornada != null) {
-                        celda(html, enJornada.amarillas, enJornada.pagada, bloque.colores.amarilla);
-                        celda(html, enJornada.rojas, enJornada.pagada, bloque.colores.roja);
-                        columna++;
-                        continue;
-                    }
-                    if (fila.marcadas.contains(jornada.getId())) {
-                        int ancho = 1;
-                        while (columna + ancho < bloque.columnas.size()
-                                && fila.marcadas.contains(bloque.columnas.get(columna + ancho).getId())
-                                && fila.porJornada.get(bloque.columnas.get(columna + ancho).getId()) == null) {
-                            ancho++;
-                        }
-                        html.append("<td class=\"cuadro susp\" colspan=\"").append(ancho * 2).append("\">SUSP</td>");
-                        columna += ancho;
-                        continue;
-                    }
-                    html.append("<td class=\"cuadro\"></td><td class=\"cuadro\"></td>");
-                    columna++;
-                }
-                html.append("<td class=\"puntos\">").append(fila.puntos).append("</td>");
-                html.append("</tr>");
-            }
-            html.append("<tr><td class=\"total\" colspan=\"").append(2 + bloque.columnas.size() * 2).append("\">Total</td>");
-            html.append("<td class=\"puntos total\">").append(totalEquipo).append("</td></tr>");
-            filaIndice += grupo;
-        }
-        html.append("</tbody></table>");
+        html.append("</tr></thead>");
         return html.toString();
+    }
+
+    private void filasEquipo(StringBuilder html, Bloque bloque, int filaIndice, int grupo) {
+        int totalEquipo = 0;
+        for (int desplazamiento = 0; desplazamiento < grupo; desplazamiento++) {
+            totalEquipo += bloque.filas.get(filaIndice + desplazamiento).puntos;
+        }
+        for (int desplazamiento = 0; desplazamiento < grupo; desplazamiento++) {
+            Fila fila = bloque.filas.get(filaIndice + desplazamiento);
+            html.append("<tr>");
+            if (desplazamiento == 0) {
+                html.append("<td class=\"equipo\" rowspan=\"").append(grupo + 1).append("\">")
+                        .append(esc(fila.equipo)).append("</td>");
+            }
+            html.append("<td class=\"numero\">").append(fila.numero).append("</td>");
+            html.append("<td class=\"jugador\">").append(esc(nombrePropio(fila.jugador))).append("</td>");
+            int columna = 0;
+            while (columna < bloque.columnas.size()) {
+                Jornada jornada = bloque.columnas.get(columna);
+                TarjetaEnJornada enJornada = fila.porJornada.get(jornada.getId());
+                if (enJornada != null) {
+                    celda(html, enJornada.amarillas, enJornada.pagada, bloque.colores.amarilla);
+                    celda(html, enJornada.rojas, enJornada.pagada, bloque.colores.roja);
+                    columna++;
+                    continue;
+                }
+                if (fila.marcadas.contains(jornada.getId())) {
+                    int ancho = 1;
+                    while (columna + ancho < bloque.columnas.size()
+                            && fila.marcadas.contains(bloque.columnas.get(columna + ancho).getId())
+                            && fila.porJornada.get(bloque.columnas.get(columna + ancho).getId()) == null) {
+                        ancho++;
+                    }
+                    html.append("<td class=\"cuadro susp\" colspan=\"").append(ancho * 2).append("\">SUSP</td>");
+                    columna += ancho;
+                    continue;
+                }
+                html.append("<td class=\"cuadro\"></td><td class=\"cuadro\"></td>");
+                columna++;
+            }
+            html.append("<td class=\"puntos\">").append(fila.puntos).append("</td>");
+            html.append("</tr>");
+        }
+        html.append("<tr><td class=\"total\" colspan=\"").append(2 + bloque.columnas.size() * 2).append("\">Total</td>");
+        html.append("<td class=\"puntos total\">").append(totalEquipo).append("</td></tr>");
     }
 
     private String columnas(Bloque bloque) {
@@ -399,7 +449,9 @@ public class ReporteTarjetasService {
                 + "h1 { font-size: 16px; margin: 6px 0 0; }"
                 + "p.sub { margin: 2px 0 0; font-weight: 700; }"
                 + "p.generado { margin: 2px 0 0; font-size: 9px; }"
-                + "table { width: auto; border-collapse: collapse; table-layout: fixed; }"
+                + "table { width: auto; border-collapse: collapse; table-layout: fixed; -fs-table-paginate: paginate; }"
+                + "table.corte { page-break-before: always; }"
+                + "thead { display: table-header-group; }"
                 + "th, td { border: 1px solid #163a5f; padding: 3px 4px; }"
                 + "th { background: #163a5f; color: white; }"
                 + "th.fecha { font-size: 7px; padding: 2px; text-align: center; }"
