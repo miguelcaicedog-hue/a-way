@@ -316,6 +316,7 @@ function App() {
   const current = sections.find((item) => item.id === section) ?? sections[0]
 
   return (
+    <div className="app">
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
@@ -379,10 +380,6 @@ function App() {
             )
           })}
         </nav>
-        <p className="sidebar-credito">
-          Created by Miguel Caicedo
-          <span>© All rights reserved</span>
-        </p>
       </aside>
       <div className="content">
         <header className="topbar">
@@ -399,6 +396,9 @@ function App() {
                 <option key={league.id} value={league.id}>{league.name}</option>
               ))}
             </select>
+            {leagues.some((league) => league.id === leagueId && league.hasLogo) && (
+              <img className="league-logo" alt="" src={`/api/leagues/${leagueId}/logo?v=${scopeVersion}`} />
+            )}
           </label>
           <label>
             Edición
@@ -408,9 +408,6 @@ function App() {
               ))}
             </select>
           </label>
-          {leagues.some((league) => league.id === leagueId && league.hasLogo) && (
-            <img className="league-logo" alt="" src={`/api/leagues/${leagueId}/logo?v=${scopeVersion}`} />
-          )}
           <span>{roleLabel(profile)}</span>
           <button type="button" onClick={onLogout}>
             Salir
@@ -453,6 +450,8 @@ function App() {
         {section === 'publicaciones' && <PublicacionesScreen key={leagueId} profile={profile} leagueId={leagueId} editionId={editionId} />}
       </main>
       </div>
+    </div>
+    <footer className="pie">Created by Miguel Caicedo © All rights reserved</footer>
     </div>
   )
 }
