@@ -21,12 +21,6 @@ import { DesempateGoleadoresScreen } from './DesempateGoleadores'
 import { DesempateEquiposScreen } from './DesempateEquipos'
 import { PublicacionesScreen } from './Publicaciones'
 
-type Health = {
-  service?: string
-  status?: string
-  database?: string
-}
-
 type Membership = {
   leagueId: string
   leagueName: string
@@ -79,6 +73,58 @@ const menuGroups = [
 
 type SectionId = (typeof sections)[number]['id']
 
+const ACCESOS_INICIALES: SectionId[] = ['resultados', 'horarios', 'tabla', 'goles', 'calendario']
+
+function claveUso(usuario: string) {
+  return `away-menu-uso:${usuario}`
+}
+
+function leerUso(usuario: string) {
+  try {
+    const texto = localStorage.getItem(claveUso(usuario))
+    if (!texto) return {}
+    const valor = JSON.parse(texto) as Record<string, unknown>
+    const uso: Partial<Record<SectionId, number>> = {}
+    for (const seccion of sections) {
+      const cantidad = valor[seccion.id]
+      if (typeof cantidad === 'number' && cantidad > 0) {
+        uso[seccion.id] = cantidad
+      }
+    }
+    return uso
+  } catch {
+    return {}
+  }
+}
+
+function sumarUso(usuario: string, id: SectionId) {
+  const uso = leerUso(usuario)
+  uso[id] = (uso[id] ?? 0) + 1
+  localStorage.setItem(claveUso(usuario), JSON.stringify(uso))
+}
+
+function accesosUsados(usuario: string, staff: boolean) {
+  const uso = leerUso(usuario)
+  const visibles = sections.filter((item) => item.id !== 'inicio' && (item.id !== 'suspensiones-jugador' || staff))
+  const ordenMenu = new Map(visibles.map((item, indice) => [item.id, indice]))
+  const visitadas = visibles
+    .filter((item) => (uso[item.id] ?? 0) > 0)
+    .sort((izquierda, derecha) => {
+      const diferencia = (uso[derecha.id] ?? 0) - (uso[izquierda.id] ?? 0)
+      if (diferencia !== 0) return diferencia
+      return (ordenMenu.get(izquierda.id) ?? 0) - (ordenMenu.get(derecha.id) ?? 0)
+    })
+  const elegidas = [...visitadas]
+  for (const id of ACCESOS_INICIALES) {
+    if (elegidas.length >= 5) break
+    const item = visibles.find((seccion) => seccion.id === id)
+    if (item && !elegidas.some((seccion) => seccion.id === item.id)) {
+      elegidas.push(item)
+    }
+  }
+  return elegidas.slice(0, 5)
+}
+
 function roleLabel(profile: Profile) {
   if (profile.master) {
     return 'Master'
@@ -97,7 +143,6 @@ function App() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [health, setHealth] = useState<Health | null>(null)
   const [section, setSection] = useState<SectionId>('inicio')
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean; active: boolean }[]>([])
@@ -105,6 +150,14 @@ function App() {
   const [leagueId, setLeagueId] = useState('')
   const [editionId, setEditionId] = useState('')
   const [scopeVersion, setScopeVersion] = useState(0)
+
+  function abrirSeccion(id: SectionId) {
+    if (id !== 'inicio' && profile) {
+      sumarUso(profile.username, id)
+    }
+    setSection(id)
+    setOpenMenu(null)
+  }
 
   function refreshScope(next?: { leagueId?: string; editionId?: string }) {
     if (next?.leagueId) {
@@ -140,33 +193,6 @@ function App() {
       cancelled = true
     }
   }, [])
-
-  useEffect(() => {
-    if (!profile) {
-      return
-    }
-    let cancelled = false
-    fetch(`${apiBase}/api/health`, { credentials: 'include' })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        return (await response.json()) as Health
-      })
-      .then((body) => {
-        if (!cancelled) {
-          setHealth(body)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHealth(null)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [profile])
 
   useEffect(() => {
     if (!profile) {
@@ -257,7 +283,6 @@ function App() {
   async function onLogout() {
     await fetch(`${apiBase}/api/auth/logout`, { method: 'POST', credentials: 'include' })
     setProfile(null)
-    setHealth(null)
   }
 
   if (checkingSession) {
@@ -367,10 +392,7 @@ function App() {
                       key={item.id}
                       type="button"
                       aria-current={item.id === section ? 'page' : undefined}
-                      onClick={() => {
-                        setSection(item.id)
-                        setOpenMenu(null)
-                      }}
+                      onClick={() => abrirSeccion(item.id)}
                     >
                       {item.label}
                     </button>
@@ -416,13 +438,21 @@ function App() {
         </header>
         <main className="workspace">
         <h1>{current.label}</h1>
-        <p>{current.summary}</p>
-        {section === 'inicio' && health && (
-          <ul>
-            <li>Servicio: {health.service}</li>
-            <li>API: {health.status}</li>
-            <li>Base de datos: {health.database}</li>
-          </ul>
+        {section !== 'inicio' && <p>{current.summary}</p>}
+        {section === 'inicio' && (
+          <>
+            <p className="accesos-titulo"><span aria-hidden="true">★</span> Accesos directos</p>
+            <div className="accesos-inicio">
+            {accesosUsados(
+              profile.username,
+              profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO'),
+            ).map((item) => (
+              <button key={item.id} type="button" onClick={() => abrirSeccion(item.id)}>
+                {item.label}
+              </button>
+            ))}
+            </div>
+          </>
         )}
         {section === 'ligas' && <LeagueScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}
         {section === 'ediciones' && <EditionScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}

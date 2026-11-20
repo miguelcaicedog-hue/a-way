@@ -343,6 +343,36 @@ button:disabled {
   margin: 0 0 0.5rem;
 }
 
+.accesos-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0.7rem;
+  color: #163a5f;
+  font-weight: 700;
+}
+
+.accesos-titulo span {
+  color: #e2b007;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.accesos-inicio {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0;
+}
+
+.accesos-inicio button {
+  margin: 0;
+  padding: 0.75rem;
+  background: #163a5f;
+  color: white;
+  text-align: center;
+}
+
 ul {
   padding-left: 1.2rem;
 }
