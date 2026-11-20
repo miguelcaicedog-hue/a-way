@@ -140,6 +140,32 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
     }
   }
 
+  async function descargarPagoArbitros() {
+    if (!editionId || !fecha) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, fecha })
+      if (categoryId) params.set('categoryId', categoryId)
+      const response = await fetch(`/api/reportes/pago-arbitros?${params.toString()}`, { credentials: 'include' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
+        throw new Error(body.error ?? 'No se pudo descargar el PDF')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `PAGO-ARBITROS-${fecha}.pdf`
+      enlace.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo descargar el PDF')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   const puedeCualquierFecha = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
   const esAsistente = profile.memberships.some((item) => item.role === 'ASISTENTE')
 
@@ -317,6 +343,12 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
               <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
             </svg>
             COBROS
+          </button>
+          <button type="button" className="con-icono descarga-arbitro" disabled={!fecha || ocupado} onClick={() => void descargarPagoArbitros()}>
+            <svg className="icono-arbitro" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10h6l2-2h3a4 4 0 1 1 0 8h-1.2l-1.3 2.2a2 2 0 0 1-3.4 0L8 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2zm13 1.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6z" />
+            </svg>
+            PAGO ÁRBITROS
           </button>
         </span>
       </div>

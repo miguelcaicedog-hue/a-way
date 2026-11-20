@@ -18,12 +18,14 @@ public class ReporteController {
     private final ReporteTarjetasService tarjetas;
     private final ReporteJugadoresService jugadores;
     private final ReporteCobrosService reporteCobros;
+    private final ReportePagoArbitrosService pagoArbitros;
 
     public ReporteController(ReporteTarjetasService tarjetas, ReporteJugadoresService jugadores,
-                             ReporteCobrosService reporteCobros) {
+                             ReporteCobrosService reporteCobros, ReportePagoArbitrosService pagoArbitros) {
         this.tarjetas = tarjetas;
         this.jugadores = jugadores;
         this.reporteCobros = reporteCobros;
+        this.pagoArbitros = pagoArbitros;
     }
 
     @GetMapping(value = "/tarjetas-suspensiones", produces = MediaType.APPLICATION_PDF_VALUE)
@@ -43,6 +45,16 @@ public class ReporteController {
         byte[] pdf = reporteCobros.cobros(editionId, categoryId, LocalDate.parse(fecha));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cobros.pdf\"")
+                .body(pdf);
+    }
+
+    @GetMapping(value = "/pago-arbitros", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> pagoArbitros(@RequestParam UUID editionId,
+                                               @RequestParam(required = false) UUID categoryId,
+                                               @RequestParam String fecha) {
+        byte[] pdf = pagoArbitros.pago(editionId, categoryId, LocalDate.parse(fecha));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pago-arbitros.pdf\"")
                 .body(pdf);
     }
 

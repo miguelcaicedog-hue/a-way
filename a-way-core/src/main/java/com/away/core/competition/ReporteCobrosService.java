@@ -271,18 +271,19 @@ public class ReporteCobrosService {
     private String tablaArbitraje(List<Fila> filas) {
         StringBuilder cuerpo = new StringBuilder();
         BigDecimal total = cero();
+        int numero = 1;
         for (Fila fila : filas) {
             cuerpo.append("<tr>");
-            identidad(cuerpo, fila);
+            identidad(cuerpo, fila, numero++);
             celda(cuerpo, fila.arbitraje);
             cuerpo.append("</tr>");
             total = total.add(fila.arbitraje);
         }
-        cuerpo.append("<tr class=\"total\"><td colspan=\"4\">Total</td>");
+        cuerpo.append("<tr class=\"total\"><td colspan=\"5\">Total</td>");
         celda(cuerpo, total);
         cuerpo.append("</tr>");
         return tabla("COBRO DE ARBITRAJE",
-                "<th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th><th class=\"monto\">Arbitraje</th>",
+                "<th class=\"numero\">N°</th><th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th><th class=\"monto\">Arbitraje</th>",
                 cuerpo.toString(), filas.size());
     }
 
@@ -290,10 +291,11 @@ public class ReporteCobrosService {
         StringBuilder cuerpo = new StringBuilder();
         BigDecimal amarillas = cero();
         BigDecimal rojas = cero();
+        int numero = 1;
         for (Fila fila : filas) {
             BigDecimal total = fila.amarillas.add(fila.rojas);
             cuerpo.append("<tr>");
-            identidad(cuerpo, fila);
+            identidad(cuerpo, fila, numero++);
             celda(cuerpo, fila.amarillas);
             celda(cuerpo, fila.rojas);
             celda(cuerpo, total);
@@ -301,13 +303,13 @@ public class ReporteCobrosService {
             amarillas = amarillas.add(fila.amarillas);
             rojas = rojas.add(fila.rojas);
         }
-        cuerpo.append("<tr class=\"total\"><td colspan=\"4\">Total</td>");
+        cuerpo.append("<tr class=\"total\"><td colspan=\"5\">Total</td>");
         celda(cuerpo, amarillas);
         celda(cuerpo, rojas);
         celda(cuerpo, amarillas.add(rojas));
         cuerpo.append("</tr>");
         return tabla("COBRO DE TARJETAS",
-                "<th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th>"
+                "<th class=\"numero\">N°</th><th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th>"
                         + "<th class=\"monto\">Amarillas</th><th class=\"monto\">Rojas</th><th class=\"monto\">Total</th>",
                 cuerpo.toString(), filas.size());
     }
@@ -315,18 +317,19 @@ public class ReporteCobrosService {
     private String tablaSuspensiones(List<Fila> filas) {
         StringBuilder cuerpo = new StringBuilder();
         BigDecimal total = cero();
+        int numero = 1;
         for (Fila fila : filas) {
             cuerpo.append("<tr>");
-            identidad(cuerpo, fila);
+            identidad(cuerpo, fila, numero++);
             celda(cuerpo, fila.suspensiones);
             cuerpo.append("</tr>");
             total = total.add(fila.suspensiones);
         }
-        cuerpo.append("<tr class=\"total\"><td colspan=\"4\">Total</td>");
+        cuerpo.append("<tr class=\"total\"><td colspan=\"5\">Total</td>");
         celda(cuerpo, total);
         cuerpo.append("</tr>");
         return tabla("COBRO DE SUSPENSIONES",
-                "<th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th><th class=\"monto\">Suspensiones</th>",
+                "<th class=\"numero\">N°</th><th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th><th class=\"monto\">Suspensiones</th>",
                 cuerpo.toString(), filas.size());
     }
 
@@ -337,17 +340,19 @@ public class ReporteCobrosService {
         BigDecimal suspensiones = cero();
         BigDecimal efectivo = cero();
         BigDecimal transferencia = cero();
+        int numero = 1;
         for (Fila fila : filas) {
             BigDecimal tarjetasFila = fila.amarillas.add(fila.rojas);
             BigDecimal total = fila.arbitraje.add(tarjetasFila).add(fila.suspensiones);
             cuerpo.append("<tr>");
-            identidad(cuerpo, fila);
+            identidad(cuerpo, fila, numero++);
             celda(cuerpo, fila.arbitraje);
             celda(cuerpo, tarjetasFila);
             celda(cuerpo, fila.suspensiones);
             celda(cuerpo, total);
-            celda(cuerpo, fila.efectivo);
-            celda(cuerpo, fila.transferencia);
+            celdaCobrado(cuerpo, fila.efectivo);
+            celdaCobrado(cuerpo, fila.transferencia);
+            celdaCobrado(cuerpo, fila.efectivo.add(fila.transferencia));
             cuerpo.append("</tr>");
             arbitraje = arbitraje.add(fila.arbitraje);
             tarjetas = tarjetas.add(tarjetasFila);
@@ -355,18 +360,20 @@ public class ReporteCobrosService {
             efectivo = efectivo.add(fila.efectivo);
             transferencia = transferencia.add(fila.transferencia);
         }
-        cuerpo.append("<tr class=\"total\"><td colspan=\"4\">Total</td>");
+        cuerpo.append("<tr class=\"total\"><td colspan=\"5\">Total</td>");
         celda(cuerpo, arbitraje);
         celda(cuerpo, tarjetas);
         celda(cuerpo, suspensiones);
         celda(cuerpo, arbitraje.add(tarjetas).add(suspensiones));
-        celda(cuerpo, efectivo);
-        celda(cuerpo, transferencia);
+        celdaCobrado(cuerpo, efectivo);
+        celdaCobrado(cuerpo, transferencia);
+        celdaCobrado(cuerpo, efectivo.add(transferencia));
         cuerpo.append("</tr>");
         return tabla("RESUMEN",
-                "<th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th>"
+                "<th class=\"numero\">N°</th><th>Hora</th><th>Categoría</th><th>Jornada</th><th>Partido</th>"
                         + "<th class=\"monto\">Arbitraje</th><th class=\"monto\">Tarjetas</th><th class=\"monto\">Suspensiones</th>"
-                        + "<th class=\"monto\">Total</th><th class=\"monto\">Cobro real</th><th class=\"monto\">Transferencia</th>",
+                        + "<th class=\"monto\">Total</th><th class=\"monto cobrado\">Cobro real</th>"
+                        + "<th class=\"monto cobrado\">Transferencia</th><th class=\"monto cobrado\">Total</th>",
                 cuerpo.toString(), filas.size());
     }
 
@@ -376,7 +383,8 @@ public class ReporteCobrosService {
                 + "</tr></thead><tbody>" + cuerpo + "</tbody></table></div>";
     }
 
-    private void identidad(StringBuilder html, Fila fila) {
+    private void identidad(StringBuilder html, Fila fila, int numero) {
+        html.append("<td class=\"numero\">").append(numero).append("</td>");
         html.append("<td>").append(esc(fila.hora == null ? "Sin hora" : fila.hora)).append("</td>");
         html.append("<td>").append(esc(fila.categoria)).append("</td>");
         html.append("<td>").append(esc(fila.jornada)).append("</td>");
@@ -385,6 +393,10 @@ public class ReporteCobrosService {
 
     private void celda(StringBuilder html, BigDecimal valor) {
         html.append("<td class=\"monto\">").append(dinero(valor)).append("</td>");
+    }
+
+    private void celdaCobrado(StringBuilder html, BigDecimal valor) {
+        html.append("<td class=\"monto cobrado\">").append(dinero(valor)).append("</td>");
     }
 
     private Fila fila(String hora, String categoria, String jornada, String partido, Montos montos) {
@@ -483,7 +495,10 @@ public class ReporteCobrosService {
                 + "th, td { border: 1px solid #163a5f; padding: 3px 4px; vertical-align: top; }"
                 + "th { background: #163a5f; color: white; }"
                 + "td.monto, th.monto { text-align: right; white-space: nowrap; }"
+                + "td.numero, th.numero { text-align: center; width: 8mm; }"
                 + "tr.total td { font-weight: 700; background: #163a5f; color: white; }"
+                + "th.cobrado, tr.total td.cobrado { background: #1f8a4c; color: white; }"
+                + "td.cobrado { color: #1f8a4c; font-weight: 700; }"
                 + "</style></head><body><div class=\"cabeza\">" + logo
                 + "<h1>" + esc(liga.getName()) + "</h1>"
                 + "<p class=\"sub\">COBROS</p>"
