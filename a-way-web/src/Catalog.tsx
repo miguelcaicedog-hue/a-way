@@ -901,6 +901,7 @@ type Player = {
   numeroCamisa: number
   rotationDegrees: number
   estado: string
+  habilitado: boolean
   hasPhoto: boolean
 }
 
@@ -1135,6 +1136,22 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
     }
   }
 
+  async function cambiarHabilitado(row: Player, habilitado: boolean) {
+    const anterior = row.habilitado
+    setRows((current) => current.map((item) => item.id === row.id ? { ...item, habilitado } : item))
+    setError(null)
+    try {
+      const actualizado = await api<Player>(`/api/players/${row.id}/habilitado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ habilitado }),
+      })
+      setRows((current) => current.map((item) => item.id === row.id ? { ...item, habilitado: actualizado.habilitado } : item))
+    } catch (reason) {
+      setRows((current) => current.map((item) => item.id === row.id ? { ...item, habilitado: anterior } : item))
+      setError(reason instanceof Error ? reason.message : 'No se pudo guardar')
+    }
+  }
+
   async function remove(row: Player) {
     if (!entry) {
       return
@@ -1243,6 +1260,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
           <thead>
             <tr>
               <th className="numero">Nº</th>
+              <th>Habilitado</th>
               <th>Foto</th>
               <th>Cédula</th>
               <th>Nº de camisa</th>
@@ -1256,6 +1274,15 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
             {visibles.map((row, index) => (
               <tr key={row.id}>
                 <td className="numero">{index + 1}</td>
+                <td className="habilitado">
+                  <input
+                    type="checkbox"
+                    checked={row.habilitado}
+                    disabled={!writable}
+                    aria-label={`Habilitado ${row.name}`}
+                    onChange={(event) => { void cambiarHabilitado(row, event.target.checked) }}
+                  />
+                </td>
                 <td>
                   {row.hasPhoto && (
                     <img
@@ -1279,7 +1306,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 )}
               </tr>
             ))}
-            {visibles.length === 0 && <tr><td colSpan={writable ? 8 : 7}>No hay jugadores.</td></tr>}
+            {visibles.length === 0 && <tr><td colSpan={writable ? 9 : 8}>No hay jugadores.</td></tr>}
           </tbody>
         </table>
       )}

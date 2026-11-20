@@ -43,6 +43,9 @@ public class Player {
     @Column(nullable = false)
     private String estado;
 
+    @Column(nullable = false)
+    private boolean habilitado = false;
+
     public UUID getId() {
         return id;
     }
@@ -121,5 +124,13 @@ public class Player {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public boolean isHabilitado() {
+        return habilitado;
+    }
+
+    public void setHabilitado(boolean habilitado) {
+        this.habilitado = habilitado;
     }
 }

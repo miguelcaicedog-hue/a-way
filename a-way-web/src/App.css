@@ -457,6 +457,16 @@ button.ghost {
   width: auto;
 }
 
+td.habilitado {
+  text-align: center;
+}
+
+td.habilitado input {
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
 .player-photo {
   width: 42px;
   height: 42px;

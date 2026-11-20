@@ -714,6 +714,19 @@ class PlayerRequest {
     }
 }
 
+class HabilitadoRequest {
+    @NotNull
+    private Boolean habilitado;
+
+    public Boolean getHabilitado() {
+        return habilitado;
+    }
+
+    public void setHabilitado(Boolean habilitado) {
+        this.habilitado = habilitado;
+    }
+}
+
 class PlayerView {
     private final UUID id;
     private final UUID teamEntryId;
@@ -726,11 +739,12 @@ class PlayerView {
     private final int numeroCamisa;
     private final int rotationDegrees;
     private final String estado;
+    private final boolean habilitado;
     private final boolean hasPhoto;
 
     PlayerView(UUID id, UUID teamEntryId, UUID teamId, String teamName, UUID categoryId,
                String name, String alias, String cedula, int numeroCamisa, int rotationDegrees, String estado,
-               boolean hasPhoto) {
+               boolean habilitado, boolean hasPhoto) {
         this.id = id;
         this.teamEntryId = teamEntryId;
         this.teamId = teamId;
@@ -742,6 +756,7 @@ class PlayerView {
         this.numeroCamisa = numeroCamisa;
         this.rotationDegrees = rotationDegrees;
         this.estado = estado;
+        this.habilitado = habilitado;
         this.hasPhoto = hasPhoto;
     }
 
@@ -787,6 +802,10 @@ class PlayerView {
 
     public String getEstado() {
         return estado;
+    }
+
+    public boolean isHabilitado() {
+        return habilitado;
     }
 
     public boolean isHasPhoto() {

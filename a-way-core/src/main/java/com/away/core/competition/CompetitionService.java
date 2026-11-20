@@ -390,6 +390,13 @@ public class CompetitionService {
         return playerView(player);
     }
 
+    public PlayerView updateHabilitado(UUID id, boolean habilitado) {
+        Player player = player(id);
+        assertWrite(player.getTeamEntry().getTeam().getLeague().getId());
+        player.setHabilitado(habilitado);
+        return playerView(player);
+    }
+
     public void deletePlayer(UUID id) {
         Player player = player(id);
         assertWrite(player.getTeamEntry().getTeam().getLeague().getId());
@@ -798,6 +805,6 @@ public class CompetitionService {
         return new PlayerView(player.getId(), entry.getId(), entry.getTeam().getId(), entry.getTeam().getName(),
                 entry.getCategory().getId(), player.getName(), player.getAlias(), player.getCedula(),
                 player.getNumeroCamisa(),
-                player.getRotationDegrees(), player.getEstado(), player.getPhoto() != null);
+                player.getRotationDegrees(), player.getEstado(), player.isHabilitado(), player.getPhoto() != null);
     }
 }

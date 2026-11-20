@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -183,6 +184,11 @@ public class CompetitionController {
     @PutMapping("/players/{id}")
     public PlayerView updatePlayer(@PathVariable UUID id, @Valid @RequestBody PlayerRequest request) {
         return competition.updatePlayer(id, request);
+    }
+
+    @PatchMapping("/players/{id}/habilitado")
+    public PlayerView updateHabilitado(@PathVariable UUID id, @Valid @RequestBody HabilitadoRequest request) {
+        return competition.updateHabilitado(id, request.getHabilitado());
     }
 
     @DeleteMapping("/players/{id}")
