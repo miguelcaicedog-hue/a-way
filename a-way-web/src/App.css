@@ -192,13 +192,14 @@ button:disabled {
 }
 
 .brand {
-  padding: 0.55rem 0.7rem 0.35rem;
+  padding: 20px;
 }
 
 .brand img {
   display: block;
-  width: 100%;
+  width: 152px;
   height: auto;
+  margin: 0;
   mix-blend-mode: screen;
 }
 
@@ -640,6 +641,10 @@ button.foto-jugador {
   background: #d08984;
 }
 
+.reloj-descargas button.descarga-cobro {
+  background: #1f8a4c;
+}
+
 button.con-icono {
   display: inline-flex;
   align-items: center;
@@ -655,6 +660,11 @@ button.con-icono svg {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+button.con-icono svg.icono-cobro {
+  fill: currentColor;
+  stroke: none;
 }
 
 .jornada-proxima {

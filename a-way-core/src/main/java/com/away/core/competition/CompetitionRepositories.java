@@ -236,6 +236,9 @@ interface PartidoCobroDetalleRepository extends JpaRepository<PartidoCobroDetall
 
     @Query("select d from PartidoCobroDetalle d where d.estado = 'ACTIVO' and d.tipo in ('TARJETA', 'SANCION')")
     List<PartidoCobroDetalle> cargosActivos();
+
+    @Query("select d from PartidoCobroDetalle d where d.estado = 'ACTIVO' and d.idPartido in :partidos")
+    List<PartidoCobroDetalle> activosDePartidos(@Param("partidos") Collection<UUID> partidos);
 }
 
 interface CriterioDesempateGoleadorRepository extends JpaRepository<CriterioDesempateGoleador, UUID> {

@@ -114,6 +114,32 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
     }
   }
 
+  async function descargarCobros() {
+    if (!editionId || !fecha) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, fecha })
+      if (categoryId) params.set('categoryId', categoryId)
+      const response = await fetch(`/api/reportes/cobros?${params.toString()}`, { credentials: 'include' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
+        throw new Error(body.error ?? 'No se pudo descargar el PDF')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `COBROS-${fecha}.pdf`
+      enlace.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo descargar el PDF')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   const puedeCualquierFecha = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
   const esAsistente = profile.memberships.some((item) => item.role === 'ASISTENTE')
 
@@ -284,6 +310,13 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
           <button type="button" className="con-icono descarga-pdf" disabled={!fecha || ocupado} onClick={() => void descargarAmonestados()}>
             <IconoPdf />
             AMONESTADOS Y SUSPENDIDOS
+          </button>
+          <button type="button" className="con-icono descarga-cobro" disabled={!fecha || ocupado} onClick={() => void descargarCobros()}>
+            <svg className="icono-cobro" viewBox="0 0 24 24" aria-hidden="true">
+              <path fillRule="evenodd" d="M5 4.6h14a2.2 2.2 0 0 1 2.2 2.2v10.4A2.2 2.2 0 0 1 19 19.4H5a2.2 2.2 0 0 1-2.2-2.2V6.8A2.2 2.2 0 0 1 5 4.6zm1.35 1.55v10.1h11.3V6.15H6.35z" />
+              <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
+            </svg>
+            COBROS
           </button>
         </span>
       </div>
