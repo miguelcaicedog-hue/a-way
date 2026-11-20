@@ -56,6 +56,8 @@ type Jugador = {
   hasFoto: boolean
   rotacion: number
   suspendido: boolean
+  habilitado: boolean
+  motivoSuspension: string | null
 }
 
 function FotoArbitro({ id, hasFoto }: { id: string; hasFoto: boolean }) {
@@ -65,18 +67,38 @@ function FotoArbitro({ id, hasFoto }: { id: string; hasFoto: boolean }) {
   return <span className="arbitro-foto vacio" aria-label="Sin foto" />
 }
 
+function bordeFoto(jugador: Jugador) {
+  if (jugador.suspendido) return 'borde-suspendido'
+  if (!jugador.habilitado) return 'borde-inhabilitado'
+  return 'borde-habilitado'
+}
+
+function jugadorBloqueado(jugador: Jugador) {
+  return jugador.suspendido || !jugador.habilitado
+}
+
+function EstadoJugador({ jugador }: { jugador: Jugador }) {
+  if (jugador.suspendido) {
+    const motivo = jugador.motivoSuspension ? ` · ${jugador.motivoSuspension}` : ''
+    return <span className="estado-jugador">Suspendido{motivo}</span>
+  }
+  if (!jugador.habilitado) return <span className="estado-jugador">No habilitado</span>
+  return null
+}
+
 function FotoJugador({ jugador }: { jugador: Jugador }) {
+  const borde = bordeFoto(jugador)
   if (jugador.hasFoto) {
     return (
       <img
-        className="player-photo"
+        className={`player-photo ${borde}`}
         alt=""
         src={`/api/players/${jugador.id}/photo`}
         style={{ transform: `rotate(${jugador.rotacion}deg)` }}
       />
     )
   }
-  return <span className="player-photo vacio" aria-label="Sin foto" />
+  return <span className={`player-photo vacio ${borde}`} aria-label="Sin foto" />
 }
 
 function firmaArbitros(lista: Asignado[]) {
@@ -422,19 +444,18 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
               </label>
             </form>
             <p className="balance-goles">{textoBalance(detalle, equipoId, idsPlantilla, goles)}</p>
-            <ul className="lista-detalle">
+            <ul className="lista-detalle goleadores">
               {jugadores.map((jugador) => (
                 <li key={jugador.id}>
                   <FotoJugador jugador={jugador} />
                   <span>{jugador.numero}</span>
                   <span>{jugador.alias}</span>
-                  {jugador.suspendido && <span>Suspendido</span>}
                   <input
                     className="marcador"
                     inputMode="numeric"
                     aria-label="Goles"
                     value={goles[jugador.id] ?? ''}
-                    disabled={!detalle?.editable || jugador.suspendido}
+                    disabled={!detalle?.editable || jugadorBloqueado(jugador)}
                     onChange={(event) => {
                       const valor = event.target.value
                       if (valor !== '' && !/^\d+$/.test(valor)) return
@@ -442,6 +463,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                       setGoles({ ...goles, [jugador.id]: valor })
                     }}
                   />
+                  <EstadoJugador jugador={jugador} />
                 </li>
               ))}
               {jugadores.length === 0 && <li>No hay jugadores.</li>}
@@ -491,13 +513,12 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                     <FotoJugador jugador={jugador} />
                     <span>{jugador.numero}</span>
                     <span>{jugador.alias}</span>
-                    {jugador.suspendido && <span>Suspendido</span>}
                     <input
                       className="marcador"
                       inputMode="numeric"
                       aria-label="Tarjeta amarilla"
                       value={tarjeta.amarilla}
-                      disabled={!detalle?.editable || jugador.suspendido}
+                      disabled={!detalle?.editable || jugadorBloqueado(jugador)}
                       onChange={(event) => {
                         const valor = event.target.value
                         if (valor !== '' && valor !== '1' && valor !== '2') return
@@ -509,7 +530,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                       inputMode="numeric"
                       aria-label="Tarjeta roja"
                       value={tarjeta.roja}
-                      disabled={!detalle?.editable || jugador.suspendido}
+                      disabled={!detalle?.editable || jugadorBloqueado(jugador)}
                       onChange={(event) => {
                         const valor = event.target.value
                         if (valor !== '' && valor !== '1') return
@@ -520,9 +541,10 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                       aria-label="Observación"
                       maxLength={300}
                       value={tarjeta.observacion}
-                      disabled={!detalle?.editable || jugador.suspendido}
+                      disabled={!detalle?.editable || jugadorBloqueado(jugador)}
                       onChange={(event) => cambiar({ observacion: event.target.value })}
                     />
+                    <EstadoJugador jugador={jugador} />
                   </li>
                 )
               })}
@@ -561,9 +583,9 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                 <FotoJugador jugador={jugador} />
                 <span className="numero">{jugador.numero}</span>
                 <span>{jugador.alias}</span>
-                {jugador.suspendido && <span>Suspendido</span>}
+                <EstadoJugador jugador={jugador} />
                 <div className="sancion-jugador">
-                  {detalle?.editable && !jugador.suspendido && (
+                  {detalle?.editable && !jugadorBloqueado(jugador) && (
                     <div className="agregar-sancion">
                       <select
                         aria-label={`Sanción de ${jugador.alias}`}
@@ -596,7 +618,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                     {sancion.sancionIds.map((id) => (
                       <li key={id}>
                         <span>{nombreDe(id)}</span>
-                        {detalle?.editable && !jugador.suspendido && (
+                        {detalle?.editable && !jugadorBloqueado(jugador) && (
                           <button
                             type="button"
                             className="secundario"
@@ -619,7 +641,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                     placeholder="Observación"
                     maxLength={300}
                     value={sancion.observacion}
-                    disabled={!detalle?.editable || jugador.suspendido}
+                    disabled={!detalle?.editable || jugadorBloqueado(jugador)}
                     onChange={(event) => {
                       const valor = event.target.value
                       setSanciones((anterior) => {

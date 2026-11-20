@@ -37,11 +37,13 @@ public class CierreJornadaService {
     private final ReglaSuspensionRepository reglas;
     private final LeagueSettingsRepository ajustes;
     private final AppUserRepository users;
+    private final PlayerRepository players;
 
     public CierreJornadaService(CategoryRepository categories, JornadaRepository jornadas, PartidoRepository partidos,
                                 TarjetaJugadorRepository tarjetas, SuspensionJugadorRepository suspensiones,
                                 SuspensionExclusionRepository exclusiones, ReglaSuspensionRepository reglas,
-                                LeagueSettingsRepository ajustes, AppUserRepository users) {
+                                LeagueSettingsRepository ajustes, AppUserRepository users,
+                                PlayerRepository players) {
         this.categories = categories;
         this.jornadas = jornadas;
         this.partidos = partidos;
@@ -51,6 +53,7 @@ public class CierreJornadaService {
         this.reglas = reglas;
         this.ajustes = ajustes;
         this.users = users;
+        this.players = players;
     }
 
     @Transactional(readOnly = true)
@@ -84,11 +87,16 @@ public class CierreJornadaService {
 
     @Transactional(readOnly = true)
     public Set<UUID> suspendidos(UUID categoryId, UUID jornadaId, Collection<UUID> jugadores) {
+        return motivosSuspension(categoryId, jornadaId, jugadores).keySet();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<UUID, String> motivosSuspension(UUID categoryId, UUID jornadaId, Collection<UUID> jugadores) {
         Set<UUID> pedidos = new HashSet<>();
         if (jugadores != null) {
             pedidos.addAll(jugadores);
         }
-        Set<UUID> resultado = new HashSet<>();
+        Map<UUID, String> resultado = new HashMap<>();
         if (pedidos.isEmpty() || jornadaId == null) {
             return resultado;
         }
@@ -102,21 +110,57 @@ public class CierreJornadaService {
             if (!pedidos.contains(suspension.getIdJugador())) {
                 continue;
             }
-            if ("FALTA_GRAVE".equals(suspension.getMotivo())) {
-                resultado.add(suspension.getIdJugador());
+            boolean vigente = "FALTA_GRAVE".equals(suspension.getMotivo());
+            if (!vigente) {
+                Integer inicio = indice.get(suspension.getIdJornadaInicio());
+                vigente = inicio != null && aqui >= inicio && aqui < inicio + suspension.getJornadas();
+            }
+            if (!vigente) {
                 continue;
             }
-            Integer inicio = indice.get(suspension.getIdJornadaInicio());
-            if (inicio != null && aqui >= inicio && aqui < inicio + suspension.getJornadas()) {
-                resultado.add(suspension.getIdJugador());
+            String texto = textoMotivo(suspension);
+            String previo = resultado.get(suspension.getIdJugador());
+            if (previo == null || previo.isEmpty()) {
+                resultado.put(suspension.getIdJugador(), texto);
+            } else if (!previo.contains(texto)) {
+                resultado.put(suspension.getIdJugador(), previo + " · " + texto);
             }
         }
         return resultado;
     }
 
+    private String textoMotivo(SuspensionJugador suspension) {
+        String motivo = suspension.getMotivo();
+        if ("ROJA_DIRECTA".equals(motivo)) {
+            return "Tarjeta roja";
+        }
+        if ("AMARILLAS".equals(motivo)) {
+            return "Acumulación de amarillas";
+        }
+        if ("ROJAS_ACUMULADAS".equals(motivo)) {
+            return "Acumulación de rojas";
+        }
+        if ("FALTA_GRAVE".equals(motivo)) {
+            return "Eliminación del campeonato";
+        }
+        if ("SANCION".equals(motivo)) {
+            String observacion = suspension.getObservacion();
+            if (observacion == null || observacion.trim().isEmpty()) {
+                return "Sanción";
+            }
+            return observacion.trim();
+        }
+        return motivo == null ? "" : motivo;
+    }
+
     public void assertPuedeRegistrar(UUID categoryId, UUID jornadaId, UUID jugadorId) {
         if (suspendidos(categoryId, jornadaId, List.of(jugadorId)).contains(jugadorId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador está suspendido en esta jornada");
+        }
+        Player jugador = players.findById(jugadorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El jugador no existe"));
+        if (!jugador.isHabilitado()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador no está habilitado");
         }
     }
 

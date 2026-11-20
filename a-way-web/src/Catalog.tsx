@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent } from 'react'
 import { api } from './api'
 import { IconoPdf } from './DescargarImagen'
 import { aDia, FechaCampo } from './Fecha'
@@ -929,6 +929,9 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  const [fotoAmpliada, setFotoAmpliada] = useState<{ id: string; rotation: number; top: number; left: number } | null>(null)
+  const fotoFijaId = useRef<string | null>(null)
+  const fotoCerradaEn = useRef(0)
   const writable = canWrite(profile)
   const category = categories.find((item) => item.id === categoryId)
 
@@ -1136,6 +1139,20 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
     }
   }
 
+  function mostrarFoto(row: Player, event: MouseEvent<HTMLButtonElement>) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const size = 220
+    let left = rect.right + 10
+    if (left + size > window.innerWidth - 12) {
+      left = Math.max(12, rect.left - size - 10)
+    }
+    let top = rect.top - 70
+    if (top + size > window.innerHeight - 12) {
+      top = Math.max(12, window.innerHeight - size - 12)
+    }
+    setFotoAmpliada({ id: row.id, rotation: row.rotationDegrees, top, left })
+  }
+
   async function cambiarHabilitado(row: Player, habilitado: boolean) {
     const anterior = row.habilitado
     setRows((current) => current.map((item) => item.id === row.id ? { ...item, habilitado } : item))
@@ -1285,12 +1302,37 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 </td>
                 <td>
                   {row.hasPhoto && (
-                    <img
-                      className="player-photo"
-                      alt=""
-                      src={`/api/players/${row.id}/photo?v=${photoStamp}-${row.rotationDegrees}`}
-                      style={{ transform: `rotate(${row.rotationDegrees}deg)` }}
-                    />
+                    <button
+                      type="button"
+                      className="foto-jugador"
+                      aria-label={`Ampliar foto de ${row.name}`}
+                      onMouseEnter={(event) => {
+                        if (fotoFijaId.current === row.id || Date.now() - fotoCerradaEn.current < 400) return
+                        fotoFijaId.current = null
+                        mostrarFoto(row, event)
+                      }}
+                      onMouseLeave={() => {
+                        if (fotoFijaId.current) return
+                        setFotoAmpliada(null)
+                      }}
+                      onClick={(event) => {
+                        if (fotoFijaId.current === row.id) {
+                          fotoFijaId.current = null
+                          fotoCerradaEn.current = Date.now()
+                          setFotoAmpliada(null)
+                          return
+                        }
+                        fotoFijaId.current = row.id
+                        mostrarFoto(row, event)
+                      }}
+                    >
+                      <img
+                        className="player-photo"
+                        alt=""
+                        src={`/api/players/${row.id}/photo?v=${photoStamp}-${row.rotationDegrees}`}
+                        style={{ transform: `rotate(${row.rotationDegrees}deg)` }}
+                      />
+                    </button>
                   )}
                 </td>
                 <td>{row.cedula}</td>
@@ -1309,6 +1351,21 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
             {visibles.length === 0 && <tr><td colSpan={writable ? 9 : 8}>No hay jugadores.</td></tr>}
           </tbody>
         </table>
+      )}
+      {fotoAmpliada && (
+        <img
+          className="player-photo ampliada"
+          alt=""
+          src={`/api/players/${fotoAmpliada.id}/photo?v=${photoStamp}-${fotoAmpliada.rotation}`}
+          style={{ transform: `rotate(${fotoAmpliada.rotation}deg)`, top: fotoAmpliada.top, left: fotoAmpliada.left }}
+          role="button"
+          aria-label="Cerrar foto"
+          onClick={() => {
+            fotoFijaId.current = null
+            fotoCerradaEn.current = Date.now()
+            setFotoAmpliada(null)
+          }}
+        />
       )}
       {writable && entry && (
         <form onSubmit={onSubmit}>

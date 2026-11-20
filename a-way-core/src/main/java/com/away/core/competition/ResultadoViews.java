@@ -629,14 +629,18 @@ public class ResultadoViews {
         private final boolean hasFoto;
         private final int rotacion;
         private final boolean suspendido;
+        private final boolean habilitado;
+        private final String motivoSuspension;
 
-        public JugadorPartidoView(UUID id, int numero, String alias, boolean hasFoto, int rotacion, boolean suspendido) {
+        public JugadorPartidoView(UUID id, int numero, String alias, boolean hasFoto, int rotacion, boolean suspendido, boolean habilitado, String motivoSuspension) {
             this.id = id;
             this.numero = numero;
             this.alias = alias;
             this.hasFoto = hasFoto;
             this.rotacion = rotacion;
             this.suspendido = suspendido;
+            this.habilitado = habilitado;
+            this.motivoSuspension = motivoSuspension;
         }
 
         public UUID getId() {
@@ -661,6 +665,14 @@ public class ResultadoViews {
 
         public boolean isSuspendido() {
             return suspendido;
+        }
+
+        public boolean isHabilitado() {
+            return habilitado;
+        }
+
+        public String getMotivoSuspension() {
+            return motivoSuspension;
         }
     }
 }

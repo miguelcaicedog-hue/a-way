@@ -457,18 +457,21 @@ public class ResultadoService {
                     alias,
                     jugador.getPhoto() != null,
                     jugador.getRotationDegrees(),
-                    false));
+                    false,
+                    jugador.isHabilitado(),
+                    null));
         }
         filas.sort(Comparator.comparingInt(ResultadoViews.JugadorPartidoView::getNumero).thenComparing(ResultadoViews.JugadorPartidoView::getAlias));
         Set<UUID> ids = new HashSet<>();
         for (ResultadoViews.JugadorPartidoView fila : filas) {
             ids.add(fila.getId());
         }
-        Set<UUID> suspendidos = cierres.suspendidos(partido.getIdCategoria(), partido.getIdJornada(), ids);
+        Map<UUID, String> motivos = cierres.motivosSuspension(partido.getIdCategoria(), partido.getIdJornada(), ids);
         List<ResultadoViews.JugadorPartidoView> marcados = new ArrayList<>();
         for (ResultadoViews.JugadorPartidoView fila : filas) {
+            String motivo = motivos.get(fila.getId());
             marcados.add(new ResultadoViews.JugadorPartidoView(
-                    fila.getId(), fila.getNumero(), fila.getAlias(), fila.isHasFoto(), fila.getRotacion(), suspendidos.contains(fila.getId())));
+                    fila.getId(), fila.getNumero(), fila.getAlias(), fila.isHasFoto(), fila.getRotacion(), motivo != null, fila.isHabilitado(), motivo));
         }
         return marcados;
     }
