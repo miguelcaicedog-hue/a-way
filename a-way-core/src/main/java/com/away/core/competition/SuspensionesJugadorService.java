@@ -136,7 +136,7 @@ public class SuspensionesJugadorService {
         if (!activa(regla, motivo)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esa suspensión no está activa");
         }
-        int cantidad = cantidad(regla, motivo);
+        int cantidad = "SANCION".equals(motivo) ? jornadasPedidas(request.getJornadas()) : cantidad(regla, motivo);
         if (cantidad <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esa suspensión no tiene jornadas configuradas");
         }
@@ -229,22 +229,20 @@ public class SuspensionesJugadorService {
     private List<SuspensionesJugadorViews.OpcionView> opciones(Category categoria) {
         Regla regla = regla(categoria);
         List<SuspensionesJugadorViews.OpcionView> opciones = new ArrayList<>();
-        if (regla.rojaActiva && regla.roja > 0) {
-            opciones.add(new SuspensionesJugadorViews.OpcionView("ROJA_DIRECTA", "Tarjeta roja", regla.roja, false));
-        }
-        if (regla.amarillasActiva && regla.amarillas > 0) {
-            opciones.add(new SuspensionesJugadorViews.OpcionView("AMARILLAS", "Acumulación de amarillas", regla.amarillas, false));
-        }
-        if (regla.rojasActiva && regla.rojas > 0) {
-            opciones.add(new SuspensionesJugadorViews.OpcionView("ROJAS_ACUMULADAS", "Acumulación de rojas", regla.rojas, false));
-        }
-        if (regla.mediaActiva && regla.media > 0) {
-            opciones.add(new SuspensionesJugadorViews.OpcionView("FALTA_MEDIA", "Falta media", regla.media, true));
+        if (regla.sancionActiva) {
+            opciones.add(new SuspensionesJugadorViews.OpcionView("SANCION", "Sanción", regla.sancion, true));
         }
         if (regla.faltaGrave) {
             opciones.add(new SuspensionesJugadorViews.OpcionView("FALTA_GRAVE", "Eliminación del campeonato", 0, false));
         }
         return opciones;
+    }
+
+    private int jornadasPedidas(Integer jornadas) {
+        if (jornadas == null || jornadas < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Indica las jornadas de la sanción");
+        }
+        return jornadas;
     }
 
     private int pendientes(List<SuspensionJugador> suspensionesJugador, List<Jornada> orden, int proxima) {
@@ -388,6 +386,9 @@ public class SuspensionesJugadorService {
         if ("FALTA_MEDIA".equals(motivo)) {
             return regla.media;
         }
+        if ("SANCION".equals(motivo)) {
+            return regla.sancion;
+        }
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La suspensión no existe");
     }
 
@@ -406,16 +407,18 @@ public class SuspensionesJugadorService {
         ReglaSuspension regla = reglas.findByIdLigaAndEstado(ligaId, "ACTIVO").orElse(null);
         String momentoRoja = ajustes.findById(ligaId).map(LeagueSettings::getSuspensionTiming).orElse(JORNADA_SIGUIENTE);
         if (regla == null) {
-            return new Regla(1, 1, 2, 3, momentoRoja, JORNADA_SIGUIENTE, JORNADA_SIGUIENTE, true, true, true, true, true);
+            return new Regla(1, 1, 2, 3, 1, momentoRoja, JORNADA_SIGUIENTE, JORNADA_SIGUIENTE,
+                    true, true, true, true, true, true);
         }
         return new Regla(regla.getRojaJornadas(), regla.getAmarillasJornadas(), regla.getRojasJornadas(),
-                regla.getFaltaMediaJornadas(), momentoRoja,
+                regla.getFaltaMediaJornadas(), regla.getSancionJornadas(), momentoRoja,
                 regla.getAmarillasMomento() == null ? JORNADA_SIGUIENTE : regla.getAmarillasMomento(),
                 regla.getRojasMomento() == null ? JORNADA_SIGUIENTE : regla.getRojasMomento(),
                 "ACTIVO".equals(regla.getEstadoRoja()),
                 "ACTIVO".equals(regla.getEstadoAmarillas()),
                 "ACTIVO".equals(regla.getEstadoRojas()),
                 "ACTIVO".equals(regla.getEstadoFaltaMedia()),
+                "ACTIVO".equals(regla.getEstadoSancion()),
                 "ACTIVO".equals(regla.getEstadoFaltaGrave()));
     }
 
@@ -432,6 +435,9 @@ public class SuspensionesJugadorService {
         if ("FALTA_MEDIA".equals(motivo)) {
             return regla.mediaActiva;
         }
+        if ("SANCION".equals(motivo)) {
+            return regla.sancionActiva;
+        }
         return false;
     }
 
@@ -447,6 +453,9 @@ public class SuspensionesJugadorService {
         }
         if ("FALTA_MEDIA".equals(motivo)) {
             return "Falta media";
+        }
+        if ("SANCION".equals(motivo)) {
+            return "Sanción";
         }
         if ("FALTA_GRAVE".equals(motivo)) {
             return "Eliminación del campeonato";
@@ -524,6 +533,7 @@ public class SuspensionesJugadorService {
         private final int amarillas;
         private final int rojas;
         private final int media;
+        private final int sancion;
         private final String momentoRoja;
         private final String momentoAmarillas;
         private final String momentoRojas;
@@ -531,15 +541,17 @@ public class SuspensionesJugadorService {
         private final boolean amarillasActiva;
         private final boolean rojasActiva;
         private final boolean mediaActiva;
+        private final boolean sancionActiva;
         private final boolean faltaGrave;
 
-        private Regla(int roja, int amarillas, int rojas, int media, String momentoRoja, String momentoAmarillas,
-                      String momentoRojas, boolean rojaActiva, boolean amarillasActiva, boolean rojasActiva,
-                      boolean mediaActiva, boolean faltaGrave) {
+        private Regla(int roja, int amarillas, int rojas, int media, int sancion, String momentoRoja,
+                      String momentoAmarillas, String momentoRojas, boolean rojaActiva, boolean amarillasActiva,
+                      boolean rojasActiva, boolean mediaActiva, boolean sancionActiva, boolean faltaGrave) {
             this.roja = roja;
             this.amarillas = amarillas;
             this.rojas = rojas;
             this.media = media;
+            this.sancion = sancion;
             this.momentoRoja = momentoRoja;
             this.momentoAmarillas = momentoAmarillas;
             this.momentoRojas = momentoRojas;
@@ -547,6 +559,7 @@ public class SuspensionesJugadorService {
             this.amarillasActiva = amarillasActiva;
             this.rojasActiva = rojasActiva;
             this.mediaActiva = mediaActiva;
+            this.sancionActiva = sancionActiva;
             this.faltaGrave = faltaGrave;
         }
     }

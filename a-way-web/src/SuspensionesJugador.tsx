@@ -222,6 +222,7 @@ function SuspensionModal({
 }) {
   const [detalle, setDetalle] = useState<Detalle | null>(null)
   const [motivo, setMotivo] = useState('')
+  const [jornadas, setJornadas] = useState('1')
   const [jornadaInicioId, setJornadaInicioId] = useState(jornadaProximaId)
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -238,10 +239,13 @@ function SuspensionModal({
     cargar().catch((reason: Error) => setError(reason.message))
   }, [jugadorId, categoryId])
 
-  const opcion = detalle?.opciones.find((item) => item.motivo === motivo)
-
   async function agregar() {
     if (!motivo) return
+    const cantidad = Number(jornadas)
+    if (motivo === 'SANCION' && (!Number.isInteger(cantidad) || cantidad < 1)) {
+      setError('Indica las jornadas de la sanción')
+      return
+    }
     setOcupado(true)
     setError(null)
     try {
@@ -251,7 +255,8 @@ function SuspensionModal({
           jugadorId,
           categoryId,
           motivo,
-          jornadaInicioId: opcion?.eligeInicio ? jornadaInicioId : null,
+          jornadas: motivo === 'SANCION' ? cantidad : null,
+          jornadaInicioId: motivo === 'SANCION' ? jornadaInicioId : null,
         }),
       })
       setDetalle(respuesta)
@@ -288,13 +293,23 @@ function SuspensionModal({
             Suspensión
             <select value={motivo} onChange={(event) => setMotivo(event.target.value)}>
               {(detalle?.opciones ?? []).map((item) => (
-                <option key={item.motivo} value={item.motivo}>
-                  {item.etiqueta}{item.motivo === 'FALTA_GRAVE' ? '' : ` · ${item.jornadas}`}
-                </option>
+                <option key={item.motivo} value={item.motivo}>{item.etiqueta}</option>
               ))}
             </select>
           </label>
-          {opcion?.eligeInicio && (
+          {motivo === 'SANCION' && (
+            <label>
+              Jornadas
+              <input
+                type="number"
+                min={1}
+                value={jornadas}
+                onChange={(event) => setJornadas(event.target.value)}
+                required
+              />
+            </label>
+          )}
+          {motivo === 'SANCION' && (
             <label>
               Jornada de inicio
               <select value={jornadaInicioId} onChange={(event) => setJornadaInicioId(event.target.value)}>

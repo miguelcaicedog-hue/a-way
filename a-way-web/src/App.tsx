@@ -262,48 +262,54 @@ function App() {
 
   if (checkingSession) {
     return (
-      <main>
-        <div className="login-logo">
-          <img src={logoSistema} alt="A-WAY" />
-        </div>
-        <p>Comprobando la sesión…</p>
-      </main>
+      <div className="login-screen">
+        <main>
+          <div className="login-logo">
+            <img src={logoSistema} alt="A-WAY" />
+          </div>
+          <p>Comprobando la sesión…</p>
+        </main>
+        <footer className="login-pie">Created by Miguel Caicedo © All rights reserved</footer>
+      </div>
     )
   }
 
   if (!profile) {
     return (
-      <main>
-        <div className="login-logo">
-          <img src={logoSistema} alt="A-WAY" />
-        </div>
-        <p>Ingreso a la administración</p>
-        <form onSubmit={onLogin}>
-          <label>
-            Usuario
-            <input
-              name="username"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-            />
-          </label>
-          <label>
-            Clave
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
-          {loginError && <p className="down">{loginError}</p>}
-          <button type="submit" disabled={submitting}>
-            Entrar
-          </button>
-        </form>
-      </main>
+      <div className="login-screen">
+        <main>
+          <div className="login-logo">
+            <img src={logoSistema} alt="A-WAY" />
+          </div>
+          <p>Ingreso a la administración</p>
+          <form onSubmit={onLogin}>
+            <label>
+              Usuario
+              <input
+                name="username"
+                autoComplete="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+              />
+            </label>
+            <label>
+              Clave
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
+            {loginError && <p className="down">{loginError}</p>}
+            <button type="submit" disabled={submitting}>
+              Entrar
+            </button>
+          </form>
+        </main>
+        <footer className="login-pie">Created by Miguel Caicedo © All rights reserved</footer>
+      </div>
     )
   }
 

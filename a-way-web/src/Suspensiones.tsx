@@ -23,6 +23,8 @@ type Regla = {
   estadoRojas: string
   estadoFaltaMedia: string
   estadoFaltaGrave: string
+  estadoSancion: string
+  sancionJornadas: number
 }
 
 function Estado({ valor, writable, onChange }: { valor: string; writable: boolean; onChange: (valor: string) => void }) {
@@ -56,6 +58,8 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
   const [estadoRojas, setEstadoRojas] = useState('ACTIVO')
   const [estadoFaltaMedia, setEstadoFaltaMedia] = useState('ACTIVO')
   const [estadoFaltaGrave, setEstadoFaltaGrave] = useState('ACTIVO')
+  const [estadoSancion, setEstadoSancion] = useState('ACTIVO')
+  const [sancionJornadas, setSancionJornadas] = useState('1')
   const [error, setError] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const writable = canWrite(profile)
@@ -82,6 +86,8 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
         setEstadoRojas(regla.estadoRojas)
         setEstadoFaltaMedia(regla.estadoFaltaMedia)
         setEstadoFaltaGrave(regla.estadoFaltaGrave)
+        setEstadoSancion(regla.estadoSancion)
+        setSancionJornadas(String(regla.sancionJornadas))
       })
       .catch((reason: Error) => {
         if (activo) setError(reason.message)
@@ -114,6 +120,8 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           estadoRojas,
           estadoFaltaMedia,
           estadoFaltaGrave,
+          estadoSancion,
+          sancionJornadas: Number(sancionJornadas),
         }),
       })
       setMomento(regla.momento)
@@ -124,6 +132,8 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
       setEstadoRojas(regla.estadoRojas)
       setEstadoFaltaMedia(regla.estadoFaltaMedia)
       setEstadoFaltaGrave(regla.estadoFaltaGrave)
+      setEstadoSancion(regla.estadoSancion)
+      setSancionJornadas(String(regla.sancionJornadas))
       setAviso('Reglas guardadas.')
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudieron guardar las reglas')
@@ -139,10 +149,6 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           <h2>Tarjeta roja</h2>
           <Estado valor={estadoRoja} writable={writable} onChange={setEstadoRoja} />
           <label>
-            Jornadas de suspensión
-            <input type="number" min={0} value={rojaJornadas} disabled={!writable} onChange={(event) => setRojaJornadas(event.target.value)} required />
-          </label>
-          <label>
             Empieza en
             <select value={momento} disabled={!writable} onChange={(event) => setMomento(event.target.value)}>
               <option value="NEXT_MATCHDAY">Jornada siguiente</option>
@@ -154,10 +160,6 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           <label>
             Tarjetas acumuladas
             <input type="number" min={1} value={amarillasAcumuladas} disabled={!writable} onChange={(event) => setAmarillasAcumuladas(event.target.value)} required />
-          </label>
-          <label>
-            Jornadas de suspensión
-            <input type="number" min={0} value={amarillasJornadas} disabled={!writable} onChange={(event) => setAmarillasJornadas(event.target.value)} required />
           </label>
           <label>
             Empieza en
@@ -173,10 +175,6 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
             <input type="number" min={1} value={rojasAcumuladas} disabled={!writable} onChange={(event) => setRojasAcumuladas(event.target.value)} required />
           </label>
           <label>
-            Jornadas de suspensión
-            <input type="number" min={0} value={rojasJornadas} disabled={!writable} onChange={(event) => setRojasJornadas(event.target.value)} required />
-          </label>
-          <label>
             Empieza en
             <select value={rojasMomento} disabled={!writable} onChange={(event) => setRojasMomento(event.target.value)}>
               <option value="NEXT_MATCHDAY">Jornada siguiente</option>
@@ -185,13 +183,11 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           </label>
           <h2>Falta media</h2>
           <Estado valor={estadoFaltaMedia} writable={writable} onChange={setEstadoFaltaMedia} />
-          <label>
-            Jornadas de suspensión
-            <input type="number" min={0} value={faltaMediaJornadas} disabled={!writable} onChange={(event) => setFaltaMediaJornadas(event.target.value)} required />
-          </label>
           <h2>Falta grave</h2>
           <Estado valor={estadoFaltaGrave} writable={writable} onChange={setEstadoFaltaGrave} />
           <p>Eliminación del campeonato.</p>
+          <h2>Sanción</h2>
+          <Estado valor={estadoSancion} writable={writable} onChange={setEstadoSancion} />
           {writable && <button type="submit">Guardar</button>}
           {error && <p className="down">{error}</p>}
         </form>

@@ -224,6 +224,7 @@ public class SuspensionesJugadorViews {
         private UUID jugadorId;
         private UUID categoryId;
         private String motivo;
+        private Integer jornadas;
         private UUID jornadaInicioId;
 
         public UUID getJugadorId() {
@@ -248,6 +249,14 @@ public class SuspensionesJugadorViews {
 
         public void setMotivo(String motivo) {
             this.motivo = motivo;
+        }
+
+        public Integer getJornadas() {
+            return jornadas;
+        }
+
+        public void setJornadas(Integer jornadas) {
+            this.jornadas = jornadas;
         }
 
         public UUID getJornadaInicioId() {
