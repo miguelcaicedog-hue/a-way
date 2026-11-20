@@ -27,6 +27,7 @@ type Suspension = {
   jornadaInicio: string
   jornadas: number
   origen: string
+  observacion: string | null
 }
 
 type Detalle = {
@@ -224,6 +225,7 @@ function SuspensionModal({
   const [motivo, setMotivo] = useState('')
   const [jornadas, setJornadas] = useState('1')
   const [jornadaInicioId, setJornadaInicioId] = useState(jornadaProximaId)
+  const [observacion, setObservacion] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
 
@@ -257,8 +259,10 @@ function SuspensionModal({
           motivo,
           jornadas: motivo === 'SANCION' ? cantidad : null,
           jornadaInicioId: motivo === 'SANCION' ? jornadaInicioId : null,
+          observacion,
         }),
       })
+      setObservacion('')
       setDetalle(respuesta)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'No se pudo agregar la suspensión')
@@ -319,6 +323,14 @@ function SuspensionModal({
               </select>
             </label>
           )}
+          <label className="motivo-suspension">
+            Motivo
+            <input
+              value={observacion}
+              maxLength={200}
+              onChange={(event) => setObservacion(event.target.value)}
+            />
+          </label>
           <button type="button" disabled={ocupado || !motivo} onClick={agregar}>Agregar</button>
         </form>
         <ul className="lista-detalle">
@@ -327,6 +339,7 @@ function SuspensionModal({
               <span>{item.etiqueta}</span>
               <span>{item.jornadaInicio}</span>
               <span>{item.motivo === 'FALTA_GRAVE' ? 'Todas' : `${item.jornadas} jornadas`}</span>
+              {item.observacion && <span>{item.observacion}</span>}
               <button type="button" className="ghost" disabled={ocupado} onClick={() => quitar(item.id)}>Quitar</button>
             </li>
           ))}

@@ -185,14 +185,17 @@ public class SuspensionesJugadorViews {
         private final String jornadaInicio;
         private final int jornadas;
         private final String origen;
+        private final String observacion;
 
-        public SuspensionView(UUID id, String motivo, String etiqueta, String jornadaInicio, int jornadas, String origen) {
+        public SuspensionView(UUID id, String motivo, String etiqueta, String jornadaInicio, int jornadas, String origen,
+                              String observacion) {
             this.id = id;
             this.motivo = motivo;
             this.etiqueta = etiqueta;
             this.jornadaInicio = jornadaInicio;
             this.jornadas = jornadas;
             this.origen = origen;
+            this.observacion = observacion;
         }
 
         public UUID getId() {
@@ -218,6 +221,10 @@ public class SuspensionesJugadorViews {
         public String getOrigen() {
             return origen;
         }
+
+        public String getObservacion() {
+            return observacion;
+        }
     }
 
     public static class AgregarRequest {
@@ -226,6 +233,7 @@ public class SuspensionesJugadorViews {
         private String motivo;
         private Integer jornadas;
         private UUID jornadaInicioId;
+        private String observacion;
 
         public UUID getJugadorId() {
             return jugadorId;
@@ -265,6 +273,14 @@ public class SuspensionesJugadorViews {
 
         public void setJornadaInicioId(UUID jornadaInicioId) {
             this.jornadaInicioId = jornadaInicioId;
+        }
+
+        public String getObservacion() {
+            return observacion;
+        }
+
+        public void setObservacion(String observacion) {
+            this.observacion = observacion;
         }
     }
 }

@@ -99,7 +99,8 @@ public class SuspensionesJugadorService {
             activas.add(new SuspensionesJugadorViews.SuspensionView(
                     suspension.getId(), suspension.getMotivo(), etiqueta(suspension.getMotivo()),
                     "FALTA_GRAVE".equals(suspension.getMotivo()) ? "Todas las jornadas" : texto(inicio),
-                    suspension.getJornadas(), suspension.getOrigen() == null ? "CIERRE" : suspension.getOrigen()));
+                    suspension.getJornadas(), suspension.getOrigen() == null ? "CIERRE" : suspension.getOrigen(),
+                    suspension.getObservacion()));
         }
         return new SuspensionesJugadorViews.DetalleView(
                 jugador.getId(), alias(jugador), jugador.getTeamEntry().getTeam().getName(),
@@ -130,7 +131,7 @@ public class SuspensionesJugadorService {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El jugador ya está eliminado del campeonato");
                 }
             }
-            guardar(categoria, jugador.getId(), orden.get(0).getId(), orden.get(0).getId(), orden.size(), motivo);
+            guardar(categoria, jugador.getId(), orden.get(0).getId(), orden.get(0).getId(), orden.size(), motivo, request.getObservacion());
             return detalle(jugador.getId(), categoria.getId());
         }
         if (!activa(regla, motivo)) {
@@ -156,14 +157,14 @@ public class SuspensionesJugadorService {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La sanción pisa otra suspensión del jugador");
                 }
             }
-            guardar(categoria, jugador.getId(), orden.get(preferido).getId(), orden.get(preferido).getId(), cantidad, motivo);
+            guardar(categoria, jugador.getId(), orden.get(preferido).getId(), orden.get(preferido).getId(), cantidad, motivo, request.getObservacion());
             return detalle(jugador.getId(), categoria.getId());
         }
         int cursor = libre(orden, ocupadas(activas, orden), preferido, cantidad);
         if (cursor < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay jornadas libres para esta suspensión");
         }
-        guardar(categoria, jugador.getId(), orden.get(cursor).getId(), orden.get(cursor).getId(), cantidad, motivo);
+        guardar(categoria, jugador.getId(), orden.get(cursor).getId(), orden.get(cursor).getId(), cantidad, motivo, request.getObservacion());
         return detalle(jugador.getId(), categoria.getId());
     }
 
@@ -205,7 +206,8 @@ public class SuspensionesJugadorService {
         exclusiones.save(exclusion);
     }
 
-    private void guardar(Category categoria, UUID jugadorId, UUID origenId, UUID inicioId, int cantidad, String motivo) {
+    private void guardar(Category categoria, UUID jugadorId, UUID origenId, UUID inicioId, int cantidad, String motivo,
+                         String observacion) {
         String usuario = usuario();
         OffsetDateTime ahora = OffsetDateTime.now();
         SuspensionJugador suspension = new SuspensionJugador();
@@ -217,6 +219,7 @@ public class SuspensionesJugadorService {
         suspension.setIdJornadaInicio(inicioId);
         suspension.setJornadas(cantidad);
         suspension.setMotivo(motivo);
+        suspension.setObservacion(textoObservacion(observacion));
         suspension.setOrigen("MANUAL");
         suspension.setEstado("ACTIVO");
         suspension.setFechaCreacion(ahora);
@@ -224,6 +227,20 @@ public class SuspensionesJugadorService {
         suspension.setUsuarioCreacion(usuario);
         suspension.setUsuarioModificacion(usuario);
         suspensiones.save(suspension);
+    }
+
+    private String textoObservacion(String observacion) {
+        if (observacion == null) {
+            return null;
+        }
+        String texto = observacion.trim();
+        if (texto.isEmpty()) {
+            return null;
+        }
+        if (texto.length() > 200) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El motivo admite hasta 200 caracteres");
+        }
+        return texto;
     }
 
     private List<SuspensionesJugadorViews.OpcionView> opciones(Category categoria) {

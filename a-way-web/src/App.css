@@ -387,6 +387,10 @@ button + .down {
   flex: 0 0 16rem;
 }
 
+.catalog form.filtros label.motivo-suspension {
+  flex: 1 0 100%;
+}
+
 select {
   font: inherit;
   padding: 0.55rem 0.7rem;

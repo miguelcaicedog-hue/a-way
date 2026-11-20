@@ -36,6 +36,9 @@ public class SuspensionJugador {
     @Column(nullable = false)
     private String motivo;
 
+    @Column(length = 200)
+    private String observacion;
+
     @Column(nullable = false)
     private String origen;
 
@@ -116,6 +119,14 @@ public class SuspensionJugador {
 
     public void setMotivo(String motivo) {
         this.motivo = motivo;
+    }
+
+    public String getObservacion() {
+        return observacion;
+    }
+
+    public void setObservacion(String observacion) {
+        this.observacion = observacion;
     }
 
     public String getOrigen() {
