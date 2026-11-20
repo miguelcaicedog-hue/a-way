@@ -19,13 +19,16 @@ public class ReporteController {
     private final ReporteJugadoresService jugadores;
     private final ReporteCobrosService reporteCobros;
     private final ReportePagoArbitrosService pagoArbitros;
+    private final ReporteHorariosService reporteHorarios;
 
     public ReporteController(ReporteTarjetasService tarjetas, ReporteJugadoresService jugadores,
-                             ReporteCobrosService reporteCobros, ReportePagoArbitrosService pagoArbitros) {
+                             ReporteCobrosService reporteCobros, ReportePagoArbitrosService pagoArbitros,
+                             ReporteHorariosService reporteHorarios) {
         this.tarjetas = tarjetas;
         this.jugadores = jugadores;
         this.reporteCobros = reporteCobros;
         this.pagoArbitros = pagoArbitros;
+        this.reporteHorarios = reporteHorarios;
     }
 
     @GetMapping(value = "/tarjetas-suspensiones", produces = MediaType.APPLICATION_PDF_VALUE)
@@ -55,6 +58,17 @@ public class ReporteController {
         byte[] pdf = pagoArbitros.pago(editionId, categoryId, LocalDate.parse(fecha));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pago-arbitros.pdf\"")
+                .body(pdf);
+    }
+
+    @GetMapping(value = "/horarios", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> horarios(@RequestParam UUID editionId,
+                                           @RequestParam(required = false) UUID categoryId,
+                                           @RequestParam(required = false) String fecha) {
+        LocalDate dia = fecha == null || fecha.isBlank() ? null : LocalDate.parse(fecha);
+        byte[] pdf = reporteHorarios.horarios(editionId, categoryId, dia);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"horarios.pdf\"")
                 .body(pdf);
     }
 

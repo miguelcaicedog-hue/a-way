@@ -637,7 +637,8 @@ button.foto-jugador {
   background: #6eaa96;
 }
 
-.reloj-descargas button.descarga-pdf {
+.reloj-descargas button.descarga-pdf,
+.filtros button.descarga-pdf {
   background: #d08984;
 }
 

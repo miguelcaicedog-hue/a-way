@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import { FechaCampo } from './Fecha'
-import { BotonDescargarImagen } from './DescargarImagen'
+import { BotonDescargarImagen, IconoPdf } from './DescargarImagen'
 
 type Profile = {
   master: boolean
@@ -167,6 +167,33 @@ export function HorariosScreen({ profile, editionId, leagueId }: { profile: Prof
     }
   }
 
+  async function descargarPdf() {
+    if (!editionId) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId })
+      if (categoryId) params.set('categoryId', categoryId)
+      if (fecha) params.set('fecha', fecha)
+      const response = await fetch(`/api/reportes/horarios?${params.toString()}`, { credentials: 'include' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
+        throw new Error(body.error ?? 'No se pudo descargar el PDF')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `HORARIOS${fecha ? `-${fecha}` : ''}.pdf`
+      enlace.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo descargar el PDF')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   async function filtrarProximaFecha() {
     if (!editionId) return
     setOcupado(true)
@@ -271,6 +298,10 @@ export function HorariosScreen({ profile, editionId, leagueId }: { profile: Prof
               textoVisita: partido.textoVisita,
             }))}
           />
+          <button type="button" className="con-icono descarga-pdf" disabled={ocupado} onClick={() => void descargarPdf()}>
+            <IconoPdf />
+            Descargar PDF
+          </button>
         </form>
       )}
       {editionId && writable && (
