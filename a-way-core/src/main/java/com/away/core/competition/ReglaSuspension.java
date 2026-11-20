@@ -39,9 +39,6 @@ public class ReglaSuspension {
     @Column(name = "rojas_momento", nullable = false)
     private String rojasMomento;
 
-    @Column(name = "falta_media_jornadas", nullable = false)
-    private int faltaMediaJornadas;
-
     @Column(name = "estado_roja", nullable = false)
     private String estadoRoja;
 
@@ -50,9 +47,6 @@ public class ReglaSuspension {
 
     @Column(name = "estado_rojas", nullable = false)
     private String estadoRojas;
-
-    @Column(name = "estado_falta_media", nullable = false)
-    private String estadoFaltaMedia;
 
     @Column(name = "estado_falta_grave", nullable = false)
     private String estadoFaltaGrave;
@@ -150,14 +144,6 @@ public class ReglaSuspension {
         this.rojasMomento = rojasMomento;
     }
 
-    public int getFaltaMediaJornadas() {
-        return faltaMediaJornadas;
-    }
-
-    public void setFaltaMediaJornadas(int faltaMediaJornadas) {
-        this.faltaMediaJornadas = faltaMediaJornadas;
-    }
-
     public String getEstadoRoja() {
         return estadoRoja;
     }
@@ -180,14 +166,6 @@ public class ReglaSuspension {
 
     public void setEstadoRojas(String estadoRojas) {
         this.estadoRojas = estadoRojas;
-    }
-
-    public String getEstadoFaltaMedia() {
-        return estadoFaltaMedia;
-    }
-
-    public void setEstadoFaltaMedia(String estadoFaltaMedia) {
-        this.estadoFaltaMedia = estadoFaltaMedia;
     }
 
     public String getEstadoFaltaGrave() {

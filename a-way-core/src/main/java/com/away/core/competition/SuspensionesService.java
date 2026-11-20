@@ -60,11 +60,9 @@ public class SuspensionesService {
         regla.setRojasAcumuladas(request.getRojasAcumuladas());
         regla.setRojasJornadas(request.getRojasJornadas());
         regla.setRojasMomento(rojasMomento);
-        regla.setFaltaMediaJornadas(request.getFaltaMediaJornadas());
         regla.setEstadoRoja(estadoRegla(request.getEstadoRoja()));
         regla.setEstadoAmarillas(estadoRegla(request.getEstadoAmarillas()));
         regla.setEstadoRojas(estadoRegla(request.getEstadoRojas()));
-        regla.setEstadoFaltaMedia(estadoRegla(request.getEstadoFaltaMedia()));
         regla.setEstadoFaltaGrave(estadoRegla(request.getEstadoFaltaGrave()));
         regla.setEstadoSancion(estadoRegla(request.getEstadoSancion()));
         regla.setSancionJornadas(request.getSancionJornadas());
@@ -98,7 +96,6 @@ public class SuspensionesService {
         regla.setRojasAcumuladas(2);
         regla.setRojasJornadas(2);
         regla.setRojasMomento(JORNADA_SIGUIENTE);
-        regla.setFaltaMediaJornadas(3);
         regla.setSancionJornadas(1);
         activar(regla);
         auditar(regla, usuario(), true);
@@ -107,8 +104,8 @@ public class SuspensionesService {
 
     private SuspensionesViews.ReglaView vista(UUID leagueId, ReglaSuspension regla, String momento) {
         if (regla == null) {
-            return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, JORNADA_SIGUIENTE, 2, 2, JORNADA_SIGUIENTE, 3,
-                    "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", 1);
+            return new SuspensionesViews.ReglaView(leagueId, momento, 1, 3, 1, JORNADA_SIGUIENTE, 2, 2, JORNADA_SIGUIENTE,
+                    "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", "ACTIVO", 1);
         }
         return new SuspensionesViews.ReglaView(
                 leagueId,
@@ -120,11 +117,9 @@ public class SuspensionesService {
                 regla.getRojasAcumuladas(),
                 regla.getRojasJornadas(),
                 regla.getRojasMomento(),
-                regla.getFaltaMediaJornadas(),
                 regla.getEstadoRoja(),
                 regla.getEstadoAmarillas(),
                 regla.getEstadoRojas(),
-                regla.getEstadoFaltaMedia(),
                 regla.getEstadoFaltaGrave(),
                 regla.getEstadoSancion(),
                 regla.getSancionJornadas());
@@ -134,7 +129,6 @@ public class SuspensionesService {
         regla.setEstadoRoja("ACTIVO");
         regla.setEstadoAmarillas("ACTIVO");
         regla.setEstadoRojas("ACTIVO");
-        regla.setEstadoFaltaMedia("ACTIVO");
         regla.setEstadoFaltaGrave("ACTIVO");
         regla.setEstadoSancion("ACTIVO");
     }

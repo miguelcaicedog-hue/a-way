@@ -61,7 +61,7 @@ const sections = [
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
   { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
   { id: 'sanciones-jugador', label: 'Sanciones jugador', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
-  { id: 'suspensiones', label: 'Suspensiones', summary: 'Jornadas de suspensión por tarjeta roja, acumulación de amarillas o rojas, y faltas media o grave.' },
+  { id: 'suspensiones', label: 'Suspensiones', summary: 'Jornadas de suspensión por tarjeta roja, acumulación de amarillas o rojas, y falta grave.' },
   { id: 'suspensiones-jugador', label: 'Suspensiones a jugador', summary: 'Suspensiones pendientes de cada jugador y altas o bajas manuales.' },
   { id: 'desempate-goleadores', label: 'Desempate goleadores', summary: 'Orden de los criterios de desempate de la tabla de goleadores de la edición.' },
   { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },

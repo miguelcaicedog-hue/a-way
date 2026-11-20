@@ -34,17 +34,12 @@ public class SuspensionesViews {
         private Integer rojasJornadas;
         @NotBlank
         private String rojasMomento;
-        @NotNull
-        @Min(0)
-        private Integer faltaMediaJornadas;
         @NotBlank
         private String estadoRoja;
         @NotBlank
         private String estadoAmarillas;
         @NotBlank
         private String estadoRojas;
-        @NotBlank
-        private String estadoFaltaMedia;
         @NotBlank
         private String estadoFaltaGrave;
         @NotBlank
@@ -125,14 +120,6 @@ public class SuspensionesViews {
             this.rojasMomento = rojasMomento;
         }
 
-        public Integer getFaltaMediaJornadas() {
-            return faltaMediaJornadas;
-        }
-
-        public void setFaltaMediaJornadas(Integer faltaMediaJornadas) {
-            this.faltaMediaJornadas = faltaMediaJornadas;
-        }
-
         public String getEstadoRoja() {
             return estadoRoja;
         }
@@ -155,14 +142,6 @@ public class SuspensionesViews {
 
         public void setEstadoRojas(String estadoRojas) {
             this.estadoRojas = estadoRojas;
-        }
-
-        public String getEstadoFaltaMedia() {
-            return estadoFaltaMedia;
-        }
-
-        public void setEstadoFaltaMedia(String estadoFaltaMedia) {
-            this.estadoFaltaMedia = estadoFaltaMedia;
         }
 
         public String getEstadoFaltaGrave() {
@@ -200,20 +179,18 @@ public class SuspensionesViews {
         private final int rojasAcumuladas;
         private final int rojasJornadas;
         private final String rojasMomento;
-        private final int faltaMediaJornadas;
         private final String faltaGrave;
         private final String estadoRoja;
         private final String estadoAmarillas;
         private final String estadoRojas;
-        private final String estadoFaltaMedia;
         private final String estadoFaltaGrave;
         private final String estadoSancion;
         private final int sancionJornadas;
 
         public ReglaView(UUID leagueId, String momento, int rojaJornadas, int amarillasAcumuladas, int amarillasJornadas,
                          String amarillasMomento, int rojasAcumuladas, int rojasJornadas, String rojasMomento,
-                         int faltaMediaJornadas, String estadoRoja, String estadoAmarillas, String estadoRojas,
-                         String estadoFaltaMedia, String estadoFaltaGrave, String estadoSancion, int sancionJornadas) {
+                         String estadoRoja, String estadoAmarillas, String estadoRojas,
+                         String estadoFaltaGrave, String estadoSancion, int sancionJornadas) {
             this.leagueId = leagueId;
             this.momento = momento;
             this.rojaJornadas = rojaJornadas;
@@ -223,12 +200,10 @@ public class SuspensionesViews {
             this.rojasAcumuladas = rojasAcumuladas;
             this.rojasJornadas = rojasJornadas;
             this.rojasMomento = rojasMomento;
-            this.faltaMediaJornadas = faltaMediaJornadas;
             this.faltaGrave = "ELIMINACION";
             this.estadoRoja = estadoRoja;
             this.estadoAmarillas = estadoAmarillas;
             this.estadoRojas = estadoRojas;
-            this.estadoFaltaMedia = estadoFaltaMedia;
             this.estadoFaltaGrave = estadoFaltaGrave;
             this.estadoSancion = estadoSancion;
             this.sancionJornadas = sancionJornadas;
@@ -270,10 +245,6 @@ public class SuspensionesViews {
             return rojasMomento;
         }
 
-        public int getFaltaMediaJornadas() {
-            return faltaMediaJornadas;
-        }
-
         public String getFaltaGrave() {
             return faltaGrave;
         }
@@ -288,10 +259,6 @@ public class SuspensionesViews {
 
         public String getEstadoRojas() {
             return estadoRojas;
-        }
-
-        public String getEstadoFaltaMedia() {
-            return estadoFaltaMedia;
         }
 
         public String getEstadoFaltaGrave() {

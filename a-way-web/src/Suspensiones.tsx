@@ -16,12 +16,10 @@ type Regla = {
   rojasAcumuladas: number
   rojasJornadas: number
   rojasMomento: string
-  faltaMediaJornadas: number
   faltaGrave: string
   estadoRoja: string
   estadoAmarillas: string
   estadoRojas: string
-  estadoFaltaMedia: string
   estadoFaltaGrave: string
   estadoSancion: string
   sancionJornadas: number
@@ -52,11 +50,9 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
   const [rojasAcumuladas, setRojasAcumuladas] = useState('2')
   const [rojasJornadas, setRojasJornadas] = useState('2')
   const [rojasMomento, setRojasMomento] = useState('NEXT_MATCHDAY')
-  const [faltaMediaJornadas, setFaltaMediaJornadas] = useState('3')
   const [estadoRoja, setEstadoRoja] = useState('ACTIVO')
   const [estadoAmarillas, setEstadoAmarillas] = useState('ACTIVO')
   const [estadoRojas, setEstadoRojas] = useState('ACTIVO')
-  const [estadoFaltaMedia, setEstadoFaltaMedia] = useState('ACTIVO')
   const [estadoFaltaGrave, setEstadoFaltaGrave] = useState('ACTIVO')
   const [estadoSancion, setEstadoSancion] = useState('ACTIVO')
   const [sancionJornadas, setSancionJornadas] = useState('1')
@@ -80,11 +76,9 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
         setRojasAcumuladas(String(regla.rojasAcumuladas))
         setRojasJornadas(String(regla.rojasJornadas))
         setRojasMomento(regla.rojasMomento)
-        setFaltaMediaJornadas(String(regla.faltaMediaJornadas))
         setEstadoRoja(regla.estadoRoja)
         setEstadoAmarillas(regla.estadoAmarillas)
         setEstadoRojas(regla.estadoRojas)
-        setEstadoFaltaMedia(regla.estadoFaltaMedia)
         setEstadoFaltaGrave(regla.estadoFaltaGrave)
         setEstadoSancion(regla.estadoSancion)
         setSancionJornadas(String(regla.sancionJornadas))
@@ -114,11 +108,9 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
           rojasAcumuladas: Number(rojasAcumuladas),
           rojasJornadas: Number(rojasJornadas),
           rojasMomento,
-          faltaMediaJornadas: Number(faltaMediaJornadas),
           estadoRoja,
           estadoAmarillas,
           estadoRojas,
-          estadoFaltaMedia,
           estadoFaltaGrave,
           estadoSancion,
           sancionJornadas: Number(sancionJornadas),
@@ -130,7 +122,6 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
       setEstadoRoja(regla.estadoRoja)
       setEstadoAmarillas(regla.estadoAmarillas)
       setEstadoRojas(regla.estadoRojas)
-      setEstadoFaltaMedia(regla.estadoFaltaMedia)
       setEstadoFaltaGrave(regla.estadoFaltaGrave)
       setEstadoSancion(regla.estadoSancion)
       setSancionJornadas(String(regla.sancionJornadas))
@@ -181,8 +172,6 @@ export function SuspensionesScreen({ profile, leagueId }: { profile: Profile; le
               <option value="FIRST_MATCHDAY_OF_DAY">Primera jornada de la siguiente fecha</option>
             </select>
           </label>
-          <h2>Falta media</h2>
-          <Estado valor={estadoFaltaMedia} writable={writable} onChange={setEstadoFaltaMedia} />
           <h2>Falta grave</h2>
           <Estado valor={estadoFaltaGrave} writable={writable} onChange={setEstadoFaltaGrave} />
           <p>Eliminación del campeonato.</p>
