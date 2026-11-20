@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import logoSistema from './assets/logo-sistema.png'
 import './App.css'
 import { api } from './api'
 import { ArbitrosScreen } from './Arbitros'
@@ -262,7 +263,9 @@ function App() {
   if (checkingSession) {
     return (
       <main>
-        <h1>A-WAY</h1>
+        <div className="login-logo">
+          <img src={logoSistema} alt="A-WAY" />
+        </div>
         <p>Comprobando la sesión…</p>
       </main>
     )
@@ -271,7 +274,9 @@ function App() {
   if (!profile) {
     return (
       <main>
-        <h1>A-WAY</h1>
+        <div className="login-logo">
+          <img src={logoSistema} alt="A-WAY" />
+        </div>
         <p>Ingreso a la administración</p>
         <form onSubmit={onLogin}>
           <label>
@@ -307,7 +312,9 @@ function App() {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">A-WAY</div>
+        <div className="brand">
+          <img src={logoSistema} alt="A-WAY" />
+        </div>
         <nav aria-label="Principal">
           {menuGroups.map((group) => {
             const staff = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
