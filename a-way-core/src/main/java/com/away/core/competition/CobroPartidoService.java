@@ -135,6 +135,15 @@ public class CobroPartidoService {
                                  Set<UUID> sancionesPedidas, String usuario) {
         List<PartidoCobroDetalle> existentes = detalles.findByIdPartidoCobro(cobro.getId());
         Set<UUID> conservados = new HashSet<>();
+        if (contexto.arbitros.isEmpty()) {
+            PartidoCobroDetalle detalle = buscarArbitrajeSinArbitro(existentes);
+            if (detalle == null) {
+                detalle = nuevoDetalle(cobro, "ARBITRAJE", usuario);
+            }
+            llenar(detalle, cobro, "Arbitraje", contexto.cobroEquipo, usuario);
+            detalles.save(detalle);
+            conservados.add(detalle.getId());
+        }
         for (ArbitroCargo arbitro : contexto.arbitros) {
             PartidoCobroDetalle detalle = buscar(existentes, "ARBITRAJE", arbitro.arbitro.getId());
             if (detalle == null) {
@@ -201,10 +210,7 @@ public class CobroPartidoService {
             sancionesVista.add(cargo(cargo.detalle.getId(), cargo.jugador, cargo.jornada, cargo.detalleTexto, cargo.costo, marcado));
         }
         ordenar(sancionesVista);
-        BigDecimal arbitraje = BigDecimal.ZERO.setScale(2);
-        for (ArbitroCargo arbitro : contexto.arbitros) {
-            arbitraje = arbitraje.add(arbitro.costo);
-        }
+        BigDecimal arbitraje = arbitrajeDe(contexto);
         String observacion = contexto.cobro == null ? null : contexto.cobro.getObservacion();
         BigDecimal total = arbitraje.add(tarjetas).add(sanciones).setScale(2);
         BigDecimal efectivo = contexto.cobro == null || contexto.cobro.getValorCobroEfectivo() == null
@@ -329,6 +335,8 @@ public class CobroPartidoService {
                 contexto.sanciones.put(detalle.getId(), cargo);
             }
         }
+        contexto.cobroEquipo = categoria.getValorCobroEquipo() == null
+                ? BigDecimal.ZERO.setScale(2) : categoria.getValorCobroEquipo().setScale(2);
         for (PartidoArbitro asignado : partidosArbitros.findByIdPartido(partido.getId())) {
             if (!"ACTIVO".equals(asignado.getEstado())) {
                 continue;
@@ -339,8 +347,7 @@ public class CobroPartidoService {
             }
             ArbitroCargo cargo = new ArbitroCargo();
             cargo.arbitro = arbitro;
-            cargo.costo = arbitro.getValorCobroEquipo() == null
-                    ? BigDecimal.ZERO.setScale(2) : arbitro.getValorCobroEquipo().setScale(2);
+            cargo.costo = contexto.cobroEquipo;
             contexto.arbitros.add(cargo);
         }
         return contexto;
@@ -448,6 +455,26 @@ public class CobroPartidoService {
                 .thenComparing(CobroViews.CargoView::getAlias));
     }
 
+    private PartidoCobroDetalle buscarArbitrajeSinArbitro(List<PartidoCobroDetalle> existentes) {
+        for (PartidoCobroDetalle detalle : existentes) {
+            if ("ARBITRAJE".equals(detalle.getTipo()) && detalle.getIdArbitro() == null) {
+                return detalle;
+            }
+        }
+        return null;
+    }
+
+    private BigDecimal arbitrajeDe(Contexto contexto) {
+        if (contexto.arbitros.isEmpty()) {
+            return contexto.cobroEquipo;
+        }
+        BigDecimal total = BigDecimal.ZERO.setScale(2);
+        for (ArbitroCargo arbitro : contexto.arbitros) {
+            total = total.add(arbitro.costo);
+        }
+        return total.setScale(2);
+    }
+
     private PartidoCobroDetalle buscar(List<PartidoCobroDetalle> existentes, String tipo, UUID origen) {
         for (PartidoCobroDetalle detalle : existentes) {
             if (!tipo.equals(detalle.getTipo())) {
@@ -498,10 +525,7 @@ public class CobroPartidoService {
     }
 
     private BigDecimal totalDe(Contexto contexto, Set<UUID> tarjetasPedidas, Set<UUID> sancionesPedidas) {
-        BigDecimal total = BigDecimal.ZERO.setScale(2);
-        for (ArbitroCargo arbitro : contexto.arbitros) {
-            total = total.add(arbitro.costo);
-        }
+        BigDecimal total = arbitrajeDe(contexto);
         for (UUID id : tarjetasPedidas) {
             total = total.add(contexto.tarjetas.get(id).costo);
         }
@@ -652,6 +676,7 @@ public class CobroPartidoService {
     private static final class Contexto {
         private LocalDate fechaActual;
         private PartidoCobro cobro;
+        private BigDecimal cobroEquipo = BigDecimal.ZERO.setScale(2);
         private final List<ArbitroCargo> arbitros = new ArrayList<>();
         private final Map<UUID, CargoTarjeta> tarjetas = new HashMap<>();
         private final Map<UUID, CargoSancion> sanciones = new HashMap<>();

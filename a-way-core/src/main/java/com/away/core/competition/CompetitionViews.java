@@ -4,6 +4,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -142,6 +143,9 @@ class CategoryRequest {
     private Integer equiposPorGrupo;
     @Min(1)
     private int cantidadFases;
+    private BigDecimal valorPagoPartido;
+    private BigDecimal valorCobroEquipo;
+    private BigDecimal valorPagoSinPito;
     private String estado;
 
     public UUID getEditionId() {
@@ -190,6 +194,30 @@ class CategoryRequest {
 
     public void setCantidadFases(int cantidadFases) {
         this.cantidadFases = cantidadFases;
+    }
+
+    public BigDecimal getValorPagoPartido() {
+        return valorPagoPartido;
+    }
+
+    public void setValorPagoPartido(BigDecimal valorPagoPartido) {
+        this.valorPagoPartido = valorPagoPartido;
+    }
+
+    public BigDecimal getValorCobroEquipo() {
+        return valorCobroEquipo;
+    }
+
+    public void setValorCobroEquipo(BigDecimal valorCobroEquipo) {
+        this.valorCobroEquipo = valorCobroEquipo;
+    }
+
+    public BigDecimal getValorPagoSinPito() {
+        return valorPagoSinPito;
+    }
+
+    public void setValorPagoSinPito(BigDecimal valorPagoSinPito) {
+        this.valorPagoSinPito = valorPagoSinPito;
     }
 
     public String getEstado() {
@@ -401,10 +429,14 @@ class CategoryView {
     private final int cantidadGrupos;
     private final Integer equiposPorGrupo;
     private final int cantidadFases;
+    private final BigDecimal valorPagoPartido;
+    private final BigDecimal valorCobroEquipo;
+    private final BigDecimal valorPagoSinPito;
     private final String estado;
 
     CategoryView(UUID id, UUID editionId, String editionName, UUID leagueId, String leagueName, String name, int maxPlayers,
-                 int cantidadGrupos, Integer equiposPorGrupo, int cantidadFases, String estado) {
+                 int cantidadGrupos, Integer equiposPorGrupo, int cantidadFases, BigDecimal valorPagoPartido,
+                 BigDecimal valorCobroEquipo, BigDecimal valorPagoSinPito, String estado) {
         this.id = id;
         this.editionId = editionId;
         this.editionName = editionName;
@@ -415,6 +447,9 @@ class CategoryView {
         this.cantidadGrupos = cantidadGrupos;
         this.equiposPorGrupo = equiposPorGrupo;
         this.cantidadFases = cantidadFases;
+        this.valorPagoPartido = valorPagoPartido;
+        this.valorCobroEquipo = valorCobroEquipo;
+        this.valorPagoSinPito = valorPagoSinPito;
         this.estado = estado;
     }
 
@@ -456,6 +491,18 @@ class CategoryView {
 
     public int getCantidadFases() {
         return cantidadFases;
+    }
+
+    public BigDecimal getValorPagoPartido() {
+        return valorPagoPartido;
+    }
+
+    public BigDecimal getValorCobroEquipo() {
+        return valorCobroEquipo;
+    }
+
+    public BigDecimal getValorPagoSinPito() {
+        return valorPagoSinPito;
     }
 
     public String getEstado() {

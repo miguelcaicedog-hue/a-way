@@ -5,6 +5,7 @@ import { api } from './api'
 import { ArbitrosScreen } from './Arbitros'
 import { CategoryScreen, EditionScreen, LeagueScreen, PlayerScreen, TeamScreen } from './Catalog'
 import { CalendarioScreen } from './Calendario'
+import { ClasificacionScreen } from './Clasificacion'
 import { CanchasScreen } from './Canchas'
 import { FasesScreen } from './Fases'
 import { GruposScreen } from './Grupos'
@@ -46,6 +47,7 @@ const sections = [
   { id: 'inscripciones', label: 'Inscripciones', summary: 'Carga del archivo de inscripciones y alta de equipos y jugadores por categoría.' },
   { id: 'grupos', label: 'Grupos', summary: 'Grupos de cada categoría y asignación de equipos, a mano o automática.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
+  { id: 'clasificacion', label: 'Clasificación', summary: 'Cuadro de los equipos clasificados según grupos, tabla y fases.' },
   { id: 'calendario', label: 'Calendario', summary: 'Jornadas, fechas, horarios, cancha y árbitro de cada partido.' },
   { id: 'horarios', label: 'Horarios', summary: 'Cancha y hora de los partidos. Filtra por categoría y fecha, y asigna turnos desde la hora y el intervalo que elijas.' },
   { id: 'resultados', label: 'Resultados', summary: 'Marcador de los partidos de una jornada.' },
@@ -65,7 +67,7 @@ const sections = [
 const menuGroups = [
   { label: 'Inicio', ids: ['inicio'] },
   { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
-  { label: 'Fixture', ids: ['grupos', 'fases', 'calendario', 'horarios'] },
+  { label: 'Fixture', ids: ['grupos', 'fases', 'clasificacion', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tabla'] },
   { label: 'Disciplina', ids: ['sanciones-jugador', 'suspensiones-jugador'] },
   { label: 'Administración', ids: ['arbitros', 'canchas', 'catalogo-tarjetas', 'suspensiones', 'desempate-goleadores', 'desempate-equipos', 'publicaciones'] },
@@ -436,7 +438,7 @@ function App() {
           </button>
           </div>
         </header>
-        <main className="workspace">
+        <main className={section === 'clasificacion' ? 'workspace ancho' : 'workspace'}>
         <h1>{current.label}</h1>
         {section !== 'inicio' && <p>{current.summary}</p>}
         {section === 'inicio' && (
@@ -464,6 +466,17 @@ function App() {
         )}
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}
+        {section === 'clasificacion' && (
+          <ClasificacionScreen
+            key={editionId}
+            editionId={editionId}
+            leagueId={leagueId}
+            leagueName={leagues.find((league) => league.id === leagueId)?.name ?? ''}
+            hasLogo={leagues.some((league) => league.id === leagueId && league.hasLogo)}
+            editionName={editions.find((edition) => edition.id === editionId)?.name ?? ''}
+            logoVersion={scopeVersion}
+          />
+        )}
         {section === 'calendario' && <CalendarioScreen profile={profile} editionId={editionId} />}
         {section === 'horarios' && <HorariosScreen profile={profile} editionId={editionId} leagueId={leagueId} />}
         {section === 'resultados' && <ResultadosScreen key={editionId} profile={profile} editionId={editionId} leagueId={leagueId} />}

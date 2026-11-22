@@ -120,7 +120,7 @@ public class ReportePagoArbitrosService {
             Arbitro arbitro = ficha.get(id);
             List<Linea> lineas = porArbitro.get(id);
             for (Linea linea : lineas) {
-                linea.pago = pago(arbitro, linea);
+                linea.pago = pago(linea);
             }
             lineas.sort(Comparator
                     .comparing((Linea linea) -> linea.hora == null ? "" : linea.hora)
@@ -169,12 +169,15 @@ public class ReportePagoArbitrosService {
             if (partido.getIdEquipoVisita() != null) {
                 equipos++;
             }
+            Category categoria = categoriaPartido(elegidas, partido.getIdCategoria());
             vistas.put(partido.getId(), new Vista(
                     textoHora(partido.getHora()),
                     nombreCategoria.getOrDefault(partido.getIdCategoria(), ""),
                     nombreJornada(porJornada.get(partido.getIdJornada())),
                     local + " VS " + visita,
-                    equipos));
+                    equipos,
+                    categoria == null ? cero() : monto(categoria.getValorPagoPartido()),
+                    categoria == null ? cero() : monto(categoria.getValorPagoSinPito())));
         }
         return vistas;
     }
@@ -187,18 +190,26 @@ public class ReportePagoArbitrosService {
         linea.partido = vista.partido;
         linea.pito = pito;
         linea.equipos = vista.equipos;
+        linea.valorPagoPartido = vista.valorPagoPartido;
+        linea.valorPagoSinPito = vista.valorPagoSinPito;
         linea.pago = cero();
         return linea;
     }
 
-    private BigDecimal pago(Arbitro arbitro, Linea linea) {
-        if (arbitro == null) {
-            return cero();
+    private Category categoriaPartido(List<Category> elegidas, UUID categoryId) {
+        for (Category categoria : elegidas) {
+            if (categoria.getId().equals(categoryId)) {
+                return categoria;
+            }
         }
+        return null;
+    }
+
+    private BigDecimal pago(Linea linea) {
         if (linea.pito) {
-            return monto(arbitro.getValorPagoPartido()).multiply(BigDecimal.valueOf(linea.equipos));
+            return monto(linea.valorPagoPartido).multiply(BigDecimal.valueOf(linea.equipos));
         }
-        return monto(arbitro.getValorPagoSinPito());
+        return monto(linea.valorPagoSinPito);
     }
 
     private String nombre(Arbitro arbitro) {
@@ -389,13 +400,18 @@ public class ReportePagoArbitrosService {
         private final String jornada;
         private final String partido;
         private final int equipos;
+        private final BigDecimal valorPagoPartido;
+        private final BigDecimal valorPagoSinPito;
 
-        private Vista(String hora, String categoria, String jornada, String partido, int equipos) {
+        private Vista(String hora, String categoria, String jornada, String partido, int equipos,
+                      BigDecimal valorPagoPartido, BigDecimal valorPagoSinPito) {
             this.hora = hora;
             this.categoria = categoria;
             this.jornada = jornada;
             this.partido = partido;
             this.equipos = equipos;
+            this.valorPagoPartido = valorPagoPartido;
+            this.valorPagoSinPito = valorPagoSinPito;
         }
     }
 
@@ -406,6 +422,8 @@ public class ReportePagoArbitrosService {
         private String partido;
         private boolean pito;
         private int equipos;
+        private BigDecimal valorPagoPartido;
+        private BigDecimal valorPagoSinPito;
         private BigDecimal pago;
     }
 

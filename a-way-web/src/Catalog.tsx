@@ -38,6 +38,9 @@ type Category = {
   cantidadGrupos: number
   equiposPorGrupo: number | null
   cantidadFases: number
+  valorPagoPartido: number
+  valorCobroEquipo: number
+  valorPagoSinPito: number
   estado: string
 }
 
@@ -429,6 +432,9 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
   const [cantidadGrupos, setCantidadGrupos] = useState('1')
   const [equiposPorGrupo, setEquiposPorGrupo] = useState('')
   const [cantidadFases, setCantidadFases] = useState('1')
+  const [valorPagoPartido, setValorPagoPartido] = useState('0.00')
+  const [valorCobroEquipo, setValorCobroEquipo] = useState('0.00')
+  const [valorPagoSinPito, setValorPagoSinPito] = useState('0.00')
   const [estado, setEstado] = useState('ACTIVO')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
@@ -452,6 +458,9 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
     setCantidadGrupos('1')
     setEquiposPorGrupo('')
     setCantidadFases('1')
+    setValorPagoPartido('0.00')
+    setValorCobroEquipo('0.00')
+    setValorPagoSinPito('0.00')
     setEstado('ACTIVO')
   }
 
@@ -473,6 +482,9 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
       cantidadGrupos: Number(cantidadGrupos),
       equiposPorGrupo: equipos === '' ? null : Number(equipos),
       cantidadFases: Number(cantidadFases),
+      valorPagoPartido: Number(valorPagoPartido),
+      valorCobroEquipo: Number(valorCobroEquipo),
+      valorPagoSinPito: Number(valorPagoSinPito),
       estado,
     }
     try {
@@ -536,7 +548,7 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
               <td>{row.estado === 'INACTIVO' ? 'Inactiva' : 'Activa'}</td>
               {writable && (
                 <td className="actions">
-                  <button type="button" onClick={() => { setEditing(row); setName(row.name); setMaxPlayers(String(row.maxPlayers)); setCantidadGrupos(String(row.cantidadGrupos)); setEquiposPorGrupo(row.equiposPorGrupo == null ? '' : String(row.equiposPorGrupo)); setCantidadFases(String(row.cantidadFases)); setEstado(row.estado === 'INACTIVO' ? 'INACTIVO' : 'ACTIVO') }}>Editar</button>
+                  <button type="button" onClick={() => { setEditing(row); setName(row.name); setMaxPlayers(String(row.maxPlayers)); setCantidadGrupos(String(row.cantidadGrupos)); setEquiposPorGrupo(row.equiposPorGrupo == null ? '' : String(row.equiposPorGrupo)); setCantidadFases(String(row.cantidadFases)); setValorPagoPartido(Number(row.valorPagoPartido ?? 0).toFixed(2)); setValorCobroEquipo(Number(row.valorCobroEquipo ?? 0).toFixed(2)); setValorPagoSinPito(Number(row.valorPagoSinPito ?? 0).toFixed(2)); setEstado(row.estado === 'INACTIVO' ? 'INACTIVO' : 'ACTIVO') }}>Editar</button>
                   {row.estado !== 'INACTIVO' && <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>}
                 </td>
               )}
@@ -553,6 +565,21 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
           <label>Grupos<input type="number" min={1} value={cantidadGrupos} onChange={(event) => setCantidadGrupos(event.target.value)} required /></label>
           <label>Equipos por grupo<input type="number" min={1} value={equiposPorGrupo} onChange={(event) => setEquiposPorGrupo(event.target.value)} placeholder="Todos" /></label>
           <label>Fases<input type="number" min={1} value={cantidadFases} onChange={(event) => setCantidadFases(event.target.value)} required /></label>
+          <fieldset className="grupo-arbitraje">
+            <legend>Arbitraje</legend>
+            <label>
+              Valor cobro equipo
+              <input type="number" min={0} step="0.01" required value={valorCobroEquipo} onChange={(event) => setValorCobroEquipo(event.target.value)} />
+            </label>
+            <label>
+              Valor a pagar arbitraje
+              <input type="number" min={0} step="0.01" required value={valorPagoPartido} onChange={(event) => setValorPagoPartido(event.target.value)} />
+            </label>
+            <label>
+              Valor a pagar si árbitro no pita
+              <input type="number" min={0} step="0.01" required value={valorPagoSinPito} onChange={(event) => setValorPagoSinPito(event.target.value)} />
+            </label>
+          </fieldset>
           <label>
             Estado
             <select value={estado} onChange={(event) => setEstado(event.target.value)}>

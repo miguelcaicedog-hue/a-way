@@ -49,12 +49,15 @@ public class ReporteCobrosService {
     private final TarjetaJugadorRepository tarjetasJugadores;
     private final PartidoCobroRepository cobros;
     private final PartidoCobroDetalleRepository detalles;
+    private final PartidoArbitroRepository asignaciones;
+    private final ArbitroRepository arbitros;
     private final AppUserRepository users;
 
     public ReporteCobrosService(EditionRepository editions, CategoryRepository categories, JornadaRepository jornadas,
                                 PartidoRepository partidos, TeamRepository teams, TarjetaRepository catalogo,
                                 TarjetaJugadorRepository tarjetasJugadores, PartidoCobroRepository cobros,
-                                PartidoCobroDetalleRepository detalles, AppUserRepository users) {
+                                PartidoCobroDetalleRepository detalles, PartidoArbitroRepository asignaciones,
+                                ArbitroRepository arbitros, AppUserRepository users) {
         this.editions = editions;
         this.categories = categories;
         this.jornadas = jornadas;
@@ -64,6 +67,8 @@ public class ReporteCobrosService {
         this.tarjetasJugadores = tarjetasJugadores;
         this.cobros = cobros;
         this.detalles = detalles;
+        this.asignaciones = asignaciones;
+        this.arbitros = arbitros;
         this.users = users;
     }
 
@@ -135,6 +140,18 @@ public class ReporteCobrosService {
                 .thenComparing(partido -> nombreJornada(porJornada.get(partido.getIdJornada())))
                 .thenComparingInt(Partido::getOrden));
         Map<String, Montos> montos = montos(ligaId, delDia);
+        Map<UUID, BigDecimal> cobroCategoria = new HashMap<>();
+        for (Category categoria : elegidas) {
+            cobroCategoria.put(categoria.getId(), monto(categoria.getValorCobroEquipo()));
+        }
+        Map<UUID, Integer> arbitrosPorPartido = arbitrosActivos(delDia);
+        for (Partido partido : delDia) {
+            int factor = Math.max(1, arbitrosPorPartido.getOrDefault(partido.getId(), 0));
+            BigDecimal porEquipo = cobroCategoria.getOrDefault(partido.getIdCategoria(), cero())
+                    .multiply(BigDecimal.valueOf(factor));
+            sumarArbitraje(montos, partido.getId(), partido.getIdEquipoLocal(), porEquipo);
+            sumarArbitraje(montos, partido.getId(), partido.getIdEquipoVisita(), porEquipo);
+        }
         List<Fila> filas = new ArrayList<>();
         for (Partido partido : delDia) {
             String hora = textoHora(partido.getHora());
@@ -177,9 +194,7 @@ public class ReporteCobrosService {
         for (PartidoCobroDetalle detalle : lineas) {
             Montos montos = porEquipo.computeIfAbsent(llave(detalle.getIdPartido(), detalle.getIdEquipo()), clave -> new Montos());
             BigDecimal costo = monto(detalle.getCosto());
-            if ("ARBITRAJE".equals(detalle.getTipo())) {
-                montos.arbitraje = montos.arbitraje.add(costo);
-            } else if ("TARJETA".equals(detalle.getTipo())) {
+            if ("TARJETA".equals(detalle.getTipo())) {
                 sumarTarjeta(montos, detalle, porTarjeta.get(detalle.getIdTarjetaJugador()), costoAmarillo, costoRojo);
             } else if ("SANCION".equals(detalle.getTipo())) {
                 montos.suspensiones = montos.suspensiones.add(costo);
@@ -191,6 +206,44 @@ public class ReporteCobrosService {
             montos.transferencia = montos.transferencia.add(monto(cobro.getValorCobroTransferencia()));
         }
         return porEquipo;
+    }
+
+    private Map<UUID, Integer> arbitrosActivos(List<Partido> delDia) {
+        Map<UUID, Integer> conteo = new HashMap<>();
+        if (delDia.isEmpty()) {
+            return conteo;
+        }
+        List<UUID> ids = new ArrayList<>();
+        for (Partido partido : delDia) {
+            ids.add(partido.getId());
+        }
+        List<PartidoArbitro> asignados = asignaciones.activosDePartidos(ids);
+        Set<UUID> arbitroIds = new HashSet<>();
+        for (PartidoArbitro asignado : asignados) {
+            arbitroIds.add(asignado.getIdArbitro());
+        }
+        Set<UUID> activos = new HashSet<>();
+        if (!arbitroIds.isEmpty()) {
+            for (Arbitro arbitro : arbitros.findAllById(arbitroIds)) {
+                if ("ACTIVO".equals(arbitro.getEstado())) {
+                    activos.add(arbitro.getId());
+                }
+            }
+        }
+        for (PartidoArbitro asignado : asignados) {
+            if (activos.contains(asignado.getIdArbitro())) {
+                conteo.merge(asignado.getIdPartido(), 1, Integer::sum);
+            }
+        }
+        return conteo;
+    }
+
+    private void sumarArbitraje(Map<String, Montos> montos, UUID partido, UUID equipo, BigDecimal valor) {
+        if (equipo == null) {
+            return;
+        }
+        Montos destino = montos.computeIfAbsent(llave(partido, equipo), clave -> new Montos());
+        destino.arbitraje = destino.arbitraje.add(valor);
     }
 
     private void sumarTarjeta(Montos montos, PartidoCobroDetalle detalle, TarjetaJugador tarjeta,

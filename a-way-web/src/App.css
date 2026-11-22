@@ -407,6 +407,22 @@ button + .down {
   max-width: 24rem;
 }
 
+.grupo-arbitraje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.85rem 0.9rem 1rem;
+  border: 1px solid #163a5f;
+  border-radius: 6px;
+}
+
+.grupo-arbitraje legend {
+  padding: 0 0.35rem;
+  color: #163a5f;
+  font-weight: 700;
+}
+
 .catalog form.filtros {
   max-width: none;
   flex-direction: row;
@@ -1687,4 +1703,187 @@ button.silbato.sin-cobro {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
+}
+
+.workspace.ancho {
+  width: calc(100% - 2rem);
+}
+
+.cuadro-fecha {
+  margin: 0.8rem 0 0.4rem;
+  color: #163a5f;
+  font-weight: 700;
+}
+
+.cuadro {
+  display: flex;
+  align-items: stretch;
+  gap: 1.6rem;
+  overflow-x: auto;
+  padding: 0.4rem 0.2rem 8.5rem;
+}
+
+.cuadro-lado {
+  display: flex;
+  flex: 1;
+  gap: 1.6rem;
+}
+
+.cuadro-centro {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 10rem;
+}
+
+.cuadro-centro .cuadro-ronda {
+  width: 100%;
+}
+
+.cuadro-final {
+  position: relative;
+}
+
+.cuadro-liga {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: max-content;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.cuadro-escudo {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+}
+
+.cuadro-liga-nombre,
+.cuadro-liga-edicion {
+  margin: 0;
+  color: #163a5f;
+  line-height: 1.2;
+}
+
+.cuadro-liga-nombre {
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cuadro-liga-edicion {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cuadro-ronda {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 9.5rem;
+}
+
+.cuadro-ronda h2 {
+  margin: 0 0 0.45rem;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: #163a5f;
+}
+
+.cuadro-llaves {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: 0.7rem;
+}
+
+.cuadro-pareja {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: 0.7rem;
+}
+
+.cuadro-lado.izquierda .cuadro-pareja::before,
+.cuadro-lado.derecha .cuadro-pareja::before {
+  content: "";
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  width: 0.8rem;
+  border-top: 2px solid #163a5f;
+  border-bottom: 2px solid #163a5f;
+}
+
+.cuadro-lado.izquierda .cuadro-pareja::before {
+  right: -0.8rem;
+  border-right: 2px solid #163a5f;
+}
+
+.cuadro-lado.derecha .cuadro-pareja::before {
+  left: -0.8rem;
+  border-left: 2px solid #163a5f;
+}
+
+.cuadro-lado.izquierda .cuadro-pareja.sola::before,
+.cuadro-lado.derecha .cuadro-pareja.sola::before {
+  top: 50%;
+  bottom: auto;
+  height: 0;
+  border-bottom: 0;
+}
+
+.cuadro-lado.derecha .cuadro-pareja.sola::before {
+  border-right: 0;
+}
+
+.cuadro-llave {
+  background: #fff;
+  border: 1px solid #163a5f;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cuadro-equipo {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.7rem;
+  padding: 0.3rem 0.45rem;
+  background: #f4f7fb;
+  color: #163a5f;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cuadro-equipo + .cuadro-equipo {
+  border-top: 1px solid #163a5f;
+}
+
+.cuadro-equipo.puesto {
+  color: #5d7590;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.cuadro-equipo.vacio {
+  color: transparent;
+}
+
+.cuadro-equipo.avanza {
+  background: #163a5f;
+  color: #fff;
+}
+
+.cuadro-equipo .goles {
+  font-variant-numeric: tabular-nums;
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -183,6 +184,9 @@ public class CompetitionService {
         category.setCantidadGrupos(request.getCantidadGrupos());
         category.setEquiposPorGrupo(request.getEquiposPorGrupo());
         category.setCantidadFases(request.getCantidadFases());
+        category.setValorPagoPartido(valorArbitraje(request.getValorPagoPartido(), "Valor pago por partido"));
+        category.setValorCobroEquipo(valorArbitraje(request.getValorCobroEquipo(), "Valor cobro equipo"));
+        category.setValorPagoSinPito(valorArbitraje(request.getValorPagoSinPito(), "Valor pago si no pita"));
         category.setEstado(estadoCategoria(request.getEstado(), "ACTIVO"));
         return categoryView(categories.save(category));
     }
@@ -198,6 +202,9 @@ public class CompetitionService {
         category.setCantidadGrupos(request.getCantidadGrupos());
         category.setEquiposPorGrupo(request.getEquiposPorGrupo());
         category.setCantidadFases(request.getCantidadFases());
+        category.setValorPagoPartido(valorArbitraje(request.getValorPagoPartido(), "Valor pago por partido"));
+        category.setValorCobroEquipo(valorArbitraje(request.getValorCobroEquipo(), "Valor cobro equipo"));
+        category.setValorPagoSinPito(valorArbitraje(request.getValorPagoSinPito(), "Valor pago si no pita"));
         if (request.getEstado() != null && !request.getEstado().isBlank()) {
             category.setEstado(estadoCategoria(request.getEstado(), category.getEstado()));
         }
@@ -765,6 +772,16 @@ public class CompetitionService {
         return categories.findByEdition_IdAndEstadoOrderByNameAsc(editionId, filtro);
     }
 
+    private BigDecimal valorArbitraje(BigDecimal monto, String etiqueta) {
+        if (monto == null) {
+            return BigDecimal.ZERO.setScale(2);
+        }
+        if (monto.signum() < 0 || monto.scale() > 2 && monto.stripTrailingZeros().scale() > 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, etiqueta + " debe ser cero o mayor, con hasta dos decimales");
+        }
+        return monto.setScale(2);
+    }
+
     private String estadoCategoria(String estado, String omision) {
         if (estado == null || estado.isBlank()) {
             return omision;
@@ -781,7 +798,8 @@ public class CompetitionService {
         return new CategoryView(category.getId(), edition.getId(), edition.getName(),
                 edition.getLeague().getId(), edition.getLeague().getName(),
                 category.getName(), category.getMaxPlayers(), category.getCantidadGrupos(), category.getEquiposPorGrupo(),
-                category.getCantidadFases(), category.getEstado());
+                category.getCantidadFases(), category.getValorPagoPartido(), category.getValorCobroEquipo(),
+                category.getValorPagoSinPito(), category.getEstado());
     }
 
     private TeamView teamView(Team team) {
