@@ -20,15 +20,17 @@ public class ReporteController {
     private final ReporteCobrosService reporteCobros;
     private final ReportePagoArbitrosService pagoArbitros;
     private final ReporteHorariosService reporteHorarios;
+    private final ReporteGoleadoresService reporteGoleadores;
 
     public ReporteController(ReporteTarjetasService tarjetas, ReporteJugadoresService jugadores,
                              ReporteCobrosService reporteCobros, ReportePagoArbitrosService pagoArbitros,
-                             ReporteHorariosService reporteHorarios) {
+                             ReporteHorariosService reporteHorarios, ReporteGoleadoresService reporteGoleadores) {
         this.tarjetas = tarjetas;
         this.jugadores = jugadores;
         this.reporteCobros = reporteCobros;
         this.pagoArbitros = pagoArbitros;
         this.reporteHorarios = reporteHorarios;
+        this.reporteGoleadores = reporteGoleadores;
     }
 
     @GetMapping(value = "/tarjetas-suspensiones", produces = MediaType.APPLICATION_PDF_VALUE)
@@ -83,6 +85,19 @@ public class ReporteController {
         byte[] pdf = reporteHorarios.horarios(editionId, categoryId, dia);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"horarios.pdf\"")
+                .body(pdf);
+    }
+
+    @GetMapping(value = "/goleadores", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> goleadores(@RequestParam UUID editionId,
+                                             @RequestParam UUID categoryId,
+                                             @RequestParam String fecha,
+                                             @RequestParam(required = false) UUID teamId,
+                                             @RequestParam(required = false) String numero,
+                                             @RequestParam(required = false) String nombre) {
+        byte[] pdf = reporteGoleadores.pdf(editionId, categoryId, LocalDate.parse(fecha), teamId, numero, nombre);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"goleadores.pdf\"")
                 .body(pdf);
     }
 

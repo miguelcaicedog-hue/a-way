@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import { aDia, FechaCampo } from './Fecha'
-import { BotonDescargarImagen } from './DescargarImagen'
+import { BotonDescargarImagen, IconoPdf } from './DescargarImagen'
 
 type Category = {
   id: string
@@ -85,6 +85,7 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
   const [detalle, setDetalle] = useState<Goleador | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  const [descargando, setDescargando] = useState(false)
 
   useEffect(() => {
     const relojId = window.setInterval(() => setAhora(new Date()), 1000)
@@ -173,6 +174,34 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
     }
   }, [editionId, categoryId, fecha, teamId])
 
+  async function descargarPdf() {
+    if (!editionId || !categoryId || !fecha) return
+    setDescargando(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, categoryId, fecha })
+      if (teamId) params.set('teamId', teamId)
+      if (filtroCamisa.trim()) params.set('numero', filtroCamisa.trim())
+      if (filtroNombre.trim()) params.set('nombre', filtroNombre.trim())
+      const response = await fetch(`/api/reportes/goleadores?${params.toString()}`, { credentials: 'include' })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
+        throw new Error(body.error ?? 'No se pudo descargar el PDF')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `GOLEADORES-${fecha}.pdf`
+      enlace.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo descargar el PDF')
+    } finally {
+      setDescargando(false)
+    }
+  }
+
   async function mover(anterior: boolean) {
     if (!editionId || !categoryId) return
     setOcupado(true)
@@ -244,6 +273,10 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
           <BotonDescargarImagen leagueId={leagueId} tipo="GOLEADORES" fecha={fecha} goleadores={goleadores} />
+          <button type="button" className="con-icono descarga-pdf" disabled={!fecha || descargando} onClick={() => void descargarPdf()}>
+            <IconoPdf />
+            {descargando ? 'Generando…' : 'Descargar PDF'}
+          </button>
         </form>
       )}
       {editionId && categoryId && !fecha && <p>No hay fechas de partidos en esta categoría.</p>}
