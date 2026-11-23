@@ -1370,7 +1370,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 {writable && (
                   <td className="actions">
                     <button type="button" onClick={() => edit(row)}>Editar</button>
-                    <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>
+                    {row.estado !== 'INACTIVO' && <button type="button" className="ghost" onClick={() => remove(row)}>Eliminar</button>}
                   </td>
                 )}
               </tr>

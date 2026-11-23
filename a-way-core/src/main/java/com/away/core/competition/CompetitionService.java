@@ -407,7 +407,7 @@ public class CompetitionService {
     public void deletePlayer(UUID id) {
         Player player = player(id);
         assertWrite(player.getTeamEntry().getTeam().getLeague().getId());
-        players.delete(player);
+        player.setEstado("INACTIVO");
     }
 
     @Transactional(readOnly = true)
