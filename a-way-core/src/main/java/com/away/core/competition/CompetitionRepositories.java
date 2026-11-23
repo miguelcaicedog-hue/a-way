@@ -70,6 +70,18 @@ interface InscripcionJugadorRepository extends JpaRepository<InscripcionJugador,
     List<InscripcionJugador> findByIdInscripcionEquipoAndEstadoOrderByOrdenAsc(UUID idInscripcionEquipo, String estado);
 }
 
+interface RefuerzoArchivoRepository extends JpaRepository<RefuerzoArchivo, UUID> {
+    List<RefuerzoArchivo> findByIdLigaAndIdEdicionAndEstadoOrderByFechaCreacionDesc(UUID idLiga, UUID idEdicion, String estado);
+}
+
+interface RefuerzoEquipoRepository extends JpaRepository<RefuerzoEquipo, UUID> {
+    List<RefuerzoEquipo> findByIdRefuerzoArchivoAndEstadoOrderByNumeroFilaAsc(UUID idRefuerzoArchivo, String estado);
+}
+
+interface RefuerzoJugadorRepository extends JpaRepository<RefuerzoJugador, UUID> {
+    List<RefuerzoJugador> findByIdRefuerzoEquipoAndEstadoOrderByOrdenAsc(UUID idRefuerzoEquipo, String estado);
+}
+
 interface TeamEntryRepository extends JpaRepository<TeamEntry, UUID> {
     List<TeamEntry> findByCategory_IdOrderByTeam_NameAsc(UUID categoryId);
 
@@ -88,6 +100,10 @@ interface PlayerRepository extends JpaRepository<Player, UUID> {
     List<Player> findByTeamEntry_IdOrderByCedulaAsc(UUID teamEntryId);
 
     List<Player> findByCedulaIgnoreCaseOrderByNameAsc(String cedula);
+
+    @Query("select player from Player player join fetch player.teamEntry entry "
+            + "where entry.category.id = :categoryId and lower(player.cedula) = lower(:cedula)")
+    List<Player> findByCategoriaAndCedula(@Param("categoryId") UUID categoryId, @Param("cedula") String cedula);
 
     @Query("select player.teamEntry.team.id, count(player.id) from Player player "
             + "where player.teamEntry.category.edition.id = :editionId and player.teamEntry.team.id in :teamIds "

@@ -14,6 +14,7 @@ import { ResultadosScreen } from './Resultados'
 import { GoleadoresScreen } from './Goleadores'
 import { TablaScreen } from './Tabla'
 import { InscripcionScreen } from './Inscripciones'
+import { RefuerzoScreen } from './Refuerzos'
 import { SancionesJugadorScreen } from './SancionesJugador'
 import { SuspensionesScreen } from './Suspensiones'
 import { SuspensionesJugadorScreen } from './SuspensionesJugador'
@@ -45,6 +46,7 @@ const sections = [
   { id: 'equipos', label: 'Equipos', summary: 'Clubes de la liga e inscripción a una categoría.' },
   { id: 'jugadores', label: 'Jugadores', summary: 'Ficha del plantel: cédula, nombre, alias, número de camisa, foto y rotación.' },
   { id: 'inscripciones', label: 'Inscripciones', summary: 'Carga del archivo de inscripciones y alta de equipos y jugadores por categoría.' },
+  { id: 'refuerzos', label: 'Refuerzos', summary: 'Carga de refuerzos para añadir o reemplazar jugadores en equipos ya inscritos.' },
   { id: 'grupos', label: 'Grupos', summary: 'Grupos de cada categoría y asignación de equipos, a mano o automática.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
   { id: 'clasificacion', label: 'Clasificación', summary: 'Cuadro de los equipos clasificados según grupos, tabla y fases.' },
@@ -66,7 +68,7 @@ const sections = [
 
 const menuGroups = [
   { label: 'Inicio', ids: ['inicio'] },
-  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones'] },
+  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones', 'refuerzos'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'clasificacion', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tabla'] },
   { label: 'Disciplina', ids: ['sanciones-jugador', 'suspensiones-jugador'] },
@@ -463,6 +465,9 @@ function App() {
         {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'inscripciones' && (
           <InscripcionScreen key={`${leagueId}-${editionId}`} profile={profile} leagueId={leagueId} editionId={editionId} />
+        )}
+        {section === 'refuerzos' && (
+          <RefuerzoScreen key={`${leagueId}-${editionId}`} profile={profile} leagueId={leagueId} editionId={editionId} />
         )}
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}

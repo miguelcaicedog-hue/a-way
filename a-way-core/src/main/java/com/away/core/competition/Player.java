@@ -46,6 +46,9 @@ public class Player {
     @Column(nullable = false)
     private boolean habilitado = false;
 
+    @Column(nullable = false)
+    private boolean reemplazo = false;
+
     public UUID getId() {
         return id;
     }
@@ -132,5 +135,13 @@ public class Player {
 
     public void setHabilitado(boolean habilitado) {
         this.habilitado = habilitado;
+    }
+
+    public boolean isReemplazo() {
+        return reemplazo;
+    }
+
+    public void setReemplazo(boolean reemplazo) {
+        this.reemplazo = reemplazo;
     }
 }
