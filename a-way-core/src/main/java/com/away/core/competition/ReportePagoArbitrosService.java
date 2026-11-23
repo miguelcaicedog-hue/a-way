@@ -58,6 +58,52 @@ public class ReportePagoArbitrosService {
 
     @Transactional(readOnly = true)
     public byte[] pago(UUID editionId, UUID categoryId, LocalDate fecha) {
+        Preparado preparado = preparar(editionId, categoryId, fecha);
+        String cuerpo = preparado.grupos.isEmpty()
+                ? "<p class=\"vacio\">No hay árbitros asignados.</p>"
+                : tablas(preparado.grupos);
+        return ReportePdf.deHtml(documento(preparado.liga, preparado.subtitulo, cuerpo));
+    }
+
+    @Transactional(readOnly = true)
+    public PagoArbitrosVista vista(UUID editionId, UUID categoryId, LocalDate fecha) {
+        Preparado preparado = preparar(editionId, categoryId, fecha);
+        List<ArbitroPagoVista> arbitrosVista = new ArrayList<>();
+        List<ResumenPagoVista> resumen = new ArrayList<>();
+        int partidos = 0;
+        BigDecimal total = cero();
+        int numeroResumen = 1;
+        for (Grupo grupo : preparado.grupos) {
+            List<LineaPagoVista> lineas = new ArrayList<>();
+            BigDecimal pago = cero();
+            int numero = 1;
+            for (Linea linea : grupo.lineas) {
+                lineas.add(new LineaPagoVista(
+                        numero++,
+                        linea.hora == null ? "Sin hora" : linea.hora,
+                        linea.categoria,
+                        linea.jornada,
+                        linea.partido,
+                        linea.pito,
+                        monto(linea.pago)));
+                pago = pago.add(linea.pago);
+            }
+            arbitrosVista.add(new ArbitroPagoVista(grupo.nombre, lineas, monto(pago)));
+            resumen.add(new ResumenPagoVista(numeroResumen++, grupo.nombre, grupo.lineas.size(), monto(pago)));
+            partidos += grupo.lineas.size();
+            total = total.add(pago);
+        }
+        return new PagoArbitrosVista(
+                preparado.liga.getName(),
+                preparado.subtitulo,
+                ZonedDateTime.now(ZONA).format(GENERADO),
+                arbitrosVista,
+                resumen,
+                partidos,
+                monto(total));
+    }
+
+    private Preparado preparar(UUID editionId, UUID categoryId, LocalDate fecha) {
         if (fecha == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Elige una fecha");
         }
@@ -66,15 +112,11 @@ public class ReportePagoArbitrosService {
         League liga = edition.getLeague();
         assertRead(liga.getId());
         List<Category> elegidas = categorias(edition, categoryId);
-        List<Grupo> grupos = grupos(elegidas, fecha);
         String subtitulo = fecha.format(DIA);
         if (categoryId != null && elegidas.size() == 1) {
             subtitulo = subtitulo + " · " + elegidas.get(0).getName();
         }
-        String cuerpo = grupos.isEmpty()
-                ? "<p class=\"vacio\">No hay árbitros asignados.</p>"
-                : tablas(grupos);
-        return ReportePdf.deHtml(documento(liga, subtitulo, cuerpo));
+        return new Preparado(liga, subtitulo, grupos(elegidas, fecha));
     }
 
     private List<Category> categorias(Edition edition, UUID categoryId) {
@@ -247,10 +289,10 @@ public class ReportePagoArbitrosService {
 
     private String tablas(List<Grupo> grupos) {
         StringBuilder html = new StringBuilder();
+        html.append(tablaResumen(grupos));
         for (Grupo grupo : grupos) {
             html.append(tablaArbitro(grupo));
         }
-        html.append(tablaResumen(grupos));
         return html.toString();
     }
 
@@ -434,6 +476,170 @@ public class ReportePagoArbitrosService {
         private Grupo(String nombre, List<Linea> lineas) {
             this.nombre = nombre;
             this.lineas = lineas;
+        }
+    }
+
+    private static final class Preparado {
+        private final League liga;
+        private final String subtitulo;
+        private final List<Grupo> grupos;
+
+        private Preparado(League liga, String subtitulo, List<Grupo> grupos) {
+            this.liga = liga;
+            this.subtitulo = subtitulo;
+            this.grupos = grupos;
+        }
+    }
+
+    public static final class PagoArbitrosVista {
+        private final String liga;
+        private final String subtitulo;
+        private final String generado;
+        private final List<ArbitroPagoVista> arbitros;
+        private final List<ResumenPagoVista> resumen;
+        private final int totalPartidos;
+        private final BigDecimal totalPago;
+
+        private PagoArbitrosVista(String liga, String subtitulo, String generado, List<ArbitroPagoVista> arbitros,
+                                  List<ResumenPagoVista> resumen, int totalPartidos, BigDecimal totalPago) {
+            this.liga = liga;
+            this.subtitulo = subtitulo;
+            this.generado = generado;
+            this.arbitros = arbitros;
+            this.resumen = resumen;
+            this.totalPartidos = totalPartidos;
+            this.totalPago = totalPago;
+        }
+
+        public String getLiga() {
+            return liga;
+        }
+
+        public String getSubtitulo() {
+            return subtitulo;
+        }
+
+        public String getGenerado() {
+            return generado;
+        }
+
+        public List<ArbitroPagoVista> getArbitros() {
+            return arbitros;
+        }
+
+        public List<ResumenPagoVista> getResumen() {
+            return resumen;
+        }
+
+        public int getTotalPartidos() {
+            return totalPartidos;
+        }
+
+        public BigDecimal getTotalPago() {
+            return totalPago;
+        }
+    }
+
+    public static final class ArbitroPagoVista {
+        private final String nombre;
+        private final List<LineaPagoVista> lineas;
+        private final BigDecimal total;
+
+        private ArbitroPagoVista(String nombre, List<LineaPagoVista> lineas, BigDecimal total) {
+            this.nombre = nombre;
+            this.lineas = lineas;
+            this.total = total;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public List<LineaPagoVista> getLineas() {
+            return lineas;
+        }
+
+        public BigDecimal getTotal() {
+            return total;
+        }
+    }
+
+    public static final class LineaPagoVista {
+        private final int numero;
+        private final String hora;
+        private final String categoria;
+        private final String jornada;
+        private final String partido;
+        private final boolean pito;
+        private final BigDecimal pago;
+
+        private LineaPagoVista(int numero, String hora, String categoria, String jornada, String partido,
+                               boolean pito, BigDecimal pago) {
+            this.numero = numero;
+            this.hora = hora;
+            this.categoria = categoria;
+            this.jornada = jornada;
+            this.partido = partido;
+            this.pito = pito;
+            this.pago = pago;
+        }
+
+        public int getNumero() {
+            return numero;
+        }
+
+        public String getHora() {
+            return hora;
+        }
+
+        public String getCategoria() {
+            return categoria;
+        }
+
+        public String getJornada() {
+            return jornada;
+        }
+
+        public String getPartido() {
+            return partido;
+        }
+
+        public boolean isPito() {
+            return pito;
+        }
+
+        public BigDecimal getPago() {
+            return pago;
+        }
+    }
+
+    public static final class ResumenPagoVista {
+        private final int numero;
+        private final String nombre;
+        private final int partidos;
+        private final BigDecimal total;
+
+        private ResumenPagoVista(int numero, String nombre, int partidos, BigDecimal total) {
+            this.numero = numero;
+            this.nombre = nombre;
+            this.partidos = partidos;
+            this.total = total;
+        }
+
+        public int getNumero() {
+            return numero;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public int getPartidos() {
+            return partidos;
+        }
+
+        public BigDecimal getTotal() {
+            return total;
         }
     }
 }

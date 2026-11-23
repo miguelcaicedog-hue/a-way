@@ -51,6 +51,13 @@ public class ReporteController {
                 .body(pdf);
     }
 
+    @GetMapping("/cobros/vista")
+    public ReporteCobrosService.CobrosVista cobrosVista(@RequestParam UUID editionId,
+                                                        @RequestParam(required = false) UUID categoryId,
+                                                        @RequestParam String fecha) {
+        return reporteCobros.vista(editionId, categoryId, LocalDate.parse(fecha));
+    }
+
     @GetMapping(value = "/pago-arbitros", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> pagoArbitros(@RequestParam UUID editionId,
                                                @RequestParam(required = false) UUID categoryId,
@@ -59,6 +66,13 @@ public class ReporteController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pago-arbitros.pdf\"")
                 .body(pdf);
+    }
+
+    @GetMapping("/pago-arbitros/vista")
+    public ReportePagoArbitrosService.PagoArbitrosVista pagoArbitrosVista(@RequestParam UUID editionId,
+                                                                          @RequestParam(required = false) UUID categoryId,
+                                                                          @RequestParam String fecha) {
+        return pagoArbitros.vista(editionId, categoryId, LocalDate.parse(fecha));
     }
 
     @GetMapping(value = "/horarios", produces = MediaType.APPLICATION_PDF_VALUE)

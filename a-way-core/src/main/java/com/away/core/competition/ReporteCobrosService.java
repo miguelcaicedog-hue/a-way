@@ -74,6 +74,58 @@ public class ReporteCobrosService {
 
     @Transactional(readOnly = true)
     public byte[] cobros(UUID editionId, UUID categoryId, LocalDate fecha) {
+        Preparado preparado = preparar(editionId, categoryId, fecha);
+        String cuerpo = preparado.filas.isEmpty()
+                ? "<p class=\"vacio\">No hay partidos en esta fecha.</p>"
+                : tablas(preparado.filas);
+        return ReportePdf.deHtml(documento(preparado.liga, preparado.subtitulo, cuerpo));
+    }
+
+    @Transactional(readOnly = true)
+    public CobrosVista vista(UUID editionId, UUID categoryId, LocalDate fecha) {
+        Preparado preparado = preparar(editionId, categoryId, fecha);
+        List<FilaCobroVista> filas = new ArrayList<>();
+        BigDecimal arbitraje = cero();
+        BigDecimal tarjetas = cero();
+        BigDecimal suspensiones = cero();
+        BigDecimal efectivo = cero();
+        BigDecimal transferencia = cero();
+        int numero = 1;
+        for (Fila fila : preparado.filas) {
+            BigDecimal tarjetasFila = fila.amarillas.add(fila.rojas);
+            BigDecimal total = fila.arbitraje.add(tarjetasFila).add(fila.suspensiones);
+            BigDecimal cobrado = fila.efectivo.add(fila.transferencia);
+            filas.add(new FilaCobroVista(
+                    numero++,
+                    fila.hora == null ? "Sin hora" : fila.hora,
+                    fila.categoria,
+                    fila.jornada,
+                    fila.partido,
+                    monto(fila.arbitraje),
+                    monto(tarjetasFila),
+                    monto(fila.suspensiones),
+                    monto(total),
+                    monto(fila.efectivo),
+                    monto(fila.transferencia),
+                    monto(cobrado)));
+            arbitraje = arbitraje.add(fila.arbitraje);
+            tarjetas = tarjetas.add(tarjetasFila);
+            suspensiones = suspensiones.add(fila.suspensiones);
+            efectivo = efectivo.add(fila.efectivo);
+            transferencia = transferencia.add(fila.transferencia);
+        }
+        return new CobrosVista(
+                filas,
+                monto(arbitraje),
+                monto(tarjetas),
+                monto(suspensiones),
+                monto(arbitraje.add(tarjetas).add(suspensiones)),
+                monto(efectivo),
+                monto(transferencia),
+                monto(efectivo.add(transferencia)));
+    }
+
+    private Preparado preparar(UUID editionId, UUID categoryId, LocalDate fecha) {
         if (fecha == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Elige una fecha");
         }
@@ -82,15 +134,11 @@ public class ReporteCobrosService {
         League liga = edition.getLeague();
         assertRead(liga.getId());
         List<Category> elegidas = categorias(edition, categoryId);
-        List<Fila> filas = filas(liga.getId(), elegidas, fecha);
         String subtitulo = fecha.format(DIA);
         if (categoryId != null && elegidas.size() == 1) {
             subtitulo = subtitulo + " · " + elegidas.get(0).getName();
         }
-        String cuerpo = filas.isEmpty()
-                ? "<p class=\"vacio\">No hay partidos en esta fecha.</p>"
-                : tablas(filas);
-        return ReportePdf.deHtml(documento(liga, subtitulo, cuerpo));
+        return new Preparado(liga, subtitulo, filas(liga.getId(), elegidas, fecha));
     }
 
     private List<Category> categorias(Edition edition, UUID categoryId) {
@@ -309,7 +357,7 @@ public class ReporteCobrosService {
 
     private String tablas(List<Fila> filas) {
         String suspensiones = haySuspensiones(filas) ? tablaSuspensiones(filas) : "";
-        return tablaArbitraje(filas) + tablaTarjetas(filas) + suspensiones + tablaResumen(filas);
+        return tablaResumen(filas) + tablaArbitraje(filas) + tablaTarjetas(filas) + suspensiones;
     }
 
     private boolean haySuspensiones(List<Fila> filas) {
@@ -634,6 +682,154 @@ public class ReporteCobrosService {
             this.suspensiones = suspensiones;
             this.efectivo = efectivo;
             this.transferencia = transferencia;
+        }
+    }
+
+    private static final class Preparado {
+        private final League liga;
+        private final String subtitulo;
+        private final List<Fila> filas;
+
+        private Preparado(League liga, String subtitulo, List<Fila> filas) {
+            this.liga = liga;
+            this.subtitulo = subtitulo;
+            this.filas = filas;
+        }
+    }
+
+    public static final class CobrosVista {
+        private final List<FilaCobroVista> filas;
+        private final BigDecimal arbitraje;
+        private final BigDecimal tarjetas;
+        private final BigDecimal suspensiones;
+        private final BigDecimal total;
+        private final BigDecimal efectivo;
+        private final BigDecimal transferencia;
+        private final BigDecimal totalCobrado;
+
+        private CobrosVista(List<FilaCobroVista> filas, BigDecimal arbitraje, BigDecimal tarjetas,
+                            BigDecimal suspensiones, BigDecimal total, BigDecimal efectivo,
+                            BigDecimal transferencia, BigDecimal totalCobrado) {
+            this.filas = filas;
+            this.arbitraje = arbitraje;
+            this.tarjetas = tarjetas;
+            this.suspensiones = suspensiones;
+            this.total = total;
+            this.efectivo = efectivo;
+            this.transferencia = transferencia;
+            this.totalCobrado = totalCobrado;
+        }
+
+        public List<FilaCobroVista> getFilas() {
+            return filas;
+        }
+
+        public BigDecimal getArbitraje() {
+            return arbitraje;
+        }
+
+        public BigDecimal getTarjetas() {
+            return tarjetas;
+        }
+
+        public BigDecimal getSuspensiones() {
+            return suspensiones;
+        }
+
+        public BigDecimal getTotal() {
+            return total;
+        }
+
+        public BigDecimal getEfectivo() {
+            return efectivo;
+        }
+
+        public BigDecimal getTransferencia() {
+            return transferencia;
+        }
+
+        public BigDecimal getTotalCobrado() {
+            return totalCobrado;
+        }
+    }
+
+    public static final class FilaCobroVista {
+        private final int numero;
+        private final String hora;
+        private final String categoria;
+        private final String jornada;
+        private final String partido;
+        private final BigDecimal arbitraje;
+        private final BigDecimal tarjetas;
+        private final BigDecimal suspensiones;
+        private final BigDecimal total;
+        private final BigDecimal efectivo;
+        private final BigDecimal transferencia;
+        private final BigDecimal totalCobrado;
+
+        private FilaCobroVista(int numero, String hora, String categoria, String jornada, String partido,
+                               BigDecimal arbitraje, BigDecimal tarjetas, BigDecimal suspensiones, BigDecimal total,
+                               BigDecimal efectivo, BigDecimal transferencia, BigDecimal totalCobrado) {
+            this.numero = numero;
+            this.hora = hora;
+            this.categoria = categoria;
+            this.jornada = jornada;
+            this.partido = partido;
+            this.arbitraje = arbitraje;
+            this.tarjetas = tarjetas;
+            this.suspensiones = suspensiones;
+            this.total = total;
+            this.efectivo = efectivo;
+            this.transferencia = transferencia;
+            this.totalCobrado = totalCobrado;
+        }
+
+        public int getNumero() {
+            return numero;
+        }
+
+        public String getHora() {
+            return hora;
+        }
+
+        public String getCategoria() {
+            return categoria;
+        }
+
+        public String getJornada() {
+            return jornada;
+        }
+
+        public String getPartido() {
+            return partido;
+        }
+
+        public BigDecimal getArbitraje() {
+            return arbitraje;
+        }
+
+        public BigDecimal getTarjetas() {
+            return tarjetas;
+        }
+
+        public BigDecimal getSuspensiones() {
+            return suspensiones;
+        }
+
+        public BigDecimal getTotal() {
+            return total;
+        }
+
+        public BigDecimal getEfectivo() {
+            return efectivo;
+        }
+
+        public BigDecimal getTransferencia() {
+            return transferencia;
+        }
+
+        public BigDecimal getTotalCobrado() {
+            return totalCobrado;
         }
     }
 }

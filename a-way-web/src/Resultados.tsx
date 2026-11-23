@@ -41,6 +41,52 @@ type Panel = {
   cerrada: boolean
 }
 
+type LineaPago = {
+  numero: number
+  hora: string
+  categoria: string
+  jornada: string
+  partido: string
+  pito: boolean
+  pago: number
+}
+
+type VistaPago = {
+  liga: string
+  subtitulo: string
+  generado: string
+  arbitros: { nombre: string; lineas: LineaPago[]; total: number }[]
+  resumen: { numero: number; nombre: string; partidos: number; total: number }[]
+  totalPartidos: number
+  totalPago: number
+}
+
+type FilaCobro = {
+  numero: number
+  hora: string
+  categoria: string
+  jornada: string
+  partido: string
+  arbitraje: number
+  tarjetas: number
+  suspensiones: number
+  total: number
+  efectivo: number
+  transferencia: number
+  totalCobrado: number
+}
+
+type VistaCobros = {
+  filas: FilaCobro[]
+  arbitraje: number
+  tarjetas: number
+  suspensiones: number
+  total: number
+  efectivo: number
+  transferencia: number
+  totalCobrado: number
+}
+
 function reloj(ahora: Date) {
   return ahora.toLocaleString('es-EC', {
     weekday: 'long',
@@ -56,6 +102,72 @@ function reloj(ahora: Date) {
 
 function textoGol(valor: number | null) {
   return valor == null ? '' : String(valor)
+}
+
+function dinero(valor: number) {
+  return Number(valor ?? 0).toFixed(2)
+}
+
+type MontosCobro = {
+  arbitraje: number
+  tarjetas: number
+  suspensiones: number
+  total: number
+  efectivo: number
+  transferencia: number
+  totalCobrado: number
+}
+
+function sumarCobros(filas: FilaCobro[]): MontosCobro {
+  return filas.reduce((acc, fila) => ({
+    arbitraje: acc.arbitraje + Number(fila.arbitraje),
+    tarjetas: acc.tarjetas + Number(fila.tarjetas),
+    suspensiones: acc.suspensiones + Number(fila.suspensiones),
+    total: acc.total + Number(fila.total),
+    efectivo: acc.efectivo + Number(fila.efectivo),
+    transferencia: acc.transferencia + Number(fila.transferencia),
+    totalCobrado: acc.totalCobrado + Number(fila.totalCobrado),
+  }), { arbitraje: 0, tarjetas: 0, suspensiones: 0, total: 0, efectivo: 0, transferencia: 0, totalCobrado: 0 })
+}
+
+function agruparCobros(filas: FilaCobro[]) {
+  const categorias: { nombre: string; jornadas: { nombre: string; filas: FilaCobro[] }[] }[] = []
+  for (const fila of filas) {
+    let categoria = categorias.find((item) => item.nombre === fila.categoria)
+    if (!categoria) {
+      categoria = { nombre: fila.categoria, jornadas: [] }
+      categorias.push(categoria)
+    }
+    let jornada = categoria.jornadas.find((item) => item.nombre === fila.jornada)
+    if (!jornada) {
+      jornada = { nombre: fila.jornada, filas: [] }
+      categoria.jornadas.push(jornada)
+    }
+    jornada.filas.push(fila)
+  }
+  return categorias
+}
+
+function MontosCobroVista({ montos }: { montos: MontosCobro }) {
+  const campos: [string, number, boolean][] = [
+    ['Arbitraje', montos.arbitraje, false],
+    ['Tarjetas', montos.tarjetas, false],
+    ['Suspensiones', montos.suspensiones, false],
+    ['Total', montos.total, false],
+    ['Cobro real', montos.efectivo, true],
+    ['Transferencia', montos.transferencia, true],
+    ['Total cobrado', montos.totalCobrado, true],
+  ]
+  return (
+    <span className="cobro-montos">
+      {campos.map(([etiqueta, valor, cobrado]) => (
+        <span key={etiqueta} className={cobrado ? 'cobrado' : undefined}>
+          <small>{etiqueta}</small>
+          {dinero(valor)}
+        </span>
+      ))}
+    </span>
+  )
 }
 
 function cobroRojo(partido: Partido, local: string, visita: string) {
@@ -87,6 +199,12 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
   const [revisionDetalle, setRevisionDetalle] = useState(0)
   const [revisionCierre, setRevisionCierre] = useState(0)
   const [ocupado, setOcupado] = useState(false)
+  const [menuPago, setMenuPago] = useState(false)
+  const [vistaPago, setVistaPago] = useState<VistaPago | null>(null)
+  const [menuCobro, setMenuCobro] = useState(false)
+  const [vistaCobros, setVistaCobros] = useState<VistaCobros | null>(null)
+  const menuPagoRef = useRef<HTMLSpanElement>(null)
+  const menuCobroRef = useRef<HTMLSpanElement>(null)
   const esperas = useRef<Record<string, number>>({})
   async function descargarAmonestados() {
     if (!editionId || !fecha) return
@@ -140,6 +258,21 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
     }
   }
 
+  async function abrirVistaCobros() {
+    if (!editionId || !fecha) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, fecha })
+      if (categoryId) params.set('categoryId', categoryId)
+      setVistaCobros(await api<VistaCobros>(`/api/reportes/cobros/vista?${params.toString()}`))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo abrir la vista previa')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   async function descargarPagoArbitros() {
     if (!editionId || !fecha) return
     setOcupado(true)
@@ -166,6 +299,21 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
     }
   }
 
+  async function abrirVistaPago() {
+    if (!editionId || !fecha) return
+    setOcupado(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams({ editionId, fecha })
+      if (categoryId) params.set('categoryId', categoryId)
+      setVistaPago(await api<VistaPago>(`/api/reportes/pago-arbitros/vista?${params.toString()}`))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'No se pudo abrir la vista previa')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   const puedeCualquierFecha = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
   const esAsistente = profile.memberships.some((item) => item.role === 'ASISTENTE')
 
@@ -173,6 +321,21 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
     const relojId = window.setInterval(() => setAhora(new Date()), 1000)
     return () => window.clearInterval(relojId)
   }, [])
+
+  useEffect(() => {
+    if (!menuPago && !menuCobro) return
+    function cerrar(event: MouseEvent) {
+      const destino = event.target as Node
+      if (menuPago && !menuPagoRef.current?.contains(destino)) {
+        setMenuPago(false)
+      }
+      if (menuCobro && !menuCobroRef.current?.contains(destino)) {
+        setMenuCobro(false)
+      }
+    }
+    document.addEventListener('mousedown', cerrar)
+    return () => document.removeEventListener('mousedown', cerrar)
+  }, [menuPago, menuCobro])
 
   useEffect(() => {
     setCategoryId('')
@@ -337,19 +500,35 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
             <IconoPdf />
             AMONESTADOS Y SUSPENDIDOS
           </button>
-          <button type="button" className="con-icono descarga-cobro" disabled={!fecha || ocupado} onClick={() => void descargarCobros()}>
-            <svg className="icono-cobro" viewBox="0 0 24 24" aria-hidden="true">
-              <path fillRule="evenodd" d="M5 4.6h14a2.2 2.2 0 0 1 2.2 2.2v10.4A2.2 2.2 0 0 1 19 19.4H5a2.2 2.2 0 0 1-2.2-2.2V6.8A2.2 2.2 0 0 1 5 4.6zm1.35 1.55v10.1h11.3V6.15H6.35z" />
-              <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
-            </svg>
-            COBROS
-          </button>
-          <button type="button" className="con-icono descarga-arbitro" disabled={!fecha || ocupado} onClick={() => void descargarPagoArbitros()}>
-            <svg className="icono-arbitro" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 10h6l2-2h3a4 4 0 1 1 0 8h-1.2l-1.3 2.2a2 2 0 0 1-3.4 0L8 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2zm13 1.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6z" />
-            </svg>
-            PAGO ÁRBITROS
-          </button>
+          <span className="menu-descarga" ref={menuCobroRef}>
+            <button type="button" className="con-icono descarga-cobro" disabled={!fecha || ocupado} aria-expanded={menuCobro} onClick={() => setMenuCobro((abierto) => !abierto)}>
+              <svg className="icono-cobro" viewBox="0 0 24 24" aria-hidden="true">
+                <path fillRule="evenodd" d="M5 4.6h14a2.2 2.2 0 0 1 2.2 2.2v10.4A2.2 2.2 0 0 1 19 19.4H5a2.2 2.2 0 0 1-2.2-2.2V6.8A2.2 2.2 0 0 1 5 4.6zm1.35 1.55v10.1h11.3V6.15H6.35z" />
+                <text x="12" y="15.7" textAnchor="middle" fontSize="10.5" fontWeight="700" fontFamily="Arial, sans-serif">$</text>
+              </svg>
+              COBROS
+            </button>
+            {menuCobro && (
+              <span className="menu-descarga-opciones" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenuCobro(false); void abrirVistaCobros() }}>Vista previa</button>
+                <button type="button" role="menuitem" onClick={() => { setMenuCobro(false); void descargarCobros() }}>Descargar PDF</button>
+              </span>
+            )}
+          </span>
+          <span className="menu-descarga" ref={menuPagoRef}>
+            <button type="button" className="con-icono descarga-arbitro" disabled={!fecha || ocupado} aria-expanded={menuPago} onClick={() => setMenuPago((abierto) => !abierto)}>
+              <svg className="icono-arbitro" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 10h6l2-2h3a4 4 0 1 1 0 8h-1.2l-1.3 2.2a2 2 0 0 1-3.4 0L8 16H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2zm13 1.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6z" />
+              </svg>
+              PAGO ÁRBITROS
+            </button>
+            {menuPago && (
+              <span className="menu-descarga-opciones" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenuPago(false); void abrirVistaPago() }}>Vista previa</button>
+                <button type="button" role="menuitem" onClick={() => { setMenuPago(false); void descargarPagoArbitros() }}>Descargar PDF</button>
+              </span>
+            )}
+          </span>
         </span>
       </div>
       {jornadaCerrada && <p className="jornada-cerrada">JORNADA CERRADA</p>}
@@ -496,6 +675,161 @@ export function ResultadosScreen({ profile, editionId, leagueId }: { profile: Pr
             setRevisionCobro((valor) => valor + 1)
           }}
         />
+      )}
+      {vistaCobros && (
+        <div className="modal-fondo" role="presentation" onClick={() => setVistaCobros(null)}>
+          <section className="modal cobros-resumen" role="dialog" aria-modal="true" aria-label="Cobros" onClick={(event) => event.stopPropagation()}>
+            <div className="partido-cabecera">
+              <button type="button" className="ghost" onClick={() => setVistaCobros(null)}>Cerrar</button>
+            </div>
+            {vistaCobros.filas.length === 0 && <p className="vacio-reporte">No hay partidos en esta fecha.</p>}
+            {vistaCobros.filas.length > 0 && (
+              <>
+                <div className="cobros-total">
+                  <strong>Total</strong>
+                  <MontosCobroVista montos={{
+                    arbitraje: vistaCobros.arbitraje,
+                    tarjetas: vistaCobros.tarjetas,
+                    suspensiones: vistaCobros.suspensiones,
+                    total: vistaCobros.total,
+                    efectivo: vistaCobros.efectivo,
+                    transferencia: vistaCobros.transferencia,
+                    totalCobrado: vistaCobros.totalCobrado,
+                  }} />
+                </div>
+                {agruparCobros(vistaCobros.filas).map((categoria) => {
+                  const filasCategoria = categoria.jornadas.flatMap((jornada) => jornada.filas)
+                  return (
+                    <details key={categoria.nombre} className="cobro-grupo">
+                      <summary>
+                        <span>{categoria.nombre}</span>
+                        <MontosCobroVista montos={sumarCobros(filasCategoria)} />
+                      </summary>
+                      {categoria.jornadas.map((jornada) => (
+                        <details key={jornada.nombre} className="cobro-grupo">
+                          <summary>
+                            <span>{jornada.nombre}</span>
+                            <MontosCobroVista montos={sumarCobros(jornada.filas)} />
+                          </summary>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th className="numero">N°</th>
+                                <th>Hora</th>
+                                <th>Partido</th>
+                                <th className="monto">Arbitraje</th>
+                                <th className="monto">Tarjetas</th>
+                                <th className="monto">Suspensiones</th>
+                                <th className="monto">Total</th>
+                                <th className="monto cobrado">Cobro real</th>
+                                <th className="monto cobrado">Transferencia</th>
+                                <th className="monto cobrado">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {jornada.filas.map((fila, indice) => (
+                                <tr key={fila.numero}>
+                                  <td className="numero">{indice + 1}</td>
+                                  <td>{fila.hora}</td>
+                                  <td>{fila.partido}</td>
+                                  <td className="monto">{dinero(fila.arbitraje)}</td>
+                                  <td className="monto">{dinero(fila.tarjetas)}</td>
+                                  <td className="monto">{dinero(fila.suspensiones)}</td>
+                                  <td className="monto">{dinero(fila.total)}</td>
+                                  <td className="monto cobrado">{dinero(fila.efectivo)}</td>
+                                  <td className="monto cobrado">{dinero(fila.transferencia)}</td>
+                                  <td className="monto cobrado">{dinero(fila.totalCobrado)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </details>
+                      ))}
+                    </details>
+                  )
+                })}
+              </>
+            )}
+          </section>
+        </div>
+      )}
+      {vistaPago && (
+        <div className="modal-fondo" role="presentation" onClick={() => setVistaPago(null)}>
+          <section className="modal pago-arbitros" role="dialog" aria-modal="true" aria-label="Pago árbitros" onClick={(event) => event.stopPropagation()}>
+            <div className="partido-cabecera">
+              <button type="button" className="ghost" onClick={() => setVistaPago(null)}>Cerrar</button>
+            </div>
+            {vistaPago.arbitros.length === 0 && <p className="vacio-reporte">No hay árbitros asignados.</p>}
+            {vistaPago.arbitros.length > 0 && (
+              <div>
+                <h3>RESUMEN</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th className="numero">N°</th>
+                      <th>Árbitro</th>
+                      <th className="monto">Partidos</th>
+                      <th className="monto">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vistaPago.resumen.map((fila) => (
+                      <tr key={fila.numero}>
+                        <td className="numero">{fila.numero}</td>
+                        <td>{fila.nombre}</td>
+                        <td className="monto">{fila.partidos}</td>
+                        <td className="monto">{dinero(fila.total)}</td>
+                      </tr>
+                    ))}
+                    <tr className="total">
+                      <td colSpan={2}>Total</td>
+                      <td className="monto">{vistaPago.totalPartidos}</td>
+                      <td className="monto">{dinero(vistaPago.totalPago)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {vistaPago.arbitros.map((arbitro) => (
+              <details key={arbitro.nombre} className="pago-arbitro">
+                <summary>
+                  <span>{arbitro.nombre}</span>
+                  <span className="monto">{dinero(arbitro.total)}</span>
+                </summary>
+                <table>
+                  <thead>
+                    <tr>
+                      <th className="numero">N°</th>
+                      <th>Hora</th>
+                      <th>Categoría</th>
+                      <th>Jornada</th>
+                      <th>Partido</th>
+                      <th>Pitó</th>
+                      <th className="monto">Pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {arbitro.lineas.map((linea) => (
+                      <tr key={linea.numero}>
+                        <td className="numero">{linea.numero}</td>
+                        <td>{linea.hora}</td>
+                        <td>{linea.categoria}</td>
+                        <td>{linea.jornada}</td>
+                        <td>{linea.partido}</td>
+                        <td>{linea.pito ? 'Sí' : 'No'}</td>
+                        <td className="monto">{dinero(linea.pago)}</td>
+                      </tr>
+                    ))}
+                    <tr className="total">
+                      <td colSpan={6}>Total</td>
+                      <td className="monto">{dinero(arbitro.total)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </details>
+            ))}
+          </section>
+        </div>
       )}
     </section>
   )
