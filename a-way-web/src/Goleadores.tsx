@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from './api'
 import { aDia, FechaCampo } from './Fecha'
 import { BotonDescargarImagen, IconoPdf } from './DescargarImagen'
@@ -86,6 +86,8 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
   const [descargando, setDescargando] = useState(false)
+  const [menuPdf, setMenuPdf] = useState(false)
+  const menuPdfRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     const relojId = window.setInterval(() => setAhora(new Date()), 1000)
@@ -174,7 +176,16 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
     }
   }, [editionId, categoryId, fecha, teamId])
 
-  async function descargarPdf() {
+  useEffect(() => {
+    if (!menuPdf) return
+    function cerrar(event: MouseEvent) {
+      if (!menuPdfRef.current?.contains(event.target as Node)) setMenuPdf(false)
+    }
+    document.addEventListener('mousedown', cerrar)
+    return () => document.removeEventListener('mousedown', cerrar)
+  }, [menuPdf])
+
+  async function descargarPdf(detalle: boolean) {
     if (!editionId || !categoryId || !fecha) return
     setDescargando(true)
     setError(null)
@@ -183,7 +194,8 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
       if (teamId) params.set('teamId', teamId)
       if (filtroCamisa.trim()) params.set('numero', filtroCamisa.trim())
       if (filtroNombre.trim()) params.set('nombre', filtroNombre.trim())
-      const response = await fetch(`/api/reportes/goleadores?${params.toString()}`, { credentials: 'include' })
+      const ruta = detalle ? '/api/reportes/goleadores/detalle' : '/api/reportes/goleadores'
+      const response = await fetch(`${ruta}?${params.toString()}`, { credentials: 'include' })
       if (!response.ok) {
         const body = await response.json().catch(() => ({ error: 'No se pudo descargar el PDF' }))
         throw new Error(body.error ?? 'No se pudo descargar el PDF')
@@ -192,7 +204,7 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
       const url = URL.createObjectURL(blob)
       const enlace = document.createElement('a')
       enlace.href = url
-      enlace.download = `GOLEADORES-${fecha}.pdf`
+      enlace.download = `${detalle ? 'GOLEADORES-DETALLE' : 'GOLEADORES'}-${fecha}.pdf`
       enlace.click()
       URL.revokeObjectURL(url)
     } catch (caught) {
@@ -273,10 +285,18 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
           <BotonDescargarImagen leagueId={leagueId} tipo="GOLEADORES" fecha={fecha} goleadores={goleadores} />
-          <button type="button" className="con-icono descarga-pdf" disabled={!fecha || descargando} onClick={() => void descargarPdf()}>
-            <IconoPdf />
-            {descargando ? 'Generando…' : 'Descargar PDF'}
-          </button>
+          <span className="menu-descarga" ref={menuPdfRef}>
+            <button type="button" className="con-icono descarga-pdf" disabled={!fecha || descargando} aria-expanded={menuPdf} onClick={() => setMenuPdf((abierto) => !abierto)}>
+              <IconoPdf />
+              {descargando ? 'Generando…' : 'Descargar PDF'}
+            </button>
+            {menuPdf && (
+              <span className="menu-descarga-opciones" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenuPdf(false); void descargarPdf(false) }}>Descargar resumen</button>
+                <button type="button" role="menuitem" onClick={() => { setMenuPdf(false); void descargarPdf(true) }}>Descargar detalle</button>
+              </span>
+            )}
+          </span>
         </form>
       )}
       {editionId && categoryId && !fecha && <p>No hay fechas de partidos en esta categoría.</p>}

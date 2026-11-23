@@ -101,6 +101,19 @@ public class ReporteController {
                 .body(pdf);
     }
 
+    @GetMapping(value = "/goleadores/detalle", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> goleadoresDetalle(@RequestParam UUID editionId,
+                                                    @RequestParam UUID categoryId,
+                                                    @RequestParam String fecha,
+                                                    @RequestParam(required = false) UUID teamId,
+                                                    @RequestParam(required = false) String numero,
+                                                    @RequestParam(required = false) String nombre) {
+        byte[] pdf = reporteGoleadores.detalle(editionId, categoryId, LocalDate.parse(fecha), teamId, numero, nombre);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"goleadores-detalle.pdf\"")
+                .body(pdf);
+    }
+
     @GetMapping(value = "/jugadores-por-equipo", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> jugadores(@RequestParam UUID editionId, @RequestParam UUID categoryId) {
         byte[] pdf = jugadores.jugadoresPorEquipo(editionId, categoryId);
