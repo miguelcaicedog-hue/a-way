@@ -284,7 +284,7 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
           </label>
           <button type="button" disabled={ocupado} onClick={() => mover(true)}>FILTRAR FECHA ANTERIOR</button>
           <button type="button" disabled={ocupado} onClick={() => mover(false)}>FILTRAR PROXIMA FECHA</button>
-          <BotonDescargarImagen leagueId={leagueId} tipo="GOLEADORES" fecha={fecha} goleadores={goleadores} />
+          <BotonDescargarImagen leagueId={leagueId} tipo="GOLEADORES" fecha={fecha} goleadores={panel?.goleadores ?? []} />
           <span className="menu-descarga" ref={menuPdfRef}>
             <button type="button" className="con-icono descarga-pdf" disabled={!fecha || descargando} aria-expanded={menuPdf} onClick={() => setMenuPdf((abierto) => !abierto)}>
               <IconoPdf />
@@ -308,6 +308,7 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
           <table>
             <thead>
               <tr>
+                <th>Posición</th>
                 <th>Foto</th>
                 <th>Nº</th>
                 <th>Nombre</th>
@@ -317,8 +318,9 @@ export function GoleadoresScreen({ editionId, leagueId }: { editionId: string; l
               </tr>
             </thead>
             <tbody>
-              {paginaActual.map((goleador) => (
+              {paginaActual.map((goleador, indice) => (
                 <tr key={goleador.jugadorId}>
+                  <td className="numero">{desde + indice + 1}</td>
                   <td><Foto goleador={goleador} /></td>
                   <td className="numero">{goleador.numeroCamisa}</td>
                   <td>{etiqueta(goleador)}</td>

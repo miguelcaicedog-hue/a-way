@@ -171,9 +171,7 @@ function armar(
       nombre: '',
       fecha: null as string | null,
       columnas: columnasGoleadores(),
-      filas: goleadores.map((goleador, indice) => ({
-        valores: [String(indice + 1), goleador.alias.trim() || goleador.nombre, String(goleador.goles), goleador.equipo],
-      })),
+      filas: filasGoleadores(goleadores),
     }]
   }
   if (tipo === 'RESULTADOS') {
@@ -216,6 +214,17 @@ function armar(
     filas: grupo.equipos.map((fila) => ({
       valores: activas.map((columna) => valorFila(fila, columna.codigo)),
     })),
+  }))
+}
+
+function filasGoleadores(goleadores: Goleador[]): FilaImagen[] {
+  let fin = Math.min(6, goleadores.length)
+  if (goleadores.length > 6) {
+    const corte = goleadores[5].goles
+    while (fin < goleadores.length && goleadores[fin].goles === corte) fin += 1
+  }
+  return goleadores.slice(0, fin).map((goleador, indice) => ({
+    valores: [String(indice + 1), goleador.alias.trim() || goleador.nombre, String(goleador.goles), goleador.equipo],
   }))
 }
 
