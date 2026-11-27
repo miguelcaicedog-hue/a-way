@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { api } from './api'
 import { aDia } from './Fecha'
 
@@ -60,11 +60,39 @@ type Jugador = {
   motivoSuspension: string | null
 }
 
-function FotoArbitro({ id, hasFoto }: { id: string; hasFoto: boolean }) {
-  if (hasFoto) {
-    return <img className="arbitro-foto" alt="" src={`/api/arbitros/${id}/foto`} />
+type FotoGrande = { clave: string; src: string; rotation: number; top: number; left: number }
+
+function posicionFoto(event: MouseEvent<HTMLButtonElement>) {
+  const rect = event.currentTarget.getBoundingClientRect()
+  const size = 220
+  let left = rect.right + 10
+  if (left + size > window.innerWidth - 12) {
+    left = Math.max(12, rect.left - size - 10)
   }
-  return <span className="arbitro-foto vacio" aria-label="Sin foto" />
+  let top = rect.top - 70
+  if (top + size > window.innerHeight - 12) {
+    top = Math.max(12, window.innerHeight - size - 12)
+  }
+  return { top, left }
+}
+
+function FotoArbitro({ id, hasFoto, nombre, ampliar }: { id: string; hasFoto: boolean; nombre: string; ampliar: AmpliarFoto }) {
+  if (!hasFoto) {
+    return <span className="arbitro-foto vacio" aria-label="Sin foto" />
+  }
+  const src = `/api/arbitros/${id}/foto`
+  return (
+    <button
+      type="button"
+      className="foto-jugador"
+      aria-label={`Ampliar foto de ${nombre}`}
+      onMouseEnter={(event) => ampliar.mostrar(id, src, 0, event)}
+      onMouseLeave={ampliar.ocultar}
+      onClick={(event) => ampliar.alternar(id, src, 0, event)}
+    >
+      <img className="arbitro-foto" alt="" src={src} />
+    </button>
+  )
 }
 
 function bordeFoto(jugador: Jugador) {
@@ -86,19 +114,35 @@ function EstadoJugador({ jugador }: { jugador: Jugador }) {
   return null
 }
 
-function FotoJugador({ jugador }: { jugador: Jugador }) {
+type AmpliarFoto = {
+  mostrar: (clave: string, src: string, rotation: number, event: MouseEvent<HTMLButtonElement>) => void
+  ocultar: () => void
+  alternar: (clave: string, src: string, rotation: number, event: MouseEvent<HTMLButtonElement>) => void
+}
+
+function FotoJugador({ jugador, ampliar }: { jugador: Jugador; ampliar: AmpliarFoto }) {
   const borde = bordeFoto(jugador)
-  if (jugador.hasFoto) {
-    return (
+  if (!jugador.hasFoto) {
+    return <span className={`player-photo vacio ${borde}`} aria-label="Sin foto" />
+  }
+  const src = `/api/players/${jugador.id}/photo`
+  return (
+    <button
+      type="button"
+      className="foto-jugador"
+      aria-label={`Ampliar foto de ${jugador.alias}`}
+      onMouseEnter={(event) => ampliar.mostrar(jugador.id, src, jugador.rotacion, event)}
+      onMouseLeave={ampliar.ocultar}
+      onClick={(event) => ampliar.alternar(jugador.id, src, jugador.rotacion, event)}
+    >
       <img
         className={`player-photo ${borde}`}
         alt=""
-        src={`/api/players/${jugador.id}/photo`}
+        src={src}
         style={{ transform: `rotate(${jugador.rotacion}deg)` }}
       />
-    )
-  }
-  return <span className={`player-photo vacio ${borde}`} aria-label="Sin foto" />
+    </button>
+  )
 }
 
 function firmaArbitros(lista: Asignado[]) {
@@ -164,6 +208,33 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
   const [ocupado, setOcupado] = useState(false)
   const [grabado, setGrabado] = useState(false)
   const [confirmarCierre, setConfirmarCierre] = useState(false)
+  const [fotoAmpliada, setFotoAmpliada] = useState<FotoGrande | null>(null)
+  const fotoFija = useRef<string | null>(null)
+  const fotoCerradaEn = useRef(0)
+
+  function mostrarFoto(clave: string, src: string, rotation: number, event: MouseEvent<HTMLButtonElement>) {
+    if (fotoFija.current === clave || Date.now() - fotoCerradaEn.current < 400) return
+    fotoFija.current = null
+    setFotoAmpliada({ clave, src, rotation, ...posicionFoto(event) })
+  }
+
+  function ocultarFoto() {
+    if (fotoFija.current) return
+    setFotoAmpliada(null)
+  }
+
+  function alternarFoto(clave: string, src: string, rotation: number, event: MouseEvent<HTMLButtonElement>) {
+    if (fotoFija.current === clave) {
+      fotoFija.current = null
+      fotoCerradaEn.current = Date.now()
+      setFotoAmpliada(null)
+      return
+    }
+    fotoFija.current = clave
+    setFotoAmpliada({ clave, src, rotation, ...posicionFoto(event) })
+  }
+
+  const ampliar: AmpliarFoto = { mostrar: mostrarFoto, ocultar: ocultarFoto, alternar: alternarFoto }
 
   function golesDe(respuesta: Detalle) {
     const cargados: Record<string, string> = {}
@@ -398,7 +469,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                 const asignado = asignados.find((item) => item.arbitroId === arbitro.id)
                 return (
                   <li key={arbitro.id}>
-                    <FotoArbitro id={arbitro.id} hasFoto={arbitro.hasFoto} />
+                    <FotoArbitro id={arbitro.id} hasFoto={arbitro.hasFoto} nombre={arbitro.nombre} ampliar={ampliar} />
                     <span>{arbitro.nombre}</span>
                     {asignado ? (
                       <>
@@ -447,7 +518,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
             <ul className="lista-detalle goleadores">
               {jugadores.map((jugador) => (
                 <li key={jugador.id}>
-                  <FotoJugador jugador={jugador} />
+                  <FotoJugador jugador={jugador} ampliar={ampliar} />
                   <span>{jugador.numero}</span>
                   <span>{jugador.alias}</span>
                   <input
@@ -510,7 +581,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
                 }
                 return (
                   <li key={jugador.id}>
-                    <FotoJugador jugador={jugador} />
+                    <FotoJugador jugador={jugador} ampliar={ampliar} />
                     <span>{jugador.numero}</span>
                     <span>{jugador.alias}</span>
                     <input
@@ -580,7 +651,7 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
             const nombreDe = (id: string) => detalle?.sancionesDisponibles.find((opcion) => opcion.id === id)?.descripcion ?? 'Sanción'
             return (
               <li key={jugador.id}>
-                <FotoJugador jugador={jugador} />
+                <FotoJugador jugador={jugador} ampliar={ampliar} />
                 <span className="numero">{jugador.numero}</span>
                 <span>{jugador.alias}</span>
                 <EstadoJugador jugador={jugador} />
@@ -661,6 +732,21 @@ export function PartidoModal({ partidoId, onClose }: { partidoId: string; onClos
         )}
         </div>
       </section>
+      {fotoAmpliada && (
+        <img
+          className="player-photo ampliada"
+          alt=""
+          src={fotoAmpliada.src}
+          style={{ transform: `rotate(${fotoAmpliada.rotation}deg)`, top: fotoAmpliada.top, left: fotoAmpliada.left }}
+          role="button"
+          aria-label="Cerrar foto"
+          onClick={() => {
+            fotoFija.current = null
+            fotoCerradaEn.current = Date.now()
+            setFotoAmpliada(null)
+          }}
+        />
+      )}
     </div>
   )
 }
