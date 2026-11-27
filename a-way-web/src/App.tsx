@@ -45,8 +45,8 @@ const sections = [
   { id: 'categorias', label: 'Categorías', summary: 'Categorías de una edición, tope de jugadores y criterios de desempate.' },
   { id: 'equipos', label: 'Equipos', summary: 'Clubes de la liga e inscripción a una categoría.' },
   { id: 'jugadores', label: 'Jugadores', summary: 'Ficha del plantel: cédula, nombre, alias, número de camisa, foto y rotación.' },
-  { id: 'inscripciones', label: 'Inscripciones', summary: 'Carga del archivo de inscripciones y alta de equipos y jugadores por categoría.' },
-  { id: 'refuerzos', label: 'Refuerzos', summary: 'Carga de refuerzos para añadir o reemplazar jugadores en equipos ya inscritos.' },
+  { id: 'inscripciones', label: 'Inscripción equipo', summary: 'Carga del archivo de inscripciones y alta de equipos y jugadores por categoría.' },
+  { id: 'refuerzos', label: 'Inscripción refuerzo', summary: 'Carga de refuerzos para añadir o reemplazar jugadores en equipos ya inscritos.' },
   { id: 'grupos', label: 'Grupos', summary: 'Grupos de cada categoría y asignación de equipos, a mano o automática.' },
   { id: 'fases', label: 'Fases', summary: 'Fase de grupos, ida y vuelta, y cruces de octavos a final por posición.' },
   { id: 'clasificacion', label: 'Clasificación', summary: 'Cuadro de los equipos clasificados según grupos, tabla y fases.' },
@@ -58,25 +58,27 @@ const sections = [
   { id: 'arbitros', label: 'Árbitros', summary: 'Árbitros de la liga: cédula, nombre, teléfono, foto y contacto por WhatsApp.' },
   { id: 'canchas', label: 'Canchas', summary: 'Canchas de la liga, con búsqueda por descripción y estado.' },
   { id: 'catalogo-tarjetas', label: 'Tarjetas', summary: 'Tipos de tarjeta de la liga: color, costo y jornadas de suspensión.' },
-  { id: 'sanciones-jugador', label: 'Sanciones jugador', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
+  { id: 'sanciones-jugador', label: 'Multas económicas', summary: 'Sanciones de jugador de la liga: descripción, costo y estado.' },
   { id: 'suspensiones', label: 'Suspensiones', summary: 'Jornadas de suspensión por tarjeta roja, acumulación de amarillas o rojas, y falta grave.' },
-  { id: 'suspensiones-jugador', label: 'Suspensiones a jugador', summary: 'Suspensiones pendientes de cada jugador y altas o bajas manuales.' },
+  { id: 'suspensiones-jugador', label: 'Suspender jugador', summary: 'Suspensiones pendientes de cada jugador y altas o bajas manuales.' },
   { id: 'desempate-goleadores', label: 'Desempate goleadores', summary: 'Orden de los criterios de desempate de la tabla de goleadores de la edición.' },
   { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },
   { id: 'publicaciones', label: 'Publicaciones', summary: 'Estilo del gráfico de la liga y descarga de goleadores, resultados, horarios y tabla de posiciones.' },
 ] as const
 
-const menuGroups = [
+type SectionId = (typeof sections)[number]['id']
+
+type MenuNodo = SectionId | { label: string; ids: readonly SectionId[] }
+
+const menuGroups: { label: string; ids: readonly MenuNodo[] }[] = [
   { label: 'Inicio', ids: ['inicio'] },
-  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'inscripciones', 'refuerzos'] },
+  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias'] },
+  { label: 'Inscripción', ids: ['inscripciones', 'refuerzos'] },
   { label: 'Club', ids: ['equipos', 'jugadores'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'clasificacion', 'calendario', 'horarios'] },
-  { label: 'Jornada', ids: ['resultados', 'goles', 'tabla'] },
-  { label: 'Disciplina', ids: ['sanciones-jugador', 'suspensiones-jugador'] },
-  { label: 'Administración', ids: ['arbitros', 'canchas', 'catalogo-tarjetas', 'suspensiones', 'desempate-goleadores', 'desempate-equipos', 'publicaciones'] },
-] as const
-
-type SectionId = (typeof sections)[number]['id']
+  { label: 'Jornada', ids: ['resultados', 'goles', 'tabla', 'suspensiones-jugador'] },
+  { label: 'Administración', ids: [{ label: 'General', ids: ['canchas', 'arbitros'] }, { label: 'Disciplina', ids: ['sanciones-jugador', 'catalogo-tarjetas', 'suspensiones'] }, { label: 'Criterio de desempate', ids: ['desempate-goleadores', 'desempate-equipos'] }, 'publicaciones'] },
+]
 
 const ACCESOS_INICIALES: SectionId[] = ['resultados', 'horarios', 'tabla', 'goles', 'calendario']
 
@@ -152,6 +154,8 @@ function App() {
   const [equipoJugadores, setEquipoJugadores] = useState<{ categoryId: string; teamId: string } | null>(null)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const cierreMenu = useRef<number | null>(null)
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+  const cierreSubmenu = useRef<number | null>(null)
   const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean; active: boolean }[]>([])
   const [editions, setEditions] = useState<{ id: string; name: string }[]>([])
   const [leagueId, setLeagueId] = useState('')
@@ -171,6 +175,7 @@ function App() {
       cierreMenu.current = null
     }
     setOpenMenu(null)
+    setOpenSubmenu(null)
   }
 
   function abrirMenu(label: string) {
@@ -181,6 +186,24 @@ function App() {
     setOpenMenu(label)
   }
 
+  function abrirSubmenu(label: string) {
+    if (cierreSubmenu.current != null) {
+      window.clearTimeout(cierreSubmenu.current)
+      cierreSubmenu.current = null
+    }
+    setOpenSubmenu(label)
+  }
+
+  function programarCierreSubmenu() {
+    if (cierreSubmenu.current != null) {
+      window.clearTimeout(cierreSubmenu.current)
+    }
+    cierreSubmenu.current = window.setTimeout(() => {
+      cierreSubmenu.current = null
+      setOpenSubmenu(null)
+    }, 300)
+  }
+
   function programarCierreMenu() {
     if (cierreMenu.current != null) {
       window.clearTimeout(cierreMenu.current)
@@ -188,6 +211,7 @@ function App() {
     cierreMenu.current = window.setTimeout(() => {
       cierreMenu.current = null
       setOpenMenu(null)
+      setOpenSubmenu(null)
     }, 300)
   }
 
@@ -316,6 +340,9 @@ function App() {
     if (cierreMenu.current != null) {
       window.clearTimeout(cierreMenu.current)
     }
+    if (cierreSubmenu.current != null) {
+      window.clearTimeout(cierreSubmenu.current)
+    }
   }, [])
 
   async function onLogout() {
@@ -388,13 +415,14 @@ function App() {
         <nav aria-label="Principal">
           {menuGroups.map((group) => {
             const staff = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
-            const items = group.ids.flatMap((id) => {
+            const seccionesDe = (id: SectionId) => {
               const item = sections.find((sectionItem) => sectionItem.id === id)
               if (!item || (item.id === 'suspensiones-jugador' && !staff)) {
                 return []
               }
               return [item]
-            })
+            }
+            const items = group.ids.flatMap((nodo) => typeof nodo === 'string' ? seccionesDe(nodo) : nodo.ids.flatMap(seccionesDe))
             if (items.length === 1 && items[0].id === 'inicio') {
               return (
                 <button
@@ -431,16 +459,66 @@ function App() {
                   {group.label}
                 </button>
                 <div className="menu-tree" role="group" aria-label={group.label}>
-                  {items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-current={item.id === section ? 'page' : undefined}
-                      onClick={() => abrirSeccion(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+                  {group.ids.map((nodo) => {
+                    if (typeof nodo === 'string') {
+                      const item = seccionesDe(nodo)[0]
+                      if (!item) {
+                        return null
+                      }
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          aria-current={item.id === section ? 'page' : undefined}
+                          onClick={() => abrirSeccion(item.id)}
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    }
+                    const hijos = nodo.ids.flatMap(seccionesDe)
+                    if (hijos.length === 0) {
+                      return null
+                    }
+                    const submenuAbierto = openSubmenu === nodo.label
+                    const submenuActivo = hijos.some((item) => item.id === section)
+                    return (
+                      <div
+                        key={nodo.label}
+                        className={submenuAbierto ? 'menu-group is-open' : 'menu-group'}
+                        onMouseEnter={() => abrirSubmenu(nodo.label)}
+                        onMouseLeave={programarCierreSubmenu}
+                      >
+                        <button
+                          type="button"
+                          className={submenuActivo ? 'is-current' : undefined}
+                          aria-expanded={submenuAbierto}
+                          aria-haspopup="true"
+                          onClick={() => {
+                            if (cierreSubmenu.current != null) {
+                              window.clearTimeout(cierreSubmenu.current)
+                              cierreSubmenu.current = null
+                            }
+                            setOpenSubmenu(submenuAbierto ? null : nodo.label)
+                          }}
+                        >
+                          {nodo.label}
+                        </button>
+                        <div className="menu-tree" role="group" aria-label={nodo.label}>
+                          {hijos.map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              aria-current={item.id === section ? 'page' : undefined}
+                              onClick={() => abrirSeccion(item.id)}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )

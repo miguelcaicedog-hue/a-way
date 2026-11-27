@@ -223,8 +223,8 @@ button:disabled {
   padding: 0.1rem 0 0.3rem 0.35rem;
 }
 
-.menu-group.is-open .menu-tree,
-.menu-group:focus-within .menu-tree {
+.menu-group.is-open > .menu-tree,
+.menu-group:focus-within > .menu-tree {
   display: flex;
   flex-direction: column;
 }
@@ -282,6 +282,14 @@ button:disabled {
   margin-left: 1.45rem;
   padding-left: 0.9rem;
   color: #9eb0c2;
+}
+
+.menu-tree .menu-group > button {
+  width: auto;
+}
+
+.sidebar .menu-tree .menu-tree button {
+  margin-left: 2.4rem;
 }
 
 .sidebar nav button.is-current {
