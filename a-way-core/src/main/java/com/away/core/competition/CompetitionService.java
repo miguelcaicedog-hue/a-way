@@ -823,6 +823,7 @@ public class CompetitionService {
         return new PlayerView(player.getId(), entry.getId(), entry.getTeam().getId(), entry.getTeam().getName(),
                 entry.getCategory().getId(), player.getName(), player.getAlias(), player.getCedula(),
                 player.getNumeroCamisa(),
-                player.getRotationDegrees(), player.getEstado(), player.isHabilitado(), player.getPhoto() != null);
+                player.getRotationDegrees(), player.getEstado(), player.isHabilitado(), player.isReemplazo(),
+                player.getPhoto() != null);
     }
 }

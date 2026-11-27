@@ -787,11 +787,12 @@ class PlayerView {
     private final int rotationDegrees;
     private final String estado;
     private final boolean habilitado;
+    private final boolean reemplazo;
     private final boolean hasPhoto;
 
     PlayerView(UUID id, UUID teamEntryId, UUID teamId, String teamName, UUID categoryId,
                String name, String alias, String cedula, int numeroCamisa, int rotationDegrees, String estado,
-               boolean habilitado, boolean hasPhoto) {
+               boolean habilitado, boolean reemplazo, boolean hasPhoto) {
         this.id = id;
         this.teamEntryId = teamEntryId;
         this.teamId = teamId;
@@ -804,6 +805,7 @@ class PlayerView {
         this.rotationDegrees = rotationDegrees;
         this.estado = estado;
         this.habilitado = habilitado;
+        this.reemplazo = reemplazo;
         this.hasPhoto = hasPhoto;
     }
 
@@ -853,6 +855,10 @@ class PlayerView {
 
     public boolean isHabilitado() {
         return habilitado;
+    }
+
+    public boolean isReemplazo() {
+        return reemplazo;
     }
 
     public boolean isHasPhoto() {

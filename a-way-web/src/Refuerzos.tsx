@@ -28,6 +28,12 @@ type Detalle = {
   equipos: Equipo[]
 }
 
+type EquipoInscrito = {
+  id: string
+  name: string
+  categorias?: { id: string; nombre: string }[]
+}
+
 type Jugador = {
   id: string
   cedula: string | null
@@ -57,6 +63,25 @@ function FotoVacia({ grande = false }: { grande?: boolean }) {
   )
 }
 
+function fechaCarga(valor: string) {
+  const fecha = new Date(valor)
+  if (Number.isNaN(fecha.getTime())) {
+    return valor
+  }
+  return fecha.toLocaleString('es-EC', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
+function plano(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+}
+
 function aliasFromName(fullName: string) {
   const parts = fullName.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 2) {
@@ -68,7 +93,7 @@ function aliasFromName(fullName: string) {
   return `${parts[0]} ${parts[2]}`
 }
 
-export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Profile; leagueId: string; editionId: string }) {
+export function RefuerzoScreen({ profile, leagueId, editionId, onAbrirPlantel }: { profile: Profile; leagueId: string; editionId: string; onAbrirPlantel: (equipo: { categoryId: string; teamId: string }) => void }) {
   const [archivos, setArchivos] = useState<Archivo[]>([])
   const [detalle, setDetalle] = useState<Detalle | null>(null)
   const [abierto, setAbierto] = useState<string | null>(null)
@@ -86,6 +111,7 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
   const [mensaje, setMensaje] = useState<string | null>(null)
   const [fotoMarca, setFotoMarca] = useState(0)
   const [vistaFoto, setVistaFoto] = useState<string | null>(null)
+  const [inscritos, setInscritos] = useState<EquipoInscrito[]>([])
   const writable = canWrite(profile)
 
   async function abrir(id: string) {
@@ -122,6 +148,28 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
       .catch((reason: Error) => {
         if (vigente) {
           setError(reason.message)
+        }
+      })
+    return () => {
+      vigente = false
+    }
+  }, [leagueId, editionId])
+
+  useEffect(() => {
+    if (!leagueId || !editionId) {
+      setInscritos([])
+      return
+    }
+    let vigente = true
+    api<EquipoInscrito[]>(`/api/teams?leagueId=${leagueId}&editionId=${editionId}&estado=ACTIVO`)
+      .then((items) => {
+        if (vigente) {
+          setInscritos(items)
+        }
+      })
+      .catch(() => {
+        if (vigente) {
+          setInscritos([])
         }
       })
     return () => {
@@ -169,6 +217,47 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
       }))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo actualizar la selección')
+    }
+  }
+
+  function plantelDe(equipo: Equipo) {
+    const categoria = plano(equipo.categoria)
+    const team = inscritos.find((item) => plano(item.name) === plano(equipo.nombreEquipo))
+    const cat = team?.categorias?.find((item) => plano(item.nombre) === categoria)
+    if (!team || !cat) {
+      return null
+    }
+    return { teamId: team.id, categoryId: cat.id }
+  }
+
+  function nombresEquipo(equipo: Equipo) {
+    const categoria = plano(equipo.categoria)
+    const deCategoria = inscritos
+      .filter((team) => (team.categorias ?? []).some((item) => plano(item.nombre) === categoria))
+      .map((team) => team.name)
+    const base = (deCategoria.length ? deCategoria : inscritos.map((team) => team.name)).slice().sort((a, b) => a.localeCompare(b, 'es'))
+    if (!base.includes(equipo.nombreEquipo)) {
+      return [equipo.nombreEquipo, ...base]
+    }
+    return base
+  }
+
+  async function renombrar(equipo: Equipo, nombreEquipo: string) {
+    if (!nombreEquipo || nombreEquipo === equipo.nombreEquipo) {
+      return
+    }
+    setError(null)
+    try {
+      const saved = await api<Equipo>(`/api/refuerzos/equipos/${equipo.id}/nombre`, {
+        method: 'PUT',
+        body: JSON.stringify({ nombreEquipo }),
+      })
+      setDetalle((current) => current && ({
+        ...current,
+        equipos: current.equipos.map((item) => item.id === saved.id ? saved : item),
+      }))
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo cambiar el nombre del equipo')
     }
   }
 
@@ -361,9 +450,11 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
         <label>
           Archivo cargado
           <select value={detalle?.id ?? ''} onChange={(event) => abrir(event.target.value)}>
-            {archivos.map((archivo) => (
-              <option key={archivo.id} value={archivo.id}>{archivo.nombreArchivo}</option>
-            ))}
+            {[...archivos]
+              .sort((a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
+              .map((archivo) => (
+                <option key={archivo.id} value={archivo.id}>{fechaCarga(archivo.fechaCreacion)} — {archivo.nombreArchivo}</option>
+              ))}
           </select>
         </label>
       )}
@@ -378,6 +469,7 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
                 <th>Categoría</th>
                 <th>Resultado</th>
                 <th>Detalle</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -395,7 +487,25 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
                   )}
                   <td className="numero">{index + 1}</td>
                   <td>
-                    <button type="button" className="ghost" onClick={() => verJugadores(equipo)}>{equipo.nombreEquipo}</button>
+                    <div className="equipo-nombre">
+                      {writable && equipo.resultado !== 'OK' ? (
+                        <select
+                          aria-label={`Nombre de ${equipo.nombreEquipo}`}
+                          value={equipo.nombreEquipo}
+                          disabled={procesando}
+                          onChange={(event) => renombrar(equipo, event.target.value)}
+                        >
+                          {nombresEquipo(equipo).map((nombre) => (
+                            <option key={nombre} value={nombre}>{nombre}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button type="button" className="ghost" onClick={() => verJugadores(equipo)}>{equipo.nombreEquipo}</button>
+                      )}
+                      {writable && equipo.resultado !== 'OK' && (
+                        <button type="button" className="ghost" onClick={() => verJugadores(equipo)}>Jugadores</button>
+                      )}
+                    </div>
                   </td>
                   <td>{equipo.categoria}</td>
                   <td>{equipo.resultado}</td>
@@ -409,6 +519,28 @@ export function RefuerzoScreen({ profile, leagueId, editionId }: { profile: Prof
                         </svg>
                       </button>
                     )}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="icono"
+                      aria-label={`Abrir el plantel de ${equipo.nombreEquipo}`}
+                      disabled={!plantelDe(equipo)}
+                      onClick={() => {
+                        const destino = plantelDe(equipo)
+                        if (destino) {
+                          onAbrirPlantel(destino)
+                        }
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path d="M3.5 6.2 9.2 4l5.7 2.2v5.2c0 3.6-2.2 6.2-5.7 7.3-3.5-1.1-5.7-3.7-5.7-7.3z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                        <circle cx="9.2" cy="10.2" r="2.15" fill="none" stroke="currentColor" strokeWidth="1.3" />
+                        <path d="M9.2 8.05v4.3M7.05 10.2h4.3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                        <path d="M16.2 4.2h4.3V8.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M20.3 4.4 15.2 9.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               ))}

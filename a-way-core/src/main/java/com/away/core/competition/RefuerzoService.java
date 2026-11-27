@@ -173,6 +173,30 @@ public class RefuerzoService {
         return equipoView(equipos.save(equipo));
     }
 
+    @Transactional
+    public RefuerzoEquipoView renombrar(UUID equipoId, String nombre) {
+        RefuerzoEquipo equipo = equipo(equipoId);
+        RefuerzoArchivo archivo = archivo(equipo.getIdRefuerzoArchivo());
+        assertWrite(archivo.getIdLiga());
+        if ("OK".equals(equipo.getResultado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo ya fue procesado");
+        }
+        boolean cargado = jugadores.findByIdRefuerzoEquipoAndEstadoOrderByOrdenAsc(equipo.getId(), "ACTIVO").stream()
+                .anyMatch(RefuerzoJugador::isCargado);
+        if (cargado) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El equipo ya tiene jugadores procesados");
+        }
+        String limpio = nombre == null ? "" : nombre.trim().replaceAll("\\s+", " ");
+        if (limpio.isEmpty() || limpio.length() > 160) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre del equipo debe tener hasta 160 caracteres");
+        }
+        equipo.setNombreEquipo(limpio);
+        equipo.setResultado(null);
+        equipo.setDetalle(null);
+        auditar(equipo, usuario(), false);
+        return equipoView(equipos.save(equipo));
+    }
+
     public RefuerzoDetalleView procesar(UUID archivoId, List<UUID> equipoIds) {
         RefuerzoArchivo archivo = archivo(archivoId);
         assertWrite(archivo.getIdLiga());

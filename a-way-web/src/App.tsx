@@ -148,6 +148,7 @@ function App() {
   const [loginError, setLoginError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [section, setSection] = useState<SectionId>('inicio')
+  const [equipoJugadores, setEquipoJugadores] = useState<{ categoryId: string; teamId: string } | null>(null)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean; active: boolean }[]>([])
   const [editions, setEditions] = useState<{ id: string; name: string }[]>([])
@@ -155,7 +156,10 @@ function App() {
   const [editionId, setEditionId] = useState('')
   const [scopeVersion, setScopeVersion] = useState(0)
 
-  function abrirSeccion(id: SectionId) {
+  function abrirSeccion(id: SectionId, equipo?: { categoryId: string; teamId: string }) {
+    if (id === 'jugadores') {
+      setEquipoJugadores(equipo ?? null)
+    }
     if (id !== 'inicio' && profile) {
       sumarUso(profile.username, id)
     }
@@ -462,12 +466,26 @@ function App() {
         {section === 'ediciones' && <EditionScreen profile={profile} leagueId={leagueId} onScopeChange={refreshScope} />}
         {section === 'categorias' && <CategoryScreen profile={profile} editionId={editionId} />}
         {section === 'equipos' && <TeamScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
-        {section === 'jugadores' && <PlayerScreen profile={profile} leagueId={leagueId} editionId={editionId} />}
+        {section === 'jugadores' && (
+          <PlayerScreen
+            key={`${leagueId}-${editionId}-${equipoJugadores?.categoryId ?? ''}-${equipoJugadores?.teamId ?? ''}`}
+            profile={profile}
+            leagueId={leagueId}
+            editionId={editionId}
+            equipoInicial={equipoJugadores}
+          />
+        )}
         {section === 'inscripciones' && (
           <InscripcionScreen key={`${leagueId}-${editionId}`} profile={profile} leagueId={leagueId} editionId={editionId} />
         )}
         {section === 'refuerzos' && (
-          <RefuerzoScreen key={`${leagueId}-${editionId}`} profile={profile} leagueId={leagueId} editionId={editionId} />
+          <RefuerzoScreen
+            key={`${leagueId}-${editionId}`}
+            profile={profile}
+            leagueId={leagueId}
+            editionId={editionId}
+            onAbrirPlantel={(equipo) => abrirSeccion('jugadores', equipo)}
+          />
         )}
         {section === 'grupos' && <GruposScreen profile={profile} editionId={editionId} />}
         {section === 'fases' && <FasesScreen profile={profile} editionId={editionId} />}

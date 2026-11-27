@@ -62,6 +62,11 @@ public class RefuerzoController {
         return refuerzos.seleccionar(id, request.isSeleccionado());
     }
 
+    @PutMapping("/equipos/{id}/nombre")
+    public RefuerzoEquipoView renombrar(@PathVariable UUID id, @RequestBody NombreEquipoRequest request) {
+        return refuerzos.renombrar(id, request.getNombreEquipo());
+    }
+
     @GetMapping("/jugadores/{id}/foto")
     public ResponseEntity<byte[]> foto(@PathVariable UUID id) {
         RefuerzoService.FotoContenido contenido = refuerzos.foto(id);

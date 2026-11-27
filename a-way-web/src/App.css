@@ -436,6 +436,16 @@ button + .down {
   flex: 0 0 16rem;
 }
 
+.catalog form.filtros.filtros-linea {
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.catalog form.filtros.filtros-linea label {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .catalog form.filtros label.motivo-suspension {
   flex: 1 0 100%;
 }
@@ -493,6 +503,17 @@ button.ghost {
   background: transparent;
   color: #163a5f;
   border: 1px solid #163a5f;
+}
+
+.equipo-nombre {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.equipo-nombre select {
+  min-width: 16rem;
+  margin: 0;
 }
 
 .check {

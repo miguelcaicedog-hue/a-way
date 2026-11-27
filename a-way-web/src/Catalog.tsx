@@ -929,10 +929,11 @@ type Player = {
   rotationDegrees: number
   estado: string
   habilitado: boolean
+  reemplazo: boolean
   hasPhoto: boolean
 }
 
-export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profile; leagueId: string; editionId: string }) {
+export function PlayerScreen({ profile, leagueId, editionId, equipoInicial = null }: { profile: Profile; leagueId: string; editionId: string; equipoInicial?: { categoryId: string; teamId: string } | null }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
   const [teams, setTeams] = useState<Team[]>([])
@@ -953,6 +954,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const [filtroCedula, setFiltroCedula] = useState('')
   const [filtroNombre, setFiltroNombre] = useState('')
   const [filtroCamisa, setFiltroCamisa] = useState('')
+  const [filtroRefuerzo, setFiltroRefuerzo] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
   const [error, setError] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -961,6 +963,11 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
   const fotoCerradaEn = useRef(0)
   const writable = canWrite(profile)
   const category = categories.find((item) => item.id === categoryId)
+  const equipoPendiente = useRef(equipoInicial)
+
+  useEffect(() => {
+    equipoPendiente.current = equipoInicial
+  }, [equipoInicial])
 
   useEffect(() => {
     if (!leagueId || !editionId || !categoryId) {
@@ -969,14 +976,14 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
       return
     }
     let vigente = true
-    setTeamId('')
     api<Team[]>(`/api/teams?leagueId=${leagueId}&estado=ACTIVO&editionId=${editionId}&categoryId=${categoryId}`)
       .then((items) => {
         if (!vigente) {
           return
         }
         setTeams(items)
-        setTeamId(items[0]?.id ?? '')
+        const preferido = equipoPendiente.current?.categoryId === categoryId ? equipoPendiente.current.teamId : ''
+        setTeamId(items.find((team) => team.id === preferido)?.id ?? items[0]?.id ?? '')
       })
       .catch((reason: Error) => {
         if (vigente) {
@@ -997,7 +1004,8 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
     api<Category[]>(`/api/categories?editionId=${editionId}`)
       .then((items) => {
         setCategories(items)
-        setCategoryId(items[0]?.id ?? '')
+        const preferida = equipoPendiente.current?.categoryId
+        setCategoryId(items.find((item) => item.id === preferida)?.id ?? items[0]?.id ?? '')
       })
       .catch((reason: Error) => setError(reason.message))
   }, [editionId])
@@ -1221,6 +1229,8 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
     if (cedulaBuscada && !row.cedula.toLowerCase().includes(cedulaBuscada)) return false
     if (nombreBuscado && !row.name.toLowerCase().includes(nombreBuscado)) return false
     if (camisaBuscada && !String(row.numeroCamisa).includes(camisaBuscada)) return false
+    if (filtroRefuerzo === 'SI' && !row.reemplazo) return false
+    if (filtroRefuerzo === 'NO' && row.reemplazo) return false
     return true
   })
 
@@ -1272,18 +1282,28 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
           {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
         </select>
       </label>
-      <label>
-        Cédula
-        <input value={filtroCedula} onChange={(event) => setFiltroCedula(event.target.value)} />
-      </label>
-      <label>
-        Nombre
-        <input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} />
-      </label>
-      <label>
-        Nº de camisa
-        <input value={filtroCamisa} onChange={(event) => setFiltroCamisa(event.target.value)} />
-      </label>
+      <form className="filtros filtros-linea" onSubmit={(event) => event.preventDefault()}>
+        <label>
+          Nº de camisa
+          <input value={filtroCamisa} onChange={(event) => setFiltroCamisa(event.target.value)} />
+        </label>
+        <label>
+          Cédula
+          <input value={filtroCedula} onChange={(event) => setFiltroCedula(event.target.value)} />
+        </label>
+        <label>
+          Nombre
+          <input value={filtroNombre} onChange={(event) => setFiltroNombre(event.target.value)} />
+        </label>
+        <label>
+          Refuerzo
+          <select value={filtroRefuerzo} onChange={(event) => setFiltroRefuerzo(event.target.value)}>
+            <option value="">Todos</option>
+            <option value="SI">Sí</option>
+            <option value="NO">No</option>
+          </select>
+        </label>
+      </form>
       <label>
         Estado
         <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)}>
@@ -1310,6 +1330,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
               <th>Nº de camisa</th>
               <th>Nombre</th>
               <th>Alias</th>
+              <th>Refuerzo</th>
               <th>Estado</th>
               {writable && <th></th>}
             </tr>
@@ -1366,6 +1387,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 <td>{row.numeroCamisa}</td>
                 <td>{row.name}</td>
                 <td>{row.alias}</td>
+                <td>{row.reemplazo ? 'Sí' : 'No'}</td>
                 <td>{row.estado === 'INACTIVO' ? 'Inactivo' : 'Activo'}</td>
                 {writable && (
                   <td className="actions">
@@ -1375,7 +1397,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
                 )}
               </tr>
             ))}
-            {visibles.length === 0 && <tr><td colSpan={writable ? 9 : 8}>No hay jugadores.</td></tr>}
+            {visibles.length === 0 && <tr><td colSpan={writable ? 10 : 9}>No hay jugadores.</td></tr>}
           </tbody>
         </table>
       )}
@@ -1416,6 +1438,7 @@ export function PlayerScreen({ profile, leagueId, editionId }: { profile: Profil
           </label>
           <label>Alias<input value={alias} onChange={(event) => setAlias(event.target.value)} /></label>
           <label>Número de camisa<input type="number" min={0} value={numeroCamisa} onChange={(event) => setNumeroCamisa(event.target.value)} required /></label>
+          {editing && <p>Refuerzo: {editing.reemplazo ? 'Sí' : 'No'}</p>}
           <label>
             Estado
             <select value={estado} onChange={(event) => setEstado(event.target.value)}>

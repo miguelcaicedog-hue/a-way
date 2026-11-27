@@ -67,6 +67,21 @@ function LogoInscripcion({ url }: { url: string | null }) {
   )
 }
 
+function fechaCarga(valor: string) {
+  const fecha = new Date(valor)
+  if (Number.isNaN(fecha.getTime())) {
+    return valor
+  }
+  return fecha.toLocaleString('es-EC', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
 function canWrite(profile: Profile) {
   return profile.master || profile.memberships.some((membership) => membership.role === 'ADMINISTRATIVO')
 }
@@ -384,9 +399,11 @@ export function InscripcionScreen({ profile, leagueId, editionId }: { profile: P
         <label>
           Archivo cargado
           <select value={detalle?.id ?? ''} onChange={(event) => abrir(event.target.value)}>
-            {archivos.map((archivo) => (
-              <option key={archivo.id} value={archivo.id}>{archivo.nombreArchivo}</option>
-            ))}
+            {[...archivos]
+              .sort((a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
+              .map((archivo) => (
+                <option key={archivo.id} value={archivo.id}>{fechaCarga(archivo.fechaCreacion)} — {archivo.nombreArchivo}</option>
+              ))}
           </select>
         </label>
       )}
