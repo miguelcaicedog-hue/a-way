@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type Mou
 import { api } from './api'
 import { IconoPdf } from './DescargarImagen'
 import { aDia, FechaCampo } from './Fecha'
+import { useFocoEdicion } from './foco'
 
 type Profile = {
   master: boolean
@@ -99,6 +100,7 @@ type ScopeChange = (next?: { leagueId?: string; editionId?: string }) => void
 export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; leagueId: string; onScopeChange: ScopeChange }) {
   const [rows, setRows] = useState<League[]>([])
   const [editing, setEditing] = useState<League | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [name, setName] = useState('')
   const [validFrom, setValidFrom] = useState('')
   const [validUntil, setValidUntil] = useState('')
@@ -276,7 +278,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
         </tbody>
       </table>
       {(profile.master || editing) && writable && (
-        <form onSubmit={onSubmit}>
+        <form ref={formEdicion} onSubmit={onSubmit}>
           <h2>{editing ? 'Editar liga' : 'Nueva liga'}</h2>
           <label>
             Nombre
@@ -329,6 +331,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
 export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: Profile; leagueId: string; onScopeChange: ScopeChange }) {
   const [rows, setRows] = useState<Edition[]>([])
   const [editing, setEditing] = useState<Edition | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [name, setName] = useState('')
   const [startsOn, setStartsOn] = useState('')
   const [endsOn, setEndsOn] = useState('')
@@ -408,7 +411,7 @@ export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: P
         </tbody>
       </table>
       {writable && (
-        <form onSubmit={onSubmit}>
+        <form ref={formEdicion} onSubmit={onSubmit}>
           <h2>{editing ? 'Editar edición' : 'Nueva edición'}</h2>
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Inicio<FechaCampo value={startsOn || null} required onChange={(fecha) => setStartsOn(fecha ?? '')} /></label>
@@ -427,6 +430,7 @@ export function EditionScreen({ profile, leagueId, onScopeChange }: { profile: P
 export function CategoryScreen({ profile, editionId }: { profile: Profile; editionId: string }) {
   const [rows, setRows] = useState<Category[]>([])
   const [editing, setEditing] = useState<Category | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [name, setName] = useState('')
   const [maxPlayers, setMaxPlayers] = useState('25')
   const [cantidadGrupos, setCantidadGrupos] = useState('1')
@@ -558,7 +562,7 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
         </tbody>
       </table>
       {writable && editionId && (
-        <form onSubmit={onSubmit}>
+        <form ref={formEdicion} onSubmit={onSubmit}>
           <h2>{editing ? 'Editar categoría' : 'Nueva categoría'}</h2>
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Máximo de jugadores<input type="number" min={1} value={maxPlayers} onChange={(event) => setMaxPlayers(event.target.value)} required /></label>
@@ -601,6 +605,7 @@ export function CategoryScreen({ profile, editionId }: { profile: Profile; editi
 export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile; leagueId: string; editionId: string }) {
   const [rows, setRows] = useState<Team[]>([])
   const [editing, setEditing] = useState<Team | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [name, setName] = useState('')
   const [nombreRepresentante, setNombreRepresentante] = useState('')
   const [numeroTelefono, setNumeroTelefono] = useState('')
@@ -834,7 +839,7 @@ export function TeamScreen({ profile, leagueId, editionId }: { profile: Profile;
         </tbody>
       </table>
       {writable && (
-        <form onSubmit={onSubmit}>
+        <form ref={formEdicion} onSubmit={onSubmit}>
           <h2>{editing ? 'Editar equipo' : 'Nuevo equipo'}</h2>
           <label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Nombre de representante<input value={nombreRepresentante} maxLength={160} onChange={(event) => setNombreRepresentante(event.target.value)} /></label>
@@ -941,6 +946,7 @@ export function PlayerScreen({ profile, leagueId, editionId, equipoInicial = nul
   const [entry, setEntry] = useState<TeamEntry | null>(null)
   const [rows, setRows] = useState<Player[]>([])
   const [editing, setEditing] = useState<Player | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [name, setName] = useState('')
   const [alias, setAlias] = useState('')
   const [cedula, setCedula] = useState('')
@@ -1417,7 +1423,7 @@ export function PlayerScreen({ profile, leagueId, editionId, equipoInicial = nul
         />
       )}
       {writable && entry && (
-        <form onSubmit={onSubmit}>
+        <form ref={formEdicion} onSubmit={onSubmit}>
           <h2>{editing ? 'Editar jugador' : 'Nuevo jugador'}</h2>
           <label>Cédula<input value={cedula} maxLength={30} onChange={(event) => setCedula(event.target.value)} required /></label>
           <label>

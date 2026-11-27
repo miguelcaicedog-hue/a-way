@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api } from './api'
+import { useFocoEdicion } from './foco'
 
 type Profile = {
   master: boolean
@@ -40,6 +41,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
   const [peso, setPeso] = useState('1')
   const [estado, setEstado] = useState('ACTIVO')
   const [editing, setEditing] = useState<Tarjeta | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
@@ -178,7 +180,7 @@ export function TarjetasCatalogoScreen({ profile, leagueId }: { profile: Profile
         </tbody>
       </table>
       {writable && leagueId && (
-        <form onSubmit={guardar}>
+        <form ref={formEdicion} onSubmit={guardar}>
           <h2>{editing ? 'Editar tarjeta' : 'Nueva tarjeta'}</h2>
           <label>
             Descripción

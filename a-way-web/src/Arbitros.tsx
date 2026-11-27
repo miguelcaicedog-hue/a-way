@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api'
+import { useFocoEdicion } from './foco'
 
 type Profile = {
   master: boolean
@@ -58,6 +59,7 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
   const [quitarFoto, setQuitarFoto] = useState(false)
   const [fotoStamp, setFotoStamp] = useState(0)
   const [editing, setEditing] = useState<Arbitro | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
@@ -238,7 +240,7 @@ export function ArbitrosScreen({ profile, leagueId }: { profile: Profile; league
         </tbody>
       </table>
       {writable && leagueId && (
-        <form onSubmit={guardar}>
+        <form ref={formEdicion} onSubmit={guardar}>
           <h2>{editing ? 'Editar árbitro' : 'Nuevo árbitro'}</h2>
           <label>
             Cédula

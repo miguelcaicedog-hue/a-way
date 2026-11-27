@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { api } from './api'
+import { useFocoEdicion } from './foco'
 
 type Profile = {
   master: boolean
@@ -105,6 +106,7 @@ export function RefuerzoScreen({ profile, leagueId, editionId, onAbrirPlantel }:
   const [comprobando, setComprobando] = useState(false)
   const [avisoFotos, setAvisoFotos] = useState<string | null>(null)
   const [editor, setEditor] = useState<Jugador | null>(null)
+  const formEdicion = useFocoEdicion(editor?.id ?? null)
   const [formJugador, setFormJugador] = useState({ cedula: '', nombre: '', alias: '', numeroCamisa: '', numeroCamisaReemplazo: '' })
   const [fotoJugador, setFotoJugador] = useState<File | null>(null)
   const [guardando, setGuardando] = useState(false)
@@ -637,7 +639,7 @@ export function RefuerzoScreen({ profile, leagueId, editionId, onAbrirPlantel }:
                       src={vistaFoto ?? `/api/refuerzos/jugadores/${editor.id}/foto?v=${fotoMarca}`}
                     />
                   ) : <FotoVacia grande />}
-                  <form onSubmit={(event) => { event.preventDefault(); void guardarJugador() }}>
+                  <form ref={formEdicion} onSubmit={(event) => { event.preventDefault(); void guardarJugador() }}>
                   <label>Cédula<input value={formJugador.cedula} maxLength={30} onChange={(event) => setFormJugador({ ...formJugador, cedula: event.target.value })} required /></label>
                   <label>Nombre<input value={formJugador.nombre} maxLength={200} onChange={(event) => cambiarNombre(event.target.value)} required /></label>
                   <label>Alias<input value={formJugador.alias} maxLength={80} onChange={(event) => setFormJugador({ ...formJugador, alias: event.target.value })} /></label>

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api } from './api'
+import { useFocoEdicion } from './foco'
 
 type Profile = {
   master: boolean
@@ -28,6 +29,7 @@ export function CanchasScreen({ profile, leagueId }: { profile: Profile; leagueI
   const [descripcion, setDescripcion] = useState('')
   const [estado, setEstado] = useState('ACTIVO')
   const [editing, setEditing] = useState<Cancha | null>(null)
+  const formEdicion = useFocoEdicion(editing?.id ?? null)
   const [error, setError] = useState<string | null>(null)
   const writable = canWrite(profile)
 
@@ -135,7 +137,7 @@ export function CanchasScreen({ profile, leagueId }: { profile: Profile; leagueI
         </tbody>
       </table>
       {writable && leagueId && (
-        <form onSubmit={guardar}>
+        <form ref={formEdicion} onSubmit={guardar}>
           <h2>{editing ? 'Editar cancha' : 'Nueva cancha'}</h2>
           <label>
             Descripción
