@@ -223,7 +223,6 @@ button:disabled {
   padding: 0.1rem 0 0.3rem 0.35rem;
 }
 
-.menu-group:hover .menu-tree,
 .menu-group.is-open .menu-tree,
 .menu-group:focus-within .menu-tree {
   display: flex;

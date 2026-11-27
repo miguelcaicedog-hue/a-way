@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import logoSistema from './assets/logo-sistema.png'
 import './App.css'
 import { api } from './api'
@@ -68,7 +68,8 @@ const sections = [
 
 const menuGroups = [
   { label: 'Inicio', ids: ['inicio'] },
-  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'equipos', 'jugadores', 'inscripciones', 'refuerzos'] },
+  { label: 'Competencia', ids: ['ligas', 'ediciones', 'categorias', 'inscripciones', 'refuerzos'] },
+  { label: 'Club', ids: ['equipos', 'jugadores'] },
   { label: 'Fixture', ids: ['grupos', 'fases', 'clasificacion', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tabla'] },
   { label: 'Disciplina', ids: ['sanciones-jugador', 'suspensiones-jugador'] },
@@ -150,6 +151,7 @@ function App() {
   const [section, setSection] = useState<SectionId>('inicio')
   const [equipoJugadores, setEquipoJugadores] = useState<{ categoryId: string; teamId: string } | null>(null)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const cierreMenu = useRef<number | null>(null)
   const [leagues, setLeagues] = useState<{ id: string; name: string; hasLogo: boolean; active: boolean }[]>([])
   const [editions, setEditions] = useState<{ id: string; name: string }[]>([])
   const [leagueId, setLeagueId] = useState('')
@@ -164,7 +166,29 @@ function App() {
       sumarUso(profile.username, id)
     }
     setSection(id)
+    if (cierreMenu.current != null) {
+      window.clearTimeout(cierreMenu.current)
+      cierreMenu.current = null
+    }
     setOpenMenu(null)
+  }
+
+  function abrirMenu(label: string) {
+    if (cierreMenu.current != null) {
+      window.clearTimeout(cierreMenu.current)
+      cierreMenu.current = null
+    }
+    setOpenMenu(label)
+  }
+
+  function programarCierreMenu() {
+    if (cierreMenu.current != null) {
+      window.clearTimeout(cierreMenu.current)
+    }
+    cierreMenu.current = window.setTimeout(() => {
+      cierreMenu.current = null
+      setOpenMenu(null)
+    }, 300)
   }
 
   function refreshScope(next?: { leagueId?: string; editionId?: string }) {
@@ -288,6 +312,12 @@ function App() {
     }
   }
 
+  useEffect(() => () => {
+    if (cierreMenu.current != null) {
+      window.clearTimeout(cierreMenu.current)
+    }
+  }, [])
+
   async function onLogout() {
     await fetch(`${apiBase}/api/auth/logout`, { method: 'POST', credentials: 'include' })
     setProfile(null)
@@ -382,15 +412,21 @@ function App() {
               <div
                 key={group.label}
                 className={openMenu === group.label ? 'menu-group is-open' : 'menu-group'}
-                onMouseEnter={() => setOpenMenu(group.label)}
-                onMouseLeave={() => setOpenMenu(null)}
+                onMouseEnter={() => abrirMenu(group.label)}
+                onMouseLeave={programarCierreMenu}
               >
                 <button
                   type="button"
                   className={active ? 'is-current' : undefined}
                   aria-expanded={openMenu === group.label}
                   aria-haspopup="true"
-                  onClick={() => setOpenMenu(openMenu === group.label ? null : group.label)}
+                  onClick={() => {
+                    if (cierreMenu.current != null) {
+                      window.clearTimeout(cierreMenu.current)
+                      cierreMenu.current = null
+                    }
+                    setOpenMenu(openMenu === group.label ? null : group.label)
+                  }}
                 >
                   {group.label}
                 </button>
