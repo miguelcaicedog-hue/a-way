@@ -78,23 +78,15 @@ public class ReporteJugadoresService {
         if (salto) {
             html.append(" corte");
         }
-        html.append("\"><colgroup>");
-        for (int grupo = 0; grupo < 3; grupo++) {
-            html.append("<col style=\"width:27mm\"/><col/><col style=\"width:12mm\"/>");
-        }
-        html.append("</colgroup><thead><tr><th class=\"equipo\" colspan=\"9\">").append(esc(equipo)).append("</th></tr><tr>");
-        for (int grupo = 0; grupo < 3; grupo++) {
-            html.append("<th>Foto</th><th>NOMBRE</th><th>Nº</th>");
-        }
-        html.append("</tr></thead><tbody>");
-        for (int inicio = 0; inicio < jugadoresEquipo.size(); inicio += 3) {
+        html.append("\"><thead><tr><th class=\"equipo\" colspan=\"5\">").append(esc(equipo)).append("</th></tr></thead><tbody>");
+        for (int inicio = 0; inicio < jugadoresEquipo.size(); inicio += 5) {
             html.append("<tr>");
-            for (int columna = 0; columna < 3; columna++) {
+            for (int columna = 0; columna < 5; columna++) {
                 int indice = inicio + columna;
                 if (indice < jugadoresEquipo.size()) {
                     jugador(html, jugadoresEquipo.get(indice));
                 } else {
-                    html.append("<td class=\"foto\"></td><td class=\"nombre\"></td><td class=\"numero\"></td>");
+                    html.append("<td class=\"jugador\"></td>");
                 }
             }
             html.append("</tr>");
@@ -104,9 +96,12 @@ public class ReporteJugadoresService {
     }
 
     private void jugador(StringBuilder html, Player jugador) {
-        html.append("<td class=\"foto\">").append(foto(jugador)).append("</td>")
-                .append("<td class=\"nombre\">").append(esc(nombrePropio(jugador.getAlias()))).append("</td>")
-                .append("<td class=\"numero\">").append(jugador.getNumeroCamisa()).append("</td>");
+        String visible = jugador.getAlias() != null && !jugador.getAlias().isBlank()
+                ? jugador.getAlias()
+                : jugador.getName();
+        html.append("<td class=\"jugador\"><div class=\"foto\">").append(foto(jugador)).append("</div>")
+                .append("<div class=\"rotulo\"># ").append(jugador.getNumeroCamisa())
+                .append(" - ").append(esc(nombrePropio(visible))).append("</div></td>");
     }
 
     private String foto(Player jugador) {
@@ -178,12 +173,12 @@ public class ReporteJugadoresService {
                 + "p.generado { margin: 2px 0 0; font-size: 9px; text-align: center; }"
                 + "table.equipo { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0 0 6px; page-break-inside: avoid; }"
                 + "table.corte { page-break-before: always; }"
-                + "th, td { border: 1px solid #163a5f; padding: 3px 4px; }"
+                + "th, td { border: 1px solid #163a5f; padding: 3px 4px; vertical-align: top; }"
                 + "th { background: #163a5f; color: white; text-align: center; }"
-                + "td.foto { text-align: center; height: 27mm; }"
-                + "img.retrato { max-height: 25mm; max-width: 25mm; }"
-                + "td.nombre { font-size: 11px; text-align: center; }"
-                + "td.numero { text-align: center; font-size: 14px; font-weight: 700; }"
+                + "td.jugador { width: 20%; text-align: center; }"
+                + "td.jugador .foto { height: 24mm; }"
+                + "img.retrato { max-height: 22mm; max-width: 22mm; }"
+                + "div.rotulo { margin-top: 3px; font-size: 11px; font-weight: 700; line-height: 1.25; }"
                 + "tr { page-break-inside: avoid; }"
                 + "</style></head><body>"
                 + "<table class=\"cabecera\"><tr><td class=\"marca\">" + logo + "</td><td class=\"textos\">"
