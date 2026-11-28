@@ -130,18 +130,25 @@ function dibujarCalendario(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.translate(x, y)
   ctx.scale(tamano / 24, tamano / 24)
   ctx.strokeStyle = color
-  ctx.lineWidth = 2
+  ctx.fillStyle = color
+  ctx.lineWidth = 1.75
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   ctx.beginPath()
-  ctx.roundRect(3, 5, 18, 16, 2)
-  ctx.moveTo(3, 10)
-  ctx.lineTo(21, 10)
-  ctx.moveTo(8, 3)
-  ctx.lineTo(8, 7)
-  ctx.moveTo(16, 3)
-  ctx.lineTo(16, 7)
+  ctx.roundRect(3.25, 5.25, 17.5, 15.5, 2.6)
   ctx.stroke()
+  ctx.beginPath()
+  ctx.roundRect(3.25, 5.25, 17.5, 5.1, [2.6, 2.6, 0, 0])
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(8.4, 3)
+  ctx.lineTo(8.4, 7.1)
+  ctx.moveTo(15.6, 3)
+  ctx.lineTo(15.6, 7.1)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.roundRect(9.15, 12.35, 5.7, 5.2, 1.1)
+  ctx.fill()
   ctx.restore()
 }
 

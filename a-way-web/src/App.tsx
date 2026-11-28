@@ -685,7 +685,25 @@ function App() {
               profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO'),
             ).map((item) => (
               <button key={item.id} type="button" onClick={() => abrirSeccion(item.id)}>
-                <IconoMenu nombre={item.label} />
+                <span className="acceso-balon">
+                  <svg className="acceso-costuras" viewBox="0 0 100 100" aria-hidden="true">
+                    <defs>
+                      <clipPath id={`corte-balon-${item.id}`}>
+                        <circle cx="50" cy="50" r="47.5" />
+                      </clipPath>
+                    </defs>
+                    <g clipPath={`url(#corte-balon-${item.id})`}>
+                      <circle cx="50" cy="50" r="47.5" />
+                      <polygon points="50,34 51.97,15.29 69.16,7.64 84.38,18.7 82.41,37.41 65.22,45.06" />
+                      <polygon points="65.22,45.06 83.62,41.15 96.2,55.12 90.39,73.01 72,76.92 59.41,62.95" />
+                      <polygon points="59.4,62.94 68.81,79.23 59.41,95.52 40.6,95.53 31.19,79.24 40.59,62.95" />
+                      <polygon points="40.6,62.94 28.02,76.93 9.61,73.02 3.79,55.13 16.37,41.14 34.78,45.05" />
+                      <polygon points="34.78,45.06 17.59,37.41 15.62,18.7 30.84,7.64 48.03,15.29 50,34" />
+                      <polygon className="centro" points="50,34 65.22,45.06 59.4,62.94 40.6,62.94 34.78,45.06" />
+                    </g>
+                  </svg>
+                  <IconoMenu nombre={item.label} />
+                </span>
                 <span>{item.label}</span>
               </button>
             ))}
