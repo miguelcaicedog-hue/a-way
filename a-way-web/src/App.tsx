@@ -143,6 +143,116 @@ function roleLabel(profile: Profile) {
   return membership.role === 'ADMINISTRATIVO' ? 'Administrativo' : 'Asistente'
 }
 
+function IconoMenu({ nombre }: { nombre: string }) {
+  const trazo = {
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  }
+  let dibujo
+  switch (nombre) {
+    case 'Inicio':
+      dibujo = <path {...trazo} d="M4 10.5 12 4l8 6.5V20H15v-6H9v6H4z" />
+      break
+    case 'Competencia':
+      dibujo = <path {...trazo} d="M8 4h8v3a4 4 0 0 1-8 0zm4 7v3m-4 6h8M7 20h10" />
+      break
+    case 'Ligas':
+      dibujo = <path {...trazo} d="M12 3 5 6v6c0 4.5 3 7 7 8 4-1 7-3.5 7-8V6z" />
+      break
+    case 'Ediciones':
+      dibujo = <><rect {...trazo} x="4" y="5" width="16" height="15" rx="2" /><path {...trazo} d="M8 3v4M16 3v4M4 10h16" /></>
+      break
+    case 'Categorías':
+      dibujo = <path {...trazo} d="M4 8h10l6 4-6 4H4z" />
+      break
+    case 'Inscripción':
+    case 'Inscripción equipo':
+      dibujo = <><path {...trazo} d="M8 3h6l4 4v14H8z" /><path {...trazo} d="M14 3v4h4M10 13h6M10 17h4" /></>
+      break
+    case 'Inscripción refuerzo':
+      dibujo = <><circle {...trazo} cx="10" cy="8" r="3" /><path {...trazo} d="M4 19c1-3 3.2-4.5 6-4.5M17 11v6M14 14h6" /></>
+      break
+    case 'Club':
+    case 'Jugadores':
+      dibujo = <><circle {...trazo} cx="12" cy="8" r="3" /><path {...trazo} d="M5 19c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></>
+      break
+    case 'Equipos':
+      dibujo = <path {...trazo} d="M12 3 5 6v6c0 4.5 3 7 7 8 4-1 7-3.5 7-8V6z" />
+      break
+    case 'Fixture':
+    case 'Grupos':
+      dibujo = <><rect {...trazo} x="4" y="4" width="7" height="7" rx="1" /><rect {...trazo} x="13" y="4" width="7" height="7" rx="1" /><rect {...trazo} x="4" y="13" width="7" height="7" rx="1" /><rect {...trazo} x="13" y="13" width="7" height="7" rx="1" /></>
+      break
+    case 'Fases':
+      dibujo = <path {...trazo} d="M7 5h4v4H7zM7 15h4v4H7zM13 10h4v4h-4zM11 7h2M11 17h2M13 12H11" />
+      break
+    case 'Clasificación':
+      dibujo = <path {...trazo} d="M5 5h5v4H5zM14 5h5v4h-5zM5 15h5v4H5zM14 15h5v4h-5zM10 7h4M10 17h4M12 7v10" />
+      break
+    case 'Calendario':
+      dibujo = <><rect {...trazo} x="4" y="5" width="16" height="15" rx="2" /><path {...trazo} d="M8 3v4M16 3v4M4 10h16M8 14h2M12 14h2M16 14h0M8 17h2" /></>
+      break
+    case 'Horarios':
+      dibujo = <><circle {...trazo} cx="12" cy="12" r="8" /><path {...trazo} d="M12 8v5l3 2" /></>
+      break
+    case 'Jornada':
+      dibujo = <path {...trazo} d="M6 4v16M6 5h9l-2 3 2 3H6" />
+      break
+    case 'Resultados':
+      dibujo = <path {...trazo} d="M5 7h14v10H5zM12 7v10M8 11h1M15 11h1" />
+      break
+    case 'Goleadores':
+    case 'Desempate goleadores':
+      dibujo = <><circle {...trazo} cx="12" cy="12" r="8" /><path {...trazo} d="M12 4v3M12 17v3M4 12h3M17 12h3M7.5 7.5l2 2M14.5 14.5l2 2M16.5 7.5l-2 2M9.5 14.5l-2 2" /></>
+      break
+    case 'Tabla':
+      dibujo = <path {...trazo} d="M5 6h14M5 12h14M5 18h14M8 6v12" />
+      break
+    case 'Suspender jugador':
+      dibujo = <><circle {...trazo} cx="10" cy="8" r="3" /><path {...trazo} d="M4 19c1-3 3-4.5 6-4.5M16 13l4 4M20 13l-4 4" /></>
+      break
+    case 'Administración':
+      dibujo = <><circle {...trazo} cx="12" cy="12" r="3" /><path {...trazo} d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.5 1.5M16.9 16.9l1.5 1.5M18.4 5.6l-1.5 1.5M7.1 16.9l-1.5 1.5" /></>
+      break
+    case 'General':
+      dibujo = <path {...trazo} d="M4 8h10M18 8h2M4 16h2M10 16h10M14 6v4M8 14v4" />
+      break
+    case 'Canchas':
+      dibujo = <><rect {...trazo} x="3" y="6" width="18" height="12" rx="1" /><path {...trazo} d="M12 6v12M3 12h18" /></>
+      break
+    case 'Árbitros':
+      dibujo = <path {...trazo} d="M8 8a4 4 0 1 1 6 3.5V14H10v-2.5A4 4 0 0 1 8 8zM9 17h6M10 20h4" />
+      break
+    case 'Disciplina':
+    case 'Tarjetas':
+      dibujo = <rect {...trazo} x="7" y="3" width="10" height="18" rx="1.5" />
+      break
+    case 'Multas económicas':
+      dibujo = <><circle {...trazo} cx="12" cy="12" r="8" /><path {...trazo} d="M12 7v10M9.5 9.5c.6-1 1.4-1.5 2.5-1.5 1.4 0 2.5.8 2.5 2s-1 2-2.5 2-2.5.8-2.5 2 1.1 2 2.5 2c1.1 0 1.9-.5 2.5-1.5" /></>
+      break
+    case 'Suspensiones':
+      dibujo = <><circle {...trazo} cx="12" cy="12" r="8" /><path {...trazo} d="m7 7 10 10" /></>
+      break
+    case 'Criterio de desempate':
+    case 'Desempate equipos':
+      dibujo = <path {...trazo} d="M12 4v16M8 20h8M6 8h4l2-3 2 3h4M6 8l-2 5h6zM18 8l-2 5h6z" />
+      break
+    case 'Publicaciones':
+      dibujo = <><rect {...trazo} x="4" y="5" width="16" height="14" rx="2" /><circle {...trazo} cx="9" cy="10" r="1.5" /><path {...trazo} d="m4 16 5-4 3 3 2-2 6 5" /></>
+      break
+    default:
+      return null
+  }
+  return (
+    <svg className="menu-icono" viewBox="0 0 24 24" aria-hidden="true">
+      {dibujo}
+    </svg>
+  )
+}
+
 function App() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -431,6 +541,7 @@ function App() {
                   aria-current={section === 'inicio' ? 'page' : undefined}
                   onClick={() => setSection('inicio')}
                 >
+                  <IconoMenu nombre="Inicio" />
                   Inicio
                 </button>
               )
@@ -456,6 +567,7 @@ function App() {
                     setOpenMenu(openMenu === group.label ? null : group.label)
                   }}
                 >
+                  <IconoMenu nombre={group.label} />
                   {group.label}
                 </button>
                 <div className="menu-tree" role="group" aria-label={group.label}>
@@ -472,6 +584,7 @@ function App() {
                           aria-current={item.id === section ? 'page' : undefined}
                           onClick={() => abrirSeccion(item.id)}
                         >
+                          <IconoMenu nombre={item.label} />
                           {item.label}
                         </button>
                       )
@@ -502,6 +615,7 @@ function App() {
                             setOpenSubmenu(submenuAbierto ? null : nodo.label)
                           }}
                         >
+                          <IconoMenu nombre={nodo.label} />
                           {nodo.label}
                         </button>
                         <div className="menu-tree" role="group" aria-label={nodo.label}>
@@ -512,6 +626,7 @@ function App() {
                               aria-current={item.id === section ? 'page' : undefined}
                               onClick={() => abrirSeccion(item.id)}
                             >
+                              <IconoMenu nombre={item.label} />
                               {item.label}
                             </button>
                           ))}
@@ -570,7 +685,8 @@ function App() {
               profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO'),
             ).map((item) => (
               <button key={item.id} type="button" onClick={() => abrirSeccion(item.id)}>
-                {item.label}
+                <IconoMenu nombre={item.label} />
+                <span>{item.label}</span>
               </button>
             ))}
             </div>
