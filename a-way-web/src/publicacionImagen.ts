@@ -131,24 +131,23 @@ function dibujarCalendario(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.scale(tamano / 24, tamano / 24)
   ctx.strokeStyle = color
   ctx.fillStyle = color
-  ctx.lineWidth = 1.75
+  ctx.lineWidth = 1.7
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   ctx.beginPath()
-  ctx.roundRect(3.25, 5.25, 17.5, 15.5, 2.6)
+  ctx.roundRect(3.5, 6, 17, 14.5, 2.4)
+  ctx.moveTo(3.5, 10.4)
+  ctx.lineTo(20.5, 10.4)
   ctx.stroke()
   ctx.beginPath()
-  ctx.roundRect(3.25, 5.25, 17.5, 5.1, [2.6, 2.6, 0, 0])
-  ctx.fill()
-  ctx.beginPath()
-  ctx.moveTo(8.4, 3)
-  ctx.lineTo(8.4, 7.1)
-  ctx.moveTo(15.6, 3)
-  ctx.lineTo(15.6, 7.1)
+  ctx.arc(8.6, 6, 1.8, Math.PI, 0)
+  ctx.arc(15.4, 6, 1.8, Math.PI, 0)
   ctx.stroke()
-  ctx.beginPath()
-  ctx.roundRect(9.15, 12.35, 5.7, 5.2, 1.1)
-  ctx.fill()
+  for (const marca of [7.4, 12, 16.6]) {
+    ctx.beginPath()
+    ctx.arc(marca, 14.7, 1.05, 0, Math.PI * 2)
+    ctx.fill()
+  }
   ctx.restore()
 }
 
@@ -163,6 +162,16 @@ function recortar(ctx: CanvasRenderingContext2D, texto: string, ancho: number) {
   return `${corte}…`
 }
 
+function anchoDeCabecera(
+  ctx: CanvasRenderingContext2D,
+  tabla: TablaEstilo,
+  columna: ColumnaImagen,
+  px: (valor: number) => number,
+) {
+  ctx.font = fuente(px(tabla.cabeceraTamano), 'Arial', true, false)
+  return ctx.measureText(columna.titulo).width + px(14)
+}
+
 function anchosDeColumnas(
   ctx: CanvasRenderingContext2D,
   tabla: TablaEstilo,
@@ -172,12 +181,18 @@ function anchosDeColumnas(
   altoFila: number,
   px: (valor: number) => number,
 ) {
+  const fija = (columna: ColumnaImagen) => columna.titulo === 'POS' ? anchoDeCabecera(ctx, tabla, columna, px) : 0
   if (!tabla.ajustarAnchoTexto) {
-    const flex = columnas.reduce((suma, columna) => suma + columna.flex, 0) || 1
-    return columnas.map((columna) => (anchoTabla * columna.flex) / flex)
+    const fijas = columnas.map(fija)
+    const ocupado = fijas.reduce((suma, item) => suma + item, 0)
+    const flex = columnas.reduce((suma, columna, indice) => suma + (fijas[indice] ? 0 : columna.flex), 0) || 1
+    const resto = Math.max(0, anchoTabla - ocupado)
+    return columnas.map((columna, indice) => fijas[indice] || (resto * columna.flex) / flex)
   }
   const holgura = px(20)
   const anchos = columnas.map((columna, indice) => {
+    const cabecera = fija(columna)
+    if (cabecera) return cabecera
     ctx.font = fuente(px(tabla.cabeceraTamano), 'Arial', true, false)
     let maximo = ctx.measureText(columna.titulo).width
     const tamano = Math.min(columna.numero ? px(tabla.numeroTamano) : px(tabla.filaTamano), altoFila * 0.72)

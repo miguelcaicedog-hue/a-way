@@ -78,7 +78,7 @@ const LETRAS = [
 ]
 
 const COLUMNAS_TABLA = [
-  { codigo: 'POSICION', etiqueta: 'Posición', titulo: '#', flex: 0.7, numero: true, destacada: false },
+  { codigo: 'POSICION', etiqueta: 'Posición', titulo: 'POS', flex: 1, numero: true, destacada: false },
   { codigo: 'EQUIPO', etiqueta: 'Equipo', titulo: 'EQUIPO', flex: 2.6, numero: false, destacada: false },
   { codigo: 'PJ', etiqueta: 'PJ', titulo: 'PJ', flex: 0.7, numero: false, destacada: false },
   { codigo: 'G', etiqueta: 'G', titulo: 'G', flex: 0.7, numero: false, destacada: false },
@@ -295,7 +295,7 @@ export function PublicacionesScreen({
   const columnas = useMemo<ColumnaImagen[]>(() => {
     if (tipo === 'GOLEADORES') {
       return [
-        { titulo: '#', destacada: false, numero: true, flex: 0.7 },
+        { titulo: 'POS', destacada: false, numero: true, flex: 1 },
         { titulo: 'JUGADOR', destacada: false, numero: false, flex: 2.4 },
         { titulo: 'GOLES', destacada: true, numero: false, flex: 0.9 },
         { titulo: 'EQUIPO', destacada: false, numero: false, flex: 2.6 },
