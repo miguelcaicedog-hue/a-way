@@ -114,6 +114,9 @@ public class FormatoPublicacionTabla {
     @Column(name = "agrupar_primera_columna", nullable = false)
     private boolean agruparPrimeraColumna;
 
+    @Column(name = "fondo_publicacion", length = 80)
+    private String fondoPublicacion;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;
 
@@ -399,6 +402,14 @@ public class FormatoPublicacionTabla {
 
     public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) {
         this.agruparPrimeraColumna = agruparPrimeraColumna;
+    }
+
+    public String getFondoPublicacion() {
+        return fondoPublicacion;
+    }
+
+    public void setFondoPublicacion(String fondoPublicacion) {
+        this.fondoPublicacion = fondoPublicacion;
     }
 
     public OffsetDateTime getFechaCreacion() {

@@ -36,6 +36,21 @@ public class FormatoPublicacion {
     @Column(name = "logo_alto", nullable = false)
     private int logoAlto;
 
+    @Column(name = "logo_habilitado", nullable = false)
+    private boolean logoHabilitado = true;
+
+    @Column(name = "titulo_habilitado", nullable = false)
+    private boolean tituloHabilitado = true;
+
+    @Column(name = "subtitulo_habilitado", nullable = false)
+    private boolean subtituloHabilitado = true;
+
+    @Column(name = "lugar_habilitado", nullable = false)
+    private boolean lugarHabilitado = true;
+
+    @Column(name = "fecha_habilitado", nullable = false)
+    private boolean fechaHabilitado = true;
+
     @Column(name = "titulo_negrita", nullable = false)
     private boolean tituloNegrita;
 
@@ -191,6 +206,46 @@ public class FormatoPublicacion {
 
     public void setLogoAlto(int logoAlto) {
         this.logoAlto = logoAlto;
+    }
+
+    public boolean isLogoHabilitado() {
+        return logoHabilitado;
+    }
+
+    public void setLogoHabilitado(boolean logoHabilitado) {
+        this.logoHabilitado = logoHabilitado;
+    }
+
+    public boolean isTituloHabilitado() {
+        return tituloHabilitado;
+    }
+
+    public void setTituloHabilitado(boolean tituloHabilitado) {
+        this.tituloHabilitado = tituloHabilitado;
+    }
+
+    public boolean isSubtituloHabilitado() {
+        return subtituloHabilitado;
+    }
+
+    public void setSubtituloHabilitado(boolean subtituloHabilitado) {
+        this.subtituloHabilitado = subtituloHabilitado;
+    }
+
+    public boolean isLugarHabilitado() {
+        return lugarHabilitado;
+    }
+
+    public void setLugarHabilitado(boolean lugarHabilitado) {
+        this.lugarHabilitado = lugarHabilitado;
+    }
+
+    public boolean isFechaHabilitado() {
+        return fechaHabilitado;
+    }
+
+    public void setFechaHabilitado(boolean fechaHabilitado) {
+        this.fechaHabilitado = fechaHabilitado;
     }
 
     public boolean isTituloNegrita() {

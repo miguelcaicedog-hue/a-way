@@ -108,7 +108,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
   const [logo, setLogo] = useState<string | null>(null)
   const [logoType, setLogoType] = useState<string | null>(null)
   const [clearLogo, setClearLogo] = useState(false)
-  const [imagenPlantilla, setImagenPlantilla] = useState('fondo-estadio.jpg')
+  const [imagenPlantilla, setImagenPlantilla] = useState('fondo-default.jpg')
   const [logoStamp, setLogoStamp] = useState(0)
   const [filtroNombre, setFiltroNombre] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVA')
@@ -148,7 +148,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
     setLogo(null)
     setLogoType(null)
     setClearLogo(false)
-    setImagenPlantilla('fondo-estadio.jpg')
+    setImagenPlantilla('fondo-default.jpg')
   }
 
   function edit(row: League) {
@@ -160,7 +160,7 @@ export function LeagueScreen({ profile, onScopeChange }: { profile: Profile; lea
     setLogo(null)
     setLogoType(null)
     setClearLogo(false)
-    setImagenPlantilla(row.imagenPlantilla || 'fondo-estadio.jpg')
+    setImagenPlantilla(row.imagenPlantilla || 'fondo-default.jpg')
   }
 
   function onLogo(event: ChangeEvent<HTMLInputElement>) {

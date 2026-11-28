@@ -378,7 +378,7 @@ export function PublicacionesScreen({
     dibujarPublicacion(nodo, formato, tipo, titulo, fecha, columnas, filas, () => serie.current === token)
       .then(() => {
         if (serie.current === token) {
-          setError((actual) => (actual && /is not defined|plantilla|estilo de la tabla|preparar la imagen/.test(actual) ? null : actual))
+          setError((actual) => (actual && /is not defined|fondo de la publicación|plantilla|estilo de la tabla|preparar la imagen/.test(actual) ? null : actual))
         }
       })
       .catch((caught: Error) => {
@@ -469,12 +469,14 @@ export function PublicacionesScreen({
           <p>Cada grupo corresponde a un bloque de la imagen. Las medidas están en píxeles del diseño de 1024 × 818.</p>
           <div className="formato-bloques">
             <Grupo titulo="Logo">
+              <Marca etiqueta="Habilitar" valor={formato.logoHabilitado} disabled={!writable} onChange={(valor) => cambiar('logoHabilitado', valor)} />
               <Numero etiqueta="Posición X" valor={formato.logoX} disabled={!writable} onChange={(valor) => cambiar('logoX', valor)} />
               <Numero etiqueta="Posición Y" valor={formato.logoY} disabled={!writable} onChange={(valor) => cambiar('logoY', valor)} />
               <Numero etiqueta="Ancho" valor={formato.logoAncho} disabled={!writable} onChange={(valor) => cambiar('logoAncho', valor)} />
               <Numero etiqueta="Alto" valor={formato.logoAlto} disabled={!writable} onChange={(valor) => cambiar('logoAlto', valor)} />
             </Grupo>
             <Grupo titulo="Título" nota="Letra, colores y contorno son comunes. El texto, el tamaño y la posición están en cada tabla.">
+              <Marca etiqueta="Habilitar" valor={formato.tituloHabilitado} disabled={!writable} onChange={(valor) => cambiar('tituloHabilitado', valor)} />
               <Letra etiqueta="Letra" valor={formato.tituloFamilia} disabled={!writable} onChange={(valor) => cambiar('tituloFamilia', valor)} />
               <ColorCampo etiqueta="Color inicial" valor={formato.tituloColorInicio} disabled={!writable} onChange={(valor) => cambiar('tituloColorInicio', valor)} />
               <ColorCampo etiqueta="Color final" valor={formato.tituloColorFin} disabled={!writable} onChange={(valor) => cambiar('tituloColorFin', valor)} />
@@ -486,7 +488,8 @@ export function PublicacionesScreen({
                 <Marca etiqueta="Sombra" valor={formato.tituloSombra} disabled={!writable} onChange={(valor) => cambiar('tituloSombra', valor)} />
               </div>
             </Grupo>
-            <Grupo titulo="Subtítulo" nota="La descripción, la letra y el color son comunes. El tamaño y la posición están en cada tabla. Si la descripción queda vacía, la imagen no muestra esta línea.">
+            <Grupo titulo="Subtítulo" nota="La descripción, la letra y el color son comunes. El tamaño y la posición están en cada tabla. Si la descripción queda vacía o el bloque no está habilitado, la imagen no muestra esta línea.">
+              <Marca etiqueta="Habilitar" valor={formato.subtituloHabilitado} disabled={!writable} onChange={(valor) => cambiar('subtituloHabilitado', valor)} />
               <label className="formato-texto">
                 Descripción
                 <input value={formato.descripcion} disabled={!writable} onChange={(event) => cambiar('descripcion', event.target.value)} />
@@ -498,7 +501,8 @@ export function PublicacionesScreen({
                 <Marca etiqueta="Cursiva" valor={formato.subtituloCursiva} disabled={!writable} onChange={(valor) => cambiar('subtituloCursiva', valor)} />
               </div>
             </Grupo>
-            <Grupo titulo="Nombre de lugar" nota="El texto, la letra, el color y las rayas son comunes. El tamaño y la posición están en cada tabla. Si el texto queda vacío, la imagen no muestra las rayas.">
+            <Grupo titulo="Nombre de lugar" nota="El texto, la letra, el color y las rayas son comunes. El tamaño y la posición están en cada tabla. Si el texto queda vacío o el bloque no está habilitado, la imagen no muestra las rayas.">
+              <Marca etiqueta="Habilitar" valor={formato.lugarHabilitado} disabled={!writable} onChange={(valor) => cambiar('lugarHabilitado', valor)} />
               <label>
                 Texto
                 <input value={formato.nombreLugar} disabled={!writable} onChange={(event) => cambiar('nombreLugar', event.target.value)} />
@@ -512,6 +516,7 @@ export function PublicacionesScreen({
               </div>
             </Grupo>
             <Grupo titulo="Fecha" nota="La pastilla, la letra y el color son comunes. El tamaño del texto y la posición están en cada tabla.">
+              <Marca etiqueta="Habilitar" valor={formato.fechaHabilitado} disabled={!writable} onChange={(valor) => cambiar('fechaHabilitado', valor)} />
               <Letra etiqueta="Letra" valor={formato.fechaFamilia} disabled={!writable} onChange={(valor) => cambiar('fechaFamilia', valor)} />
               <Numero etiqueta="Ancho" valor={formato.fechaAncho} disabled={!writable} onChange={(valor) => cambiar('fechaAncho', valor)} />
               <Numero etiqueta="Alto" valor={formato.fechaAlto} disabled={!writable} onChange={(valor) => cambiar('fechaAlto', valor)} />
@@ -534,6 +539,15 @@ export function PublicacionesScreen({
                     : `Tabla de ${(TIPOS.find((item) => item.id === tabla.tipo)?.etiqueta ?? tabla.tipo).toLowerCase()}`
                 return (
                   <Grupo key={tabla.tipo} titulo={leyenda} plano>
+                    <label className="formato-texto">
+                      Fondo publicación
+                      <input
+                        value={tabla.fondoPublicacion}
+                        disabled={!writable}
+                        onChange={(event) => cambiarTabla(tabla.tipo, 'fondoPublicacion', event.target.value)}
+                      />
+                    </label>
+                    <p className="formato-nota">Si queda vacío, toma la imagen plantilla de la liga. La imagen de esta tabla se actualiza al cambiarlo.</p>
                     <div className="formato-secciones">
                       <Grupo titulo="Título" abierto>
                         <label className="formato-texto">

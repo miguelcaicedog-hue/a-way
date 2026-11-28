@@ -74,7 +74,7 @@ public class FormatoPublicacionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "La liga no tiene formato de publicación"));
         aplicar(formato, request);
         auditar(formato, usuario());
-        aplicarTablas(formato, request.getTablas(), usuario());
+        aplicarTablas(formato, request.getTablas(), league.getImagenPlantilla(), usuario());
         return vista(league);
     }
 
@@ -88,7 +88,7 @@ public class FormatoPublicacionService {
                     .filter(item -> tipo.equals(item.getTipo()))
                     .findFirst()
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Falta la tabla " + tipo));
-            vistas.add(new FormatoPublicacionViews.TablaView(fila));
+            vistas.add(new FormatoPublicacionViews.TablaView(fila, league.getImagenPlantilla()));
         }
         byte[] logo = league.getLogo();
         return new FormatoPublicacionViews.FormatoView(
@@ -109,6 +109,11 @@ public class FormatoPublicacionService {
         formato.setLogoY(medida(request.getLogoY(), "logo y", 0, 4000));
         formato.setLogoAncho(medida(request.getLogoAncho(), "logo ancho", 1, 4000));
         formato.setLogoAlto(medida(request.getLogoAlto(), "logo alto", 1, 4000));
+        formato.setLogoHabilitado(request.isLogoHabilitado());
+        formato.setTituloHabilitado(request.isTituloHabilitado());
+        formato.setSubtituloHabilitado(request.isSubtituloHabilitado());
+        formato.setLugarHabilitado(request.isLugarHabilitado());
+        formato.setFechaHabilitado(request.isFechaHabilitado());
         formato.setTituloNegrita(request.isTituloNegrita());
         formato.setTituloCursiva(request.isTituloCursiva());
         formato.setTituloFamilia(familia(request.getTituloFamilia(), "título"));
@@ -137,7 +142,8 @@ public class FormatoPublicacionService {
         formato.setFechaIconoTamano(medida(request.getFechaIconoTamano(), "icono de la fecha", 8, 128));
     }
 
-    private void aplicarTablas(FormatoPublicacion formato, List<FormatoPublicacionViews.TablaRequest> pedidos, String usuario) {
+    private void aplicarTablas(FormatoPublicacion formato, List<FormatoPublicacionViews.TablaRequest> pedidos,
+                               String imagenPlantilla, String usuario) {
         if (pedidos == null || pedidos.size() != TIPOS.size()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes enviar el estilo de goleadores, resultados, posiciones y horarios");
         }
@@ -181,6 +187,8 @@ public class FormatoPublicacionService {
             fila.setLugarY(medida(pedido.getLugarY(), "nombre de lugar y", 0, 4000));
             fila.setLugarTamano(medida(pedido.getLugarTamano(), "nombre de lugar tamaño", 8, 200));
             fila.setAgruparPrimeraColumna(pedido.isAgruparPrimeraColumna());
+            String fondo = fondoPublicacion(pedido.getFondoPublicacion());
+            fila.setFondoPublicacion(fondo != null && fondo.equals(imagenPlantilla) ? null : fondo);
             fila.setFechaModificacion(OffsetDateTime.now());
             fila.setUsuarioModificacion(usuario);
         }
@@ -211,6 +219,11 @@ public class FormatoPublicacionService {
         formato.setLogoY(12);
         formato.setLogoAncho(160);
         formato.setLogoAlto(180);
+        formato.setLogoHabilitado(true);
+        formato.setTituloHabilitado(true);
+        formato.setSubtituloHabilitado(true);
+        formato.setLugarHabilitado(true);
+        formato.setFechaHabilitado(true);
         formato.setTituloNegrita(true);
         formato.setTituloCursiva(true);
         formato.setTituloFamilia("Arial Black");
@@ -281,6 +294,7 @@ public class FormatoPublicacionService {
         tabla.setFechaTamano(20);
         tabla.setLugarY(158);
         tabla.setLugarTamano(28);
+        tabla.setFondoPublicacion(null);
         tabla.setAgruparPrimeraColumna(false);
         tabla.setEstado("ACTIVO");
         OffsetDateTime ahora = OffsetDateTime.now();
@@ -307,6 +321,19 @@ public class FormatoPublicacionService {
             return "HORARIOS";
         }
         return "GOLEADORES";
+    }
+
+    private String fondoPublicacion(String nombre) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return null;
+        }
+        String valor = nombre.trim();
+        if (valor.contains("..") || valor.indexOf('\\') >= 0
+                || !valor.matches("(?i)(?:[A-Za-z0-9][A-Za-z0-9._-]{0,30}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,40}\\.(jpg|jpeg|png|webp)")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El fondo de la publicación debe ser un archivo jpg, png o webp, dentro de plantillas o de una carpeta");
+        }
+        return valor;
     }
 
     private String texto(String valor, String campo, int maximo, boolean vacio) {

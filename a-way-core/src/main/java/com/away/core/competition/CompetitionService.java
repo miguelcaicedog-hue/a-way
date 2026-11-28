@@ -597,11 +597,11 @@ public class CompetitionService {
     }
 
     private String imagenPlantilla(String nombre) {
-        String valor = nombre == null || nombre.trim().isEmpty() ? "fondo-estadio.jpg" : nombre.trim();
-        if (valor.contains("..") || valor.indexOf('/') >= 0 || valor.indexOf('\\') >= 0
-                || !valor.matches("(?i)[A-Za-z0-9][A-Za-z0-9._-]{0,70}\\.(jpg|jpeg|png|webp)")) {
+        String valor = nombre == null || nombre.trim().isEmpty() ? "fondo-default.jpg" : nombre.trim();
+        if (valor.contains("..") || valor.indexOf('\\') >= 0
+                || !valor.matches("(?i)(?:[A-Za-z0-9][A-Za-z0-9._-]{0,30}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,40}\\.(jpg|jpeg|png|webp)")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La imagen plantilla debe ser un archivo jpg, png o webp, sin carpetas");
+                    "La imagen plantilla debe ser un archivo jpg, png o webp, dentro de plantillas o de una carpeta");
         }
         return valor;
     }

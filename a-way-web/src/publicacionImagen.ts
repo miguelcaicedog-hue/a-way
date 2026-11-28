@@ -38,6 +38,7 @@ export type TablaEstilo = {
   lugarY: number
   lugarTamano: number
   agruparPrimeraColumna: boolean
+  fondoPublicacion: string
 }
 
 export type Formato = {
@@ -52,6 +53,11 @@ export type Formato = {
   logoY: number
   logoAncho: number
   logoAlto: number
+  logoHabilitado: boolean
+  tituloHabilitado: boolean
+  subtituloHabilitado: boolean
+  lugarHabilitado: boolean
+  fechaHabilitado: boolean
   tituloNegrita: boolean
   tituloCursiva: boolean
   tituloFamilia: string
@@ -159,17 +165,18 @@ export async function dibujarPublicacion(
   filas: FilaImagen[],
   vigente: () => boolean = () => true,
 ) {
-  const fondo = await cargar(`/plantillas/${formato.imagenPlantilla}`)
-  if (!vigente()) return
-  if (!fondo) {
-    throw new Error('No se encontró la imagen plantilla de la liga')
-  }
-  const logo = formato.hasLogo ? await cargar(`/api/leagues/${formato.leagueId}/logo`) : null
-  if (!vigente()) return
   const tabla = formato.tablas.find((item) => item.tipo === tipo)
   if (!tabla) {
     throw new Error('Falta el estilo de la tabla')
   }
+  const archivoFondo = (tabla.fondoPublicacion || '').trim() || formato.imagenPlantilla
+  const fondo = await cargar(`/plantillas/${archivoFondo}`)
+  if (!vigente()) return
+  if (!fondo) {
+    throw new Error('No se encontró el fondo de la publicación')
+  }
+  const logo = formato.hasLogo ? await cargar(`/api/leagues/${formato.leagueId}/logo`) : null
+  if (!vigente()) return
 
   canvas.width = fondo.width
   canvas.height = fondo.height
@@ -183,38 +190,40 @@ export async function dibujarPublicacion(
   const py = (valor: number) => valor * sy
 
   ctx.drawImage(fondo, 0, 0)
-  if (logo) {
+  if (formato.logoHabilitado !== false && logo) {
     ctx.drawImage(logo, px(formato.logoX), py(formato.logoY), px(formato.logoAncho), py(formato.logoAlto))
   }
 
-  const tituloTamano = px(tabla.tituloTamano)
-  ctx.font = fuente(tituloTamano, formato.tituloFamilia, formato.tituloNegrita, formato.tituloCursiva)
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'alphabetic'
-  const tituloX = px(tabla.tituloX)
-  const tituloBase = py(tabla.tituloY) + tituloTamano * 0.85
-  ctx.lineJoin = 'round'
-  ctx.miterLimit = 2
-  ctx.lineWidth = px(formato.tituloContornoGrosor)
-  ctx.strokeStyle = formato.tituloContornoColor
-  if (formato.tituloSombra) {
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
-    ctx.shadowBlur = px(4)
-    ctx.shadowOffsetX = px(2)
-    ctx.shadowOffsetY = px(2)
+  if (formato.tituloHabilitado !== false) {
+    const tituloTamano = px(tabla.tituloTamano)
+    ctx.font = fuente(tituloTamano, formato.tituloFamilia, formato.tituloNegrita, formato.tituloCursiva)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'alphabetic'
+    const tituloX = px(tabla.tituloX)
+    const tituloBase = py(tabla.tituloY) + tituloTamano * 0.85
+    ctx.lineJoin = 'round'
+    ctx.miterLimit = 2
+    ctx.lineWidth = px(formato.tituloContornoGrosor)
+    ctx.strokeStyle = formato.tituloContornoColor
+    if (formato.tituloSombra) {
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
+      ctx.shadowBlur = px(4)
+      ctx.shadowOffsetX = px(2)
+      ctx.shadowOffsetY = px(2)
+    }
+    if (formato.tituloContornoGrosor > 0) {
+      ctx.strokeText(titulo, tituloX, tituloBase)
+    }
+    ctx.shadowColor = 'transparent'
+    const degradado = ctx.createLinearGradient(tituloX, tituloBase - tituloTamano, tituloX, tituloBase)
+    degradado.addColorStop(0, formato.tituloColorInicio)
+    degradado.addColorStop(1, formato.tituloColorFin)
+    ctx.fillStyle = degradado
+    ctx.fillText(titulo, tituloX, tituloBase)
   }
-  if (formato.tituloContornoGrosor > 0) {
-    ctx.strokeText(titulo, tituloX, tituloBase)
-  }
-  ctx.shadowColor = 'transparent'
-  const degradado = ctx.createLinearGradient(tituloX, tituloBase - tituloTamano, tituloX, tituloBase)
-  degradado.addColorStop(0, formato.tituloColorInicio)
-  degradado.addColorStop(1, formato.tituloColorFin)
-  ctx.fillStyle = degradado
-  ctx.fillText(titulo, tituloX, tituloBase)
 
   const descripcion = formato.descripcion.trim()
-  if (descripcion) {
+  if (formato.subtituloHabilitado !== false && descripcion) {
     const subtituloTamano = px(tabla.subtituloTamano)
     ctx.font = fuente(subtituloTamano, formato.subtituloFamilia, formato.subtituloNegrita, formato.subtituloCursiva)
     ctx.fillStyle = formato.subtituloColor
@@ -222,7 +231,7 @@ export async function dibujarPublicacion(
   }
 
   const lugar = formato.nombreLugar.trim()
-  if (lugar) {
+  if (formato.lugarHabilitado !== false && lugar) {
     const lugarTamano = px(tabla.lugarTamano)
     ctx.font = fuente(lugarTamano, formato.lugarFamilia, false, formato.lugarCursiva)
     ctx.fillStyle = formato.lugarColor
@@ -244,29 +253,31 @@ export async function dibujarPublicacion(
     ctx.textAlign = 'left'
   }
 
-  const fechaX = px(tabla.fechaX)
-  const fechaY = py(tabla.fechaY)
-  const fechaAncho = px(formato.fechaAncho)
-  const fechaAlto = py(formato.fechaAlto)
-  ctx.beginPath()
-  ctx.roundRect(fechaX, fechaY, fechaAncho, fechaAlto, px(formato.fechaRadio))
-  ctx.lineWidth = Math.max(1, px(formato.fechaBordeGrosor))
-  ctx.strokeStyle = formato.fechaBordeColor
-  ctx.stroke()
-  const iconoTamano = px(formato.fechaIconoTamano)
-  dibujarCalendario(
-    ctx,
-    fechaX + px(16),
-    fechaY + (fechaAlto - iconoTamano) / 2,
-    iconoTamano,
-    formato.fechaColor,
-  )
-  const fechaTamano = px(tabla.fechaTamano)
-  ctx.font = fuente(fechaTamano, formato.fechaFamilia, formato.fechaNegrita, false)
-  ctx.fillStyle = formato.fechaColor
-  ctx.textAlign = 'center'
-  ctx.fillText(fechaLarga(fechaIso), fechaX + fechaAncho / 2 + iconoTamano / 4, fechaY + fechaAlto / 2 + fechaTamano * 0.35)
-  ctx.textAlign = 'left'
+  if (formato.fechaHabilitado !== false) {
+    const fechaX = px(tabla.fechaX)
+    const fechaY = py(tabla.fechaY)
+    const fechaAncho = px(formato.fechaAncho)
+    const fechaAlto = py(formato.fechaAlto)
+    ctx.beginPath()
+    ctx.roundRect(fechaX, fechaY, fechaAncho, fechaAlto, px(formato.fechaRadio))
+    ctx.lineWidth = Math.max(1, px(formato.fechaBordeGrosor))
+    ctx.strokeStyle = formato.fechaBordeColor
+    ctx.stroke()
+    const iconoTamano = px(formato.fechaIconoTamano)
+    dibujarCalendario(
+      ctx,
+      fechaX + px(16),
+      fechaY + (fechaAlto - iconoTamano) / 2,
+      iconoTamano,
+      formato.fechaColor,
+    )
+    const fechaTamano = px(tabla.fechaTamano)
+    ctx.font = fuente(fechaTamano, formato.fechaFamilia, formato.fechaNegrita, false)
+    ctx.fillStyle = formato.fechaColor
+    ctx.textAlign = 'center'
+    ctx.fillText(fechaLarga(fechaIso), fechaX + fechaAncho / 2 + iconoTamano / 4, fechaY + fechaAlto / 2 + fechaTamano * 0.35)
+    ctx.textAlign = 'left'
+  }
 
   if (columnas.length === 0) {
     return

@@ -20,6 +20,11 @@ public class FormatoPublicacionViews {
         private final int logoY;
         private final int logoAncho;
         private final int logoAlto;
+        private final boolean logoHabilitado;
+        private final boolean tituloHabilitado;
+        private final boolean subtituloHabilitado;
+        private final boolean lugarHabilitado;
+        private final boolean fechaHabilitado;
         private final boolean tituloNegrita;
         private final boolean tituloCursiva;
         private final String tituloFamilia;
@@ -61,6 +66,11 @@ public class FormatoPublicacionViews {
             this.logoY = formato.getLogoY();
             this.logoAncho = formato.getLogoAncho();
             this.logoAlto = formato.getLogoAlto();
+            this.logoHabilitado = formato.isLogoHabilitado();
+            this.tituloHabilitado = formato.isTituloHabilitado();
+            this.subtituloHabilitado = formato.isSubtituloHabilitado();
+            this.lugarHabilitado = formato.isLugarHabilitado();
+            this.fechaHabilitado = formato.isFechaHabilitado();
             this.tituloNegrita = formato.isTituloNegrita();
             this.tituloCursiva = formato.isTituloCursiva();
             this.tituloFamilia = formato.getTituloFamilia();
@@ -101,6 +111,11 @@ public class FormatoPublicacionViews {
         public int getLogoY() { return logoY; }
         public int getLogoAncho() { return logoAncho; }
         public int getLogoAlto() { return logoAlto; }
+        public boolean isLogoHabilitado() { return logoHabilitado; }
+        public boolean isTituloHabilitado() { return tituloHabilitado; }
+        public boolean isSubtituloHabilitado() { return subtituloHabilitado; }
+        public boolean isLugarHabilitado() { return lugarHabilitado; }
+        public boolean isFechaHabilitado() { return fechaHabilitado; }
         public boolean isTituloNegrita() { return tituloNegrita; }
         public boolean isTituloCursiva() { return tituloCursiva; }
         public String getTituloFamilia() { return tituloFamilia; }
@@ -162,8 +177,9 @@ public class FormatoPublicacionViews {
         private final int lugarY;
         private final int lugarTamano;
         private final boolean agruparPrimeraColumna;
+        private final String fondoPublicacion;
 
-        TablaView(FormatoPublicacionTabla tabla) {
+        TablaView(FormatoPublicacionTabla tabla, String imagenPlantilla) {
             this.tipo = tabla.getTipo();
             this.tablaX = tabla.getTablaX();
             this.tablaY = tabla.getTablaY();
@@ -195,6 +211,8 @@ public class FormatoPublicacionViews {
             this.lugarY = tabla.getLugarY();
             this.lugarTamano = tabla.getLugarTamano();
             this.agruparPrimeraColumna = tabla.isAgruparPrimeraColumna();
+            String fondo = tabla.getFondoPublicacion();
+            this.fondoPublicacion = fondo == null || fondo.trim().isEmpty() ? imagenPlantilla : fondo;
         }
 
         public String getTipo() { return tipo; }
@@ -228,6 +246,7 @@ public class FormatoPublicacionViews {
         public int getLugarY() { return lugarY; }
         public int getLugarTamano() { return lugarTamano; }
         public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
+        public String getFondoPublicacion() { return fondoPublicacion; }
     }
 
     public static class FormatoRequest {
@@ -237,6 +256,11 @@ public class FormatoPublicacionViews {
         private Integer logoY;
         private Integer logoAncho;
         private Integer logoAlto;
+        private boolean logoHabilitado = true;
+        private boolean tituloHabilitado = true;
+        private boolean subtituloHabilitado = true;
+        private boolean lugarHabilitado = true;
+        private boolean fechaHabilitado = true;
         private boolean tituloNegrita;
         private boolean tituloCursiva;
         private String tituloFamilia;
@@ -277,6 +301,16 @@ public class FormatoPublicacionViews {
         public void setLogoAncho(Integer logoAncho) { this.logoAncho = logoAncho; }
         public Integer getLogoAlto() { return logoAlto; }
         public void setLogoAlto(Integer logoAlto) { this.logoAlto = logoAlto; }
+        public boolean isLogoHabilitado() { return logoHabilitado; }
+        public void setLogoHabilitado(boolean logoHabilitado) { this.logoHabilitado = logoHabilitado; }
+        public boolean isTituloHabilitado() { return tituloHabilitado; }
+        public void setTituloHabilitado(boolean tituloHabilitado) { this.tituloHabilitado = tituloHabilitado; }
+        public boolean isSubtituloHabilitado() { return subtituloHabilitado; }
+        public void setSubtituloHabilitado(boolean subtituloHabilitado) { this.subtituloHabilitado = subtituloHabilitado; }
+        public boolean isLugarHabilitado() { return lugarHabilitado; }
+        public void setLugarHabilitado(boolean lugarHabilitado) { this.lugarHabilitado = lugarHabilitado; }
+        public boolean isFechaHabilitado() { return fechaHabilitado; }
+        public void setFechaHabilitado(boolean fechaHabilitado) { this.fechaHabilitado = fechaHabilitado; }
         public boolean isTituloNegrita() { return tituloNegrita; }
         public void setTituloNegrita(boolean tituloNegrita) { this.tituloNegrita = tituloNegrita; }
         public boolean isTituloCursiva() { return tituloCursiva; }
@@ -365,6 +399,7 @@ public class FormatoPublicacionViews {
         private Integer lugarY;
         private Integer lugarTamano;
         private boolean agruparPrimeraColumna;
+        private String fondoPublicacion;
 
         public String getTipo() { return tipo; }
         public void setTipo(String tipo) { this.tipo = tipo; }
@@ -428,5 +463,7 @@ public class FormatoPublicacionViews {
         public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
         public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
         public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) { this.agruparPrimeraColumna = agruparPrimeraColumna; }
+        public String getFondoPublicacion() { return fondoPublicacion; }
+        public void setFondoPublicacion(String fondoPublicacion) { this.fondoPublicacion = fondoPublicacion; }
     }
 }
