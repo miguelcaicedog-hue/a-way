@@ -22,6 +22,7 @@ import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 import { DesempateGoleadoresScreen } from './DesempateGoleadores'
 import { DesempateEquiposScreen } from './DesempateEquipos'
 import { PublicacionesScreen } from './Publicaciones'
+import { CambioClaveScreen } from './CambioClave'
 import { UsuariosScreen } from './Usuarios'
 
 type Membership = {
@@ -67,6 +68,7 @@ const sections = [
   { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },
   { id: 'publicaciones', label: 'Publicaciones', summary: 'Estilo del gráfico de la liga y descarga de goleadores, resultados, horarios y tabla de posiciones.' },
   { id: 'usuarios', label: 'Usuario', summary: 'Usuarios del sistema: estado, rol de la liga y foto.' },
+  { id: 'cambio-clave', label: 'Cambio de clave', summary: 'Cambia la clave de la sesión comprobando la actual y la complejidad exigida.' },
 ] as const
 
 type SectionId = (typeof sections)[number]['id']
@@ -81,7 +83,7 @@ const menuGroups: { label: string; ids: readonly MenuNodo[] }[] = [
   { label: 'Fixture', ids: ['grupos', 'fases', 'clasificacion', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tabla', 'suspensiones-jugador'] },
   { label: 'Administración', ids: [{ label: 'General', ids: ['canchas', 'arbitros'] }, { label: 'Disciplina', ids: ['sanciones-jugador', 'catalogo-tarjetas', 'suspensiones'] }, { label: 'Criterio de desempate', ids: ['desempate-goleadores', 'desempate-equipos'] }, 'publicaciones'] },
-  { label: 'Seguridad', ids: ['usuarios'] },
+  { label: 'Seguridad', ids: ['usuarios', 'cambio-clave'] },
 ]
 
 const ACCESOS_INICIALES: SectionId[] = ['resultados', 'horarios', 'tabla', 'goles', 'calendario']
@@ -242,6 +244,9 @@ function IconoMenu({ nombre }: { nombre: string }) {
       break
     case 'Usuario':
       dibujo = <><circle {...trazo} cx="12" cy="8" r="3" /><path {...trazo} d="M5 19c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></>
+      break
+    case 'Cambio de clave':
+      dibujo = <><circle {...trazo} cx="8" cy="15" r="3" /><path {...trazo} d="M10.5 15H20v2.5M17 15v2.5" /></>
       break
     case 'General':
       dibujo = <path {...trazo} d="M4 8h10M18 8h2M4 16h2M10 16h10M14 6v4M8 14v4" />
@@ -705,7 +710,7 @@ function App() {
           </button>
           </div>
         </header>
-        <main className={section === 'ligas' || section === 'ediciones' || section === 'categorias' || section === 'calendario' || section === 'horarios' || section === 'resultados' || section === 'goles' || section === 'tabla' || section === 'suspensiones' || section === 'usuarios' ? 'workspace estrecho' : 'workspace'}>
+        <main className={section === 'ligas' || section === 'ediciones' || section === 'categorias' || section === 'calendario' || section === 'horarios' || section === 'resultados' || section === 'goles' || section === 'tabla' || section === 'suspensiones' || section === 'usuarios' || section === 'cambio-clave' ? 'workspace estrecho' : 'workspace'}>
         <h1>{current.label}</h1>
         {section !== 'inicio' && <p>{current.summary}</p>}
         {section === 'inicio' && (
@@ -777,6 +782,7 @@ function App() {
         {section === 'desempate-equipos' && <DesempateEquiposScreen key={editionId} profile={profile} editionId={editionId} />}
         {section === 'publicaciones' && <PublicacionesScreen key={leagueId} profile={profile} leagueId={leagueId} editionId={editionId} />}
         {section === 'usuarios' && <UsuariosScreen key={leagueId} profile={profile} leagueId={leagueId} />}
+        {section === 'cambio-clave' && <CambioClaveScreen />}
       </main>
       </div>
     </div>
