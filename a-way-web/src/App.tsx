@@ -36,6 +36,7 @@ type Profile = {
   displayName: string
   master: boolean
   hasFoto?: boolean
+  sessionTimeoutMinutes?: number
   memberships: Membership[]
 }
 
@@ -485,6 +486,33 @@ function App() {
       window.clearTimeout(cierreSubmenu.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!profile) return
+    const minutos = profile.sessionTimeoutMinutes && profile.sessionTimeoutMinutes > 0
+      ? profile.sessionTimeoutMinutes
+      : 45
+    const limite = minutos * 60 * 1000
+    let timer = window.setTimeout(expirar, limite)
+    function reiniciar() {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(expirar, limite)
+    }
+    async function expirar() {
+      await fetch(`${apiBase}/api/auth/logout`, { method: 'POST', credentials: 'include' })
+      setProfile(null)
+    }
+    const eventos = ['pointerdown', 'keydown', 'mousemove', 'scroll', 'touchstart'] as const
+    eventos.forEach((evento) => window.addEventListener(evento, reiniciar, { passive: true }))
+    window.addEventListener('away-actividad', reiniciar)
+    window.addEventListener('away-sesion-expirada', expirar)
+    return () => {
+      window.clearTimeout(timer)
+      eventos.forEach((evento) => window.removeEventListener(evento, reiniciar))
+      window.removeEventListener('away-actividad', reiniciar)
+      window.removeEventListener('away-sesion-expirada', expirar)
+    }
+  }, [profile])
 
   async function onLogout() {
     await fetch(`${apiBase}/api/auth/logout`, { method: 'POST', credentials: 'include' })

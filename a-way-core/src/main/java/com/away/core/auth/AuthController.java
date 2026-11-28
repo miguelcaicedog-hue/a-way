@@ -1,5 +1,6 @@
 package com.away.core.auth;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,10 +37,14 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final AppUserRepository users;
+    private final int sessionTimeoutMinutes;
 
-    public AuthController(AuthenticationManager authenticationManager, AppUserRepository users) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          AppUserRepository users,
+                          @Value("${app.session.timeout-minutes:45}") int sessionTimeoutMinutes) {
         this.authenticationManager = authenticationManager;
         this.users = users;
+        this.sessionTimeoutMinutes = sessionTimeoutMinutes;
     }
 
     @PostMapping("/login")
@@ -106,7 +111,7 @@ public class AuthController {
                         membership.getRole()))
                 .collect(Collectors.toList());
         return new UserProfile(user.getUsername(), user.getDisplayName(), user.isMaster(),
-                user.getFoto() != null && user.getFoto().length > 0, memberships);
+                user.getFoto() != null && user.getFoto().length > 0, sessionTimeoutMinutes, memberships);
     }
 
     public static class LoginRequest {
@@ -137,13 +142,16 @@ public class AuthController {
         private final String displayName;
         private final boolean master;
         private final boolean hasFoto;
+        private final int sessionTimeoutMinutes;
         private final List<MembershipView> memberships;
 
-        public UserProfile(String username, String displayName, boolean master, boolean hasFoto, List<MembershipView> memberships) {
+        public UserProfile(String username, String displayName, boolean master, boolean hasFoto,
+                           int sessionTimeoutMinutes, List<MembershipView> memberships) {
             this.username = username;
             this.displayName = displayName;
             this.master = master;
             this.hasFoto = hasFoto;
+            this.sessionTimeoutMinutes = sessionTimeoutMinutes;
             this.memberships = memberships;
         }
 
@@ -161,6 +169,10 @@ public class AuthController {
 
         public boolean isHasFoto() {
             return hasFoto;
+        }
+
+        public int getSessionTimeoutMinutes() {
+            return sessionTimeoutMinutes;
         }
 
         public List<MembershipView> getMemberships() {
