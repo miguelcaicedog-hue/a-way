@@ -1,18 +1,29 @@
 .login-screen {
-  min-height: 100svh;
+  height: 100svh;
+  max-height: 100svh;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  background-image: url("/plantillas/fondo_principal.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .login-pie {
-  margin-top: auto;
+  align-self: stretch;
+  box-sizing: border-box;
+  margin-top: 0;
   padding: 0.85rem 1.25rem;
   background: #163a5f;
   color: white;
   font-size: 0.75rem;
   line-height: 1.2;
   text-align: left;
-  white-space: nowrap;
 }
 
 main {
@@ -24,6 +35,11 @@ main {
   background: var(--bg);
   text-align: left;
   box-sizing: border-box;
+}
+
+.login-screen main {
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .login-logo {
@@ -338,7 +354,7 @@ button:disabled {
 }
 
 .workspace {
-  width: min(46rem, calc(100% - 2rem));
+  width: calc(100% - 2rem);
   margin: 2rem auto;
   padding: 0 0 2rem;
   border: 0;
@@ -411,7 +427,6 @@ button + .down {
 
 .catalog form {
   margin-top: 0;
-  max-width: 24rem;
 }
 
 .grupo-arbitraje {
@@ -1955,8 +1970,16 @@ button.silbato.sin-cobro {
   gap: 0.6rem;
 }
 
-.workspace.ancho {
-  width: calc(100% - 2rem);
+.workspace.estrecho {
+  width: min(46rem, calc(100% - 2rem));
+}
+
+.workspace.estrecho .catalog form {
+  max-width: 24rem;
+}
+
+.workspace.estrecho .catalog form.filtros {
+  max-width: none;
 }
 
 .cuadro-fecha {

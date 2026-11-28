@@ -201,7 +201,7 @@ function App() {
     cierreSubmenu.current = window.setTimeout(() => {
       cierreSubmenu.current = null
       setOpenSubmenu(null)
-    }, 300)
+    }, 1000)
   }
 
   function programarCierreMenu() {
@@ -212,7 +212,7 @@ function App() {
       cierreMenu.current = null
       setOpenMenu(null)
       setOpenSubmenu(null)
-    }, 300)
+    }, 1000)
   }
 
   function refreshScope(next?: { leagueId?: string; editionId?: string }) {
@@ -558,7 +558,7 @@ function App() {
           </button>
           </div>
         </header>
-        <main className={section === 'clasificacion' ? 'workspace ancho' : 'workspace'}>
+        <main className={section === 'calendario' || section === 'horarios' || section === 'resultados' || section === 'goles' || section === 'tabla' || section === 'suspensiones' ? 'workspace estrecho' : 'workspace'}>
         <h1>{current.label}</h1>
         {section !== 'inicio' && <p>{current.summary}</p>}
         {section === 'inicio' && (
