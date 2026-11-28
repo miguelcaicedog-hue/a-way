@@ -114,6 +114,9 @@ public class FormatoPublicacionTabla {
     @Column(name = "agrupar_primera_columna", nullable = false)
     private boolean agruparPrimeraColumna;
 
+    @Column(name = "ajustar_ancho_texto", nullable = false)
+    private boolean ajustarAnchoTexto;
+
     @Column(name = "fondo_publicacion", length = 80)
     private String fondoPublicacion;
 
@@ -402,6 +405,14 @@ public class FormatoPublicacionTabla {
 
     public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) {
         this.agruparPrimeraColumna = agruparPrimeraColumna;
+    }
+
+    public boolean isAjustarAnchoTexto() {
+        return ajustarAnchoTexto;
+    }
+
+    public void setAjustarAnchoTexto(boolean ajustarAnchoTexto) {
+        this.ajustarAnchoTexto = ajustarAnchoTexto;
     }
 
     public String getFondoPublicacion() {

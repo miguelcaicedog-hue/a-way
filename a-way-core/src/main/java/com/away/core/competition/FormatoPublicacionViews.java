@@ -177,6 +177,7 @@ public class FormatoPublicacionViews {
         private final int lugarY;
         private final int lugarTamano;
         private final boolean agruparPrimeraColumna;
+        private final boolean ajustarAnchoTexto;
         private final String fondoPublicacion;
 
         TablaView(FormatoPublicacionTabla tabla, String imagenPlantilla) {
@@ -211,6 +212,7 @@ public class FormatoPublicacionViews {
             this.lugarY = tabla.getLugarY();
             this.lugarTamano = tabla.getLugarTamano();
             this.agruparPrimeraColumna = tabla.isAgruparPrimeraColumna();
+            this.ajustarAnchoTexto = tabla.isAjustarAnchoTexto();
             String fondo = tabla.getFondoPublicacion();
             this.fondoPublicacion = fondo == null || fondo.trim().isEmpty() ? imagenPlantilla : fondo;
         }
@@ -246,6 +248,7 @@ public class FormatoPublicacionViews {
         public int getLugarY() { return lugarY; }
         public int getLugarTamano() { return lugarTamano; }
         public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
+        public boolean isAjustarAnchoTexto() { return ajustarAnchoTexto; }
         public String getFondoPublicacion() { return fondoPublicacion; }
     }
 
@@ -399,6 +402,7 @@ public class FormatoPublicacionViews {
         private Integer lugarY;
         private Integer lugarTamano;
         private boolean agruparPrimeraColumna;
+        private boolean ajustarAnchoTexto;
         private String fondoPublicacion;
 
         public String getTipo() { return tipo; }
@@ -463,6 +467,8 @@ public class FormatoPublicacionViews {
         public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
         public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
         public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) { this.agruparPrimeraColumna = agruparPrimeraColumna; }
+        public boolean isAjustarAnchoTexto() { return ajustarAnchoTexto; }
+        public void setAjustarAnchoTexto(boolean ajustarAnchoTexto) { this.ajustarAnchoTexto = ajustarAnchoTexto; }
         public String getFondoPublicacion() { return fondoPublicacion; }
         public void setFondoPublicacion(String fondoPublicacion) { this.fondoPublicacion = fondoPublicacion; }
     }

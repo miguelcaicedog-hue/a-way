@@ -302,7 +302,6 @@ export function PublicacionesScreen({
     }
     if (tipo === 'RESULTADOS') {
       return [
-        { titulo: 'CANCHA', destacada: false, numero: false, flex: 1.4 },
         { titulo: 'LOCAL', destacada: false, numero: false, flex: 2.2 },
         { titulo: 'GOLES', destacada: true, numero: false, flex: 0.8 },
         { titulo: 'VISITA', destacada: false, numero: false, flex: 2.2 },
@@ -336,7 +335,6 @@ export function PublicacionesScreen({
     if (tipo === 'RESULTADOS') {
       return partidos.map((partido) => ({
         valores: [
-          partido.canchaNombre ?? '',
           partido.local,
           partido.golesLocal == null ? '' : String(partido.golesLocal),
           partido.visita,
@@ -548,6 +546,12 @@ export function PublicacionesScreen({
                       />
                     </label>
                     <p className="formato-nota">Si queda vacío, toma la imagen plantilla de la liga. La imagen de esta tabla se actualiza al cambiarlo.</p>
+                    <Marca
+                      etiqueta="Ajustar el ancho de las columnas al texto"
+                      valor={tabla.ajustarAnchoTexto}
+                      disabled={!writable}
+                      onChange={(valor) => cambiarTabla(tabla.tipo, 'ajustarAnchoTexto', valor)}
+                    />
                     <div className="formato-secciones">
                       <Grupo titulo="Título" abierto>
                         <label className="formato-texto">

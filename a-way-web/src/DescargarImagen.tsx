@@ -181,7 +181,6 @@ function armar(
       columnas: columnasResultados(),
       filas: resultados.map((partido) => ({
         valores: [
-          partido.canchaNombre ?? '',
           partido.local,
           partido.golesLocal == null ? '' : String(partido.golesLocal),
           partido.visita,
@@ -239,7 +238,6 @@ function columnasGoleadores(): ColumnaImagen[] {
 
 function columnasResultados(): ColumnaImagen[] {
   return [
-    { titulo: 'CANCHA', destacada: false, numero: false, flex: 1.4 },
     { titulo: 'LOCAL', destacada: false, numero: false, flex: 2.2 },
     { titulo: 'GOLES', destacada: true, numero: false, flex: 0.8 },
     { titulo: 'VISITA', destacada: false, numero: false, flex: 2.2 },

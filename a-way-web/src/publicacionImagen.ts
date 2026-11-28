@@ -38,6 +38,7 @@ export type TablaEstilo = {
   lugarY: number
   lugarTamano: number
   agruparPrimeraColumna: boolean
+  ajustarAnchoTexto: boolean
   fondoPublicacion: string
 }
 
@@ -153,6 +154,38 @@ function recortar(ctx: CanvasRenderingContext2D, texto: string, ancho: number) {
     corte = corte.slice(0, -1)
   }
   return `${corte}…`
+}
+
+function anchosDeColumnas(
+  ctx: CanvasRenderingContext2D,
+  tabla: TablaEstilo,
+  columnas: ColumnaImagen[],
+  filas: FilaImagen[],
+  anchoTabla: number,
+  altoFila: number,
+  px: (valor: number) => number,
+) {
+  if (!tabla.ajustarAnchoTexto) {
+    const flex = columnas.reduce((suma, columna) => suma + columna.flex, 0) || 1
+    return columnas.map((columna) => (anchoTabla * columna.flex) / flex)
+  }
+  const holgura = px(20)
+  const anchos = columnas.map((columna, indice) => {
+    ctx.font = fuente(px(tabla.cabeceraTamano), 'Arial', true, false)
+    let maximo = ctx.measureText(columna.titulo).width
+    const tamano = Math.min(columna.numero ? px(tabla.numeroTamano) : px(tabla.filaTamano), altoFila * 0.72)
+    ctx.font = fuente(tamano, 'Arial', Boolean(columna.numero), false)
+    filas.forEach((fila) => {
+      maximo = Math.max(maximo, ctx.measureText(fila.valores[indice] ?? '').width)
+    })
+    return Math.max(px(28), maximo + holgura)
+  })
+  const total = anchos.reduce((suma, item) => suma + item, 0)
+  if (total > anchoTabla && total > 0) {
+    const factor = anchoTabla / total
+    return anchos.map((item) => item * factor)
+  }
+  return anchos
 }
 
 export async function dibujarPublicacion(
@@ -295,8 +328,8 @@ export async function dibujarPublicacion(
   const cupo = Math.max(0, Math.floor((disponible - altoCabecera) / Math.max(altoFila, 1)))
   const visibles = filas.slice(0, cupo)
   const alto = altoCabecera + visibles.length * altoFila
-  const flex = columnas.reduce((suma, columna) => suma + columna.flex, 0) || 1
-  const anchos = columnas.map((columna) => (ancho * columna.flex) / flex)
+  const anchos = anchosDeColumnas(ctx, tabla, columnas, visibles, ancho, altoFila, px)
+  const anchoTabla = anchos.reduce((suma, item) => suma + item, 0)
 
   ctx.textBaseline = 'middle'
   ctx.lineWidth = Math.max(1, px(tabla.bordeGrosor))
@@ -344,19 +377,19 @@ export async function dibujarPublicacion(
   })
 
   ctx.beginPath()
-  ctx.rect(izquierda, arriba, ancho, alto)
+  ctx.rect(izquierda, arriba, anchoTabla, alto)
   for (let indice = 1; indice < columnas.length; indice += 1) {
     const x = izquierda + anchos.slice(0, indice).reduce((suma, item) => suma + item, 0)
     ctx.moveTo(x, arriba)
     ctx.lineTo(x, arriba + alto)
   }
   ctx.moveTo(izquierda, arriba + altoCabecera)
-  ctx.lineTo(izquierda + ancho, arriba + altoCabecera)
+  ctx.lineTo(izquierda + anchoTabla, arriba + altoCabecera)
   for (let indice = 1; indice <= visibles.length; indice += 1) {
     const y = arriba + altoCabecera + indice * altoFila
     const cortaPrimera = agrupar && indice < visibles.length && visibles[indice].valores[0] === visibles[indice - 1].valores[0]
     ctx.moveTo(cortaPrimera ? izquierda + anchos[0] : izquierda, y)
-    ctx.lineTo(izquierda + ancho, y)
+    ctx.lineTo(izquierda + anchoTabla, y)
   }
   ctx.stroke()
   ctx.textAlign = 'left'

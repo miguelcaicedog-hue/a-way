@@ -187,6 +187,7 @@ public class FormatoPublicacionService {
             fila.setLugarY(medida(pedido.getLugarY(), "nombre de lugar y", 0, 4000));
             fila.setLugarTamano(medida(pedido.getLugarTamano(), "nombre de lugar tamaño", 8, 200));
             fila.setAgruparPrimeraColumna(pedido.isAgruparPrimeraColumna());
+            fila.setAjustarAnchoTexto(pedido.isAjustarAnchoTexto());
             String fondo = fondoPublicacion(pedido.getFondoPublicacion());
             fila.setFondoPublicacion(fondo != null && fondo.equals(imagenPlantilla) ? null : fondo);
             fila.setFechaModificacion(OffsetDateTime.now());
@@ -296,6 +297,7 @@ public class FormatoPublicacionService {
         tabla.setLugarTamano(28);
         tabla.setFondoPublicacion(null);
         tabla.setAgruparPrimeraColumna(false);
+        tabla.setAjustarAnchoTexto(false);
         tabla.setEstado("ACTIVO");
         OffsetDateTime ahora = OffsetDateTime.now();
         tabla.setFechaCreacion(ahora);
