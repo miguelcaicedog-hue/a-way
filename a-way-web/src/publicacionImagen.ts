@@ -368,9 +368,10 @@ export async function dibujarPublicacion(
       const tamano = columna.numero ? px(tabla.numeroTamano) : px(tabla.filaTamano)
       ctx.font = fuente(Math.min(tamano, altoFila * 0.72), 'Arial', columna.numero, false)
       ctx.fillStyle = columna.numero ? tabla.numeroColor : tabla.filaColor
-      ctx.textAlign = columna.numero || columna.destacada ? 'center' : 'left'
+      const centrada = columna.numero || columna.destacada || (tipo === 'POSICIONES' && columna.titulo !== 'EQUIPO')
+      ctx.textAlign = centrada ? 'center' : 'left'
       const texto = recortar(ctx, valor, anchos[indice] - px(16))
-      const textoX = columna.numero || columna.destacada ? x + anchos[indice] / 2 : x + px(10)
+      const textoX = centrada ? x + anchos[indice] / 2 : x + px(10)
       ctx.fillText(texto, textoX, filaY + altoCelda / 2)
       x += anchos[indice]
     })

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { api } from './api'
+import { filasGoleadores } from './DescargarImagen'
 import { FechaCampo } from './Fecha'
 import {
   dibujarPublicacion,
@@ -86,7 +87,7 @@ const COLUMNAS_TABLA = [
   { codigo: 'PTS', etiqueta: 'Pts', titulo: 'PTS', flex: 0.8, numero: false, destacada: true },
   { codigo: 'GF', etiqueta: 'GF', titulo: 'GF', flex: 0.7, numero: false, destacada: false },
   { codigo: 'GC', etiqueta: 'GC', titulo: 'GC', flex: 0.7, numero: false, destacada: false },
-  { codigo: 'DIF', etiqueta: 'Dif', titulo: 'DIF', flex: 0.7, numero: false, destacada: false },
+  { codigo: 'DIF', etiqueta: 'Dif', titulo: 'DIF', flex: 0.7, numero: false, destacada: true },
 ]
 
 function horaVisible(hora: string | null) {
@@ -328,9 +329,7 @@ export function PublicacionesScreen({
 
   const filas = useMemo<FilaImagen[]>(() => {
     if (tipo === 'GOLEADORES') {
-      return goleadores.map((goleador, indice) => ({
-        valores: [String(indice + 1), goleador.alias.trim() || goleador.nombre, String(goleador.goles), goleador.equipo],
-      }))
+      return filasGoleadores(goleadores)
     }
     if (tipo === 'RESULTADOS') {
       return partidos.map((partido) => ({

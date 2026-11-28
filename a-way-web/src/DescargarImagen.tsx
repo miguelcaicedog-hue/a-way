@@ -56,7 +56,7 @@ const COLUMNAS_TABLA = [
   { codigo: 'PTS', titulo: 'PTS', flex: 0.8, numero: false, destacada: true },
   { codigo: 'GF', titulo: 'GF', flex: 0.7, numero: false, destacada: false },
   { codigo: 'GC', titulo: 'GC', flex: 0.7, numero: false, destacada: false },
-  { codigo: 'DIF', titulo: 'DIF', flex: 0.7, numero: false, destacada: false },
+  { codigo: 'DIF', titulo: 'DIF', flex: 0.7, numero: false, destacada: true },
 ]
 
 function valorFila(fila: FilaTabla, codigo: string) {
@@ -216,7 +216,7 @@ function armar(
   }))
 }
 
-function filasGoleadores(goleadores: Goleador[]): FilaImagen[] {
+export function filasGoleadores(goleadores: Goleador[]): FilaImagen[] {
   let fin = Math.min(6, goleadores.length)
   if (goleadores.length > 6) {
     const corte = goleadores[5].goles
