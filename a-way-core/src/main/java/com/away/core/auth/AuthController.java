@@ -1,8 +1,12 @@
 package com.away.core.auth;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -59,9 +63,12 @@ public class AuthController {
         }
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
+    @ExceptionHandler({BadCredentialsException.class, DisabledException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public Map<String, String> badCredentials() {
+    public Map<String, String> badCredentials(Exception exception) {
+        if (exception instanceof DisabledException) {
+            return Collections.singletonMap("error", "El usuario está inactivo o bloqueado");
+        }
         return Collections.singletonMap("error", "Usuario o clave incorrectos");
     }
 
@@ -73,6 +80,22 @@ public class AuthController {
         return profile(principal.getName());
     }
 
+    @GetMapping("/foto")
+    public ResponseEntity<byte[]> foto(Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        AppUser user = users.findWithMembershipsByUsername(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (user.getFoto() == null || user.getFotoContentType() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .contentType(MediaType.parseMediaType(user.getFotoContentType()))
+                .body(user.getFoto());
+    }
+
     private UserProfile profile(String username) {
         AppUser user = users.findWithMembershipsByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -82,7 +105,8 @@ public class AuthController {
                         membership.getLeague().getName(),
                         membership.getRole()))
                 .collect(Collectors.toList());
-        return new UserProfile(user.getUsername(), user.getDisplayName(), user.isMaster(), memberships);
+        return new UserProfile(user.getUsername(), user.getDisplayName(), user.isMaster(),
+                user.getFoto() != null && user.getFoto().length > 0, memberships);
     }
 
     public static class LoginRequest {
@@ -112,12 +136,14 @@ public class AuthController {
         private final String username;
         private final String displayName;
         private final boolean master;
+        private final boolean hasFoto;
         private final List<MembershipView> memberships;
 
-        public UserProfile(String username, String displayName, boolean master, List<MembershipView> memberships) {
+        public UserProfile(String username, String displayName, boolean master, boolean hasFoto, List<MembershipView> memberships) {
             this.username = username;
             this.displayName = displayName;
             this.master = master;
+            this.hasFoto = hasFoto;
             this.memberships = memberships;
         }
 
@@ -131,6 +157,10 @@ public class AuthController {
 
         public boolean isMaster() {
             return master;
+        }
+
+        public boolean isHasFoto() {
+            return hasFoto;
         }
 
         public List<MembershipView> getMemberships() {

@@ -38,6 +38,11 @@ export type TablaEstilo = {
   lugarY: number
   lugarTamano: number
   agruparPrimeraColumna: boolean
+  grupoFamilia: string
+  grupoTamano: number
+  grupoAlto: number
+  grupoFondo: string
+  grupoColor: string
   ajustarAnchoTexto: boolean
   fondoPublicacion: string
 }
@@ -380,18 +385,22 @@ export async function dibujarPublicacion(
         return
       }
       let altoCelda = altoFila
-      if (inicioGrupo) {
+      const agrupada = inicioGrupo
+      if (agrupada) {
         let span = 1
         while (indiceFila + span < visibles.length && visibles[indiceFila + span].valores[0] === valor) span += 1
-        altoCelda = altoFila * span
+        altoCelda = Math.max(altoFila * span, py(tabla.grupoAlto || tabla.filaAlto))
       }
-      ctx.fillStyle = columna.destacada ? tabla.destacadaFondo : tabla.filaFondo
+      ctx.fillStyle = agrupada ? (tabla.grupoFondo || tabla.filaFondo) : columna.destacada ? tabla.destacadaFondo : tabla.filaFondo
       ctx.fillRect(x, filaY, anchos[indice], altoCelda)
-      const tamano = columna.numero ? px(tabla.numeroTamano) : px(tabla.filaTamano)
-      ctx.font = fuente(Math.min(tamano, altoFila * 0.72), 'Arial', columna.numero, false)
-      ctx.fillStyle = columna.numero ? tabla.numeroColor : tabla.filaColor
-      const centrada = columna.numero || columna.destacada || (tipo === 'POSICIONES' && columna.titulo !== 'EQUIPO')
+      const tamano = agrupada
+        ? px(tabla.grupoTamano || tabla.filaTamano)
+        : columna.numero ? px(tabla.numeroTamano) : px(tabla.filaTamano)
+      ctx.font = fuente(Math.min(tamano, altoCelda * 0.72), agrupada ? (tabla.grupoFamilia || 'Arial') : 'Arial', columna.numero, false)
+      ctx.fillStyle = agrupada ? (tabla.grupoColor || tabla.filaColor) : columna.numero ? tabla.numeroColor : tabla.filaColor
+      const centrada = agrupada || columna.numero || columna.destacada || (tipo === 'POSICIONES' && columna.titulo !== 'EQUIPO')
       ctx.textAlign = centrada ? 'center' : 'left'
+      ctx.textBaseline = 'middle'
       const texto = recortar(ctx, valor, anchos[indice] - px(16))
       const textoX = centrada ? x + anchos[indice] / 2 : x + px(10)
       ctx.fillText(texto, textoX, filaY + altoCelda / 2)

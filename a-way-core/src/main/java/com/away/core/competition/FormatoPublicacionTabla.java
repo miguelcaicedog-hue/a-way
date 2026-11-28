@@ -114,6 +114,21 @@ public class FormatoPublicacionTabla {
     @Column(name = "agrupar_primera_columna", nullable = false)
     private boolean agruparPrimeraColumna;
 
+    @Column(name = "grupo_familia", nullable = false, length = 40)
+    private String grupoFamilia;
+
+    @Column(name = "grupo_tamano", nullable = false)
+    private int grupoTamano;
+
+    @Column(name = "grupo_alto", nullable = false)
+    private int grupoAlto;
+
+    @Column(name = "grupo_fondo", nullable = false, length = 7)
+    private String grupoFondo;
+
+    @Column(name = "grupo_color", nullable = false, length = 7)
+    private String grupoColor;
+
     @Column(name = "ajustar_ancho_texto", nullable = false)
     private boolean ajustarAnchoTexto;
 
@@ -405,6 +420,46 @@ public class FormatoPublicacionTabla {
 
     public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) {
         this.agruparPrimeraColumna = agruparPrimeraColumna;
+    }
+
+    public String getGrupoFamilia() {
+        return grupoFamilia;
+    }
+
+    public void setGrupoFamilia(String grupoFamilia) {
+        this.grupoFamilia = grupoFamilia;
+    }
+
+    public int getGrupoTamano() {
+        return grupoTamano;
+    }
+
+    public void setGrupoTamano(int grupoTamano) {
+        this.grupoTamano = grupoTamano;
+    }
+
+    public int getGrupoAlto() {
+        return grupoAlto;
+    }
+
+    public void setGrupoAlto(int grupoAlto) {
+        this.grupoAlto = grupoAlto;
+    }
+
+    public String getGrupoFondo() {
+        return grupoFondo;
+    }
+
+    public void setGrupoFondo(String grupoFondo) {
+        this.grupoFondo = grupoFondo;
+    }
+
+    public String getGrupoColor() {
+        return grupoColor;
+    }
+
+    public void setGrupoColor(String grupoColor) {
+        this.grupoColor = grupoColor;
     }
 
     public boolean isAjustarAnchoTexto() {

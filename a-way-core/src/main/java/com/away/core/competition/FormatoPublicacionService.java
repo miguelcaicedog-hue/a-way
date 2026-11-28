@@ -187,6 +187,11 @@ public class FormatoPublicacionService {
             fila.setLugarY(medida(pedido.getLugarY(), "nombre de lugar y", 0, 4000));
             fila.setLugarTamano(medida(pedido.getLugarTamano(), "nombre de lugar tamaño", 8, 200));
             fila.setAgruparPrimeraColumna(pedido.isAgruparPrimeraColumna());
+            fila.setGrupoFamilia(familia(pedido.getGrupoFamilia(), "celda agrupada"));
+            fila.setGrupoTamano(medida(pedido.getGrupoTamano(), "texto de la celda agrupada", 8, 120));
+            fila.setGrupoAlto(medida(pedido.getGrupoAlto(), "alto de la celda agrupada", 8, 800));
+            fila.setGrupoFondo(color(pedido.getGrupoFondo(), "fondo de la celda agrupada"));
+            fila.setGrupoColor(color(pedido.getGrupoColor(), "texto de la celda agrupada"));
             fila.setAjustarAnchoTexto(pedido.isAjustarAnchoTexto());
             String fondo = fondoPublicacion(pedido.getFondoPublicacion());
             fila.setFondoPublicacion(fondo != null && fondo.equals(imagenPlantilla) ? null : fondo);
@@ -297,6 +302,11 @@ public class FormatoPublicacionService {
         tabla.setLugarTamano(28);
         tabla.setFondoPublicacion(null);
         tabla.setAgruparPrimeraColumna(false);
+        tabla.setGrupoFamilia("Arial");
+        tabla.setGrupoTamano(22);
+        tabla.setGrupoAlto(64);
+        tabla.setGrupoFondo("#071833");
+        tabla.setGrupoColor("#FFFFFF");
         tabla.setAjustarAnchoTexto(false);
         tabla.setEstado("ACTIVO");
         OffsetDateTime ahora = OffsetDateTime.now();

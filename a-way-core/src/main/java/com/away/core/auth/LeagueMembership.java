@@ -27,11 +27,35 @@ public class LeagueMembership {
     @Column(nullable = false)
     private String role;
 
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public AppUser getUser() {
+        return user;
+    }
+
+    public void setUser(AppUser user) {
+        this.user = user;
+    }
+
     public League getLeague() {
         return league;
     }
 
+    public void setLeague(League league) {
+        this.league = league;
+    }
+
     public String getRole() {
         return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

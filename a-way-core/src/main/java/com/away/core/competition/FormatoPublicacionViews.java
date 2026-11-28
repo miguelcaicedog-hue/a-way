@@ -177,6 +177,11 @@ public class FormatoPublicacionViews {
         private final int lugarY;
         private final int lugarTamano;
         private final boolean agruparPrimeraColumna;
+        private final String grupoFamilia;
+        private final int grupoTamano;
+        private final int grupoAlto;
+        private final String grupoFondo;
+        private final String grupoColor;
         private final boolean ajustarAnchoTexto;
         private final String fondoPublicacion;
 
@@ -212,6 +217,11 @@ public class FormatoPublicacionViews {
             this.lugarY = tabla.getLugarY();
             this.lugarTamano = tabla.getLugarTamano();
             this.agruparPrimeraColumna = tabla.isAgruparPrimeraColumna();
+            this.grupoFamilia = tabla.getGrupoFamilia();
+            this.grupoTamano = tabla.getGrupoTamano();
+            this.grupoAlto = tabla.getGrupoAlto();
+            this.grupoFondo = tabla.getGrupoFondo();
+            this.grupoColor = tabla.getGrupoColor();
             this.ajustarAnchoTexto = tabla.isAjustarAnchoTexto();
             String fondo = tabla.getFondoPublicacion();
             this.fondoPublicacion = fondo == null || fondo.trim().isEmpty() ? imagenPlantilla : fondo;
@@ -248,6 +258,11 @@ public class FormatoPublicacionViews {
         public int getLugarY() { return lugarY; }
         public int getLugarTamano() { return lugarTamano; }
         public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
+        public String getGrupoFamilia() { return grupoFamilia; }
+        public int getGrupoTamano() { return grupoTamano; }
+        public int getGrupoAlto() { return grupoAlto; }
+        public String getGrupoFondo() { return grupoFondo; }
+        public String getGrupoColor() { return grupoColor; }
         public boolean isAjustarAnchoTexto() { return ajustarAnchoTexto; }
         public String getFondoPublicacion() { return fondoPublicacion; }
     }
@@ -402,6 +417,11 @@ public class FormatoPublicacionViews {
         private Integer lugarY;
         private Integer lugarTamano;
         private boolean agruparPrimeraColumna;
+        private String grupoFamilia;
+        private Integer grupoTamano;
+        private Integer grupoAlto;
+        private String grupoFondo;
+        private String grupoColor;
         private boolean ajustarAnchoTexto;
         private String fondoPublicacion;
 
@@ -467,6 +487,16 @@ public class FormatoPublicacionViews {
         public void setLugarTamano(Integer lugarTamano) { this.lugarTamano = lugarTamano; }
         public boolean isAgruparPrimeraColumna() { return agruparPrimeraColumna; }
         public void setAgruparPrimeraColumna(boolean agruparPrimeraColumna) { this.agruparPrimeraColumna = agruparPrimeraColumna; }
+        public String getGrupoFamilia() { return grupoFamilia; }
+        public void setGrupoFamilia(String grupoFamilia) { this.grupoFamilia = grupoFamilia; }
+        public Integer getGrupoTamano() { return grupoTamano; }
+        public void setGrupoTamano(Integer grupoTamano) { this.grupoTamano = grupoTamano; }
+        public Integer getGrupoAlto() { return grupoAlto; }
+        public void setGrupoAlto(Integer grupoAlto) { this.grupoAlto = grupoAlto; }
+        public String getGrupoFondo() { return grupoFondo; }
+        public void setGrupoFondo(String grupoFondo) { this.grupoFondo = grupoFondo; }
+        public String getGrupoColor() { return grupoColor; }
+        public void setGrupoColor(String grupoColor) { this.grupoColor = grupoColor; }
         public boolean isAjustarAnchoTexto() { return ajustarAnchoTexto; }
         public void setAjustarAnchoTexto(boolean ajustarAnchoTexto) { this.ajustarAnchoTexto = ajustarAnchoTexto; }
         public String getFondoPublicacion() { return fondoPublicacion; }

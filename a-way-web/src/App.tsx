@@ -22,6 +22,7 @@ import { TarjetasCatalogoScreen } from './TarjetasCatalogo'
 import { DesempateGoleadoresScreen } from './DesempateGoleadores'
 import { DesempateEquiposScreen } from './DesempateEquipos'
 import { PublicacionesScreen } from './Publicaciones'
+import { UsuariosScreen } from './Usuarios'
 
 type Membership = {
   leagueId: string
@@ -33,6 +34,7 @@ type Profile = {
   username: string
   displayName: string
   master: boolean
+  hasFoto?: boolean
   memberships: Membership[]
 }
 
@@ -64,6 +66,7 @@ const sections = [
   { id: 'desempate-goleadores', label: 'Desempate goleadores', summary: 'Orden de los criterios de desempate de la tabla de goleadores de la edición.' },
   { id: 'desempate-equipos', label: 'Desempate equipos', summary: 'Orden de los criterios de desempate de la tabla de posiciones de cada grupo.' },
   { id: 'publicaciones', label: 'Publicaciones', summary: 'Estilo del gráfico de la liga y descarga de goleadores, resultados, horarios y tabla de posiciones.' },
+  { id: 'usuarios', label: 'Usuario', summary: 'Usuarios del sistema: estado, rol de la liga y foto.' },
 ] as const
 
 type SectionId = (typeof sections)[number]['id']
@@ -78,6 +81,7 @@ const menuGroups: { label: string; ids: readonly MenuNodo[] }[] = [
   { label: 'Fixture', ids: ['grupos', 'fases', 'clasificacion', 'calendario', 'horarios'] },
   { label: 'Jornada', ids: ['resultados', 'goles', 'tabla', 'suspensiones-jugador'] },
   { label: 'Administración', ids: [{ label: 'General', ids: ['canchas', 'arbitros'] }, { label: 'Disciplina', ids: ['sanciones-jugador', 'catalogo-tarjetas', 'suspensiones'] }, { label: 'Criterio de desempate', ids: ['desempate-goleadores', 'desempate-equipos'] }, 'publicaciones'] },
+  { label: 'Seguridad', ids: ['usuarios'] },
 ]
 
 const ACCESOS_INICIALES: SectionId[] = ['resultados', 'horarios', 'tabla', 'goles', 'calendario']
@@ -132,15 +136,12 @@ function accesosUsados(usuario: string, staff: boolean) {
   return elegidas.slice(0, 5)
 }
 
-function roleLabel(profile: Profile) {
-  if (profile.master) {
-    return 'Master'
+function FotoSesion({ hasFoto }: { hasFoto?: boolean }) {
+  const [falla, setFalla] = useState(false)
+  if (!hasFoto || falla) {
+    return <span className="session-foto vacio" aria-hidden="true" />
   }
-  const membership = profile.memberships[0]
-  if (!membership) {
-    return 'Sin rol'
-  }
-  return membership.role === 'ADMINISTRATIVO' ? 'Administrativo' : 'Asistente'
+  return <img className="session-foto" alt="" src="/api/auth/foto" onError={() => setFalla(true)} />
 }
 
 function IconoMenu({ nombre }: { nombre: string }) {
@@ -202,11 +203,30 @@ function IconoMenu({ nombre }: { nombre: string }) {
       dibujo = <path {...trazo} d="M6 4v16M6 5h9l-2 3 2 3H6" />
       break
     case 'Resultados':
-      dibujo = <path {...trazo} d="M5 7h14v10H5zM12 7v10M8 11h1M15 11h1" />
+      dibujo = (
+        <text x="12" y="16" fill="currentColor" stroke="none" fontSize="10" fontWeight="700" textAnchor="middle">2-1</text>
+      )
       break
     case 'Goleadores':
     case 'Desempate goleadores':
-      dibujo = <><circle {...trazo} cx="12" cy="12" r="8" /><path {...trazo} d="M12 4v3M12 17v3M4 12h3M17 12h3M7.5 7.5l2 2M14.5 14.5l2 2M16.5 7.5l-2 2M9.5 14.5l-2 2" /></>
+      dibujo = (
+        <svg x="0" y="0" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <clipPath id={`icono-balon-${nombre.replace(/\s/g, '-')}`}>
+              <circle cx="50" cy="50" r="46" />
+            </clipPath>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="4" />
+          <g clipPath={`url(#icono-balon-${nombre.replace(/\s/g, '-')})`} fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinejoin="round">
+            <polygon points="50,34 65.22,45.06 59.4,62.94 40.6,62.94 34.78,45.06" />
+            <polygon points="50,34 51.97,15.29 69.16,7.64 84.38,18.7 82.41,37.41 65.22,45.06" />
+            <polygon points="65.22,45.06 83.62,41.15 96.2,55.12 90.39,73.01 72,76.92 59.41,62.95" />
+            <polygon points="59.4,62.94 68.81,79.23 59.41,95.52 40.6,95.53 31.19,79.24 40.59,62.95" />
+            <polygon points="40.6,62.94 28.02,76.93 9.61,73.02 3.79,55.13 16.37,41.14 34.78,45.05" />
+            <polygon points="34.78,45.06 17.59,37.41 15.62,18.7 30.84,7.64 48.03,15.29 50,34" />
+          </g>
+        </svg>
+      )
       break
     case 'Tabla':
       dibujo = <path {...trazo} d="M5 6h14M5 12h14M5 18h14M8 6v12" />
@@ -216,6 +236,12 @@ function IconoMenu({ nombre }: { nombre: string }) {
       break
     case 'Administración':
       dibujo = <><circle {...trazo} cx="12" cy="12" r="3" /><path {...trazo} d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.5 1.5M16.9 16.9l1.5 1.5M18.4 5.6l-1.5 1.5M7.1 16.9l-1.5 1.5" /></>
+      break
+    case 'Seguridad':
+      dibujo = <><rect {...trazo} x="6" y="11" width="12" height="9" rx="1.5" /><path {...trazo} d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3" /></>
+      break
+    case 'Usuario':
+      dibujo = <><circle {...trazo} cx="12" cy="8" r="3" /><path {...trazo} d="M5 19c1.2-3 3.6-4.5 7-4.5s5.8 1.5 7 4.5" /></>
       break
     case 'General':
       dibujo = <path {...trazo} d="M4 8h10M18 8h2M4 16h2M10 16h10M14 6v4M8 14v4" />
@@ -527,12 +553,15 @@ function App() {
             const staff = profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO')
             const seccionesDe = (id: SectionId) => {
               const item = sections.find((sectionItem) => sectionItem.id === id)
-              if (!item || (item.id === 'suspensiones-jugador' && !staff)) {
+              if (!item || (item.id === 'suspensiones-jugador' && !staff) || (item.id === 'usuarios' && !profile.master)) {
                 return []
               }
               return [item]
             }
             const items = group.ids.flatMap((nodo) => typeof nodo === 'string' ? seccionesDe(nodo) : nodo.ids.flatMap(seccionesDe))
+            if (items.length === 0) {
+              return null
+            }
             if (items.length === 1 && items[0].id === 'inicio') {
               return (
                 <button
@@ -667,13 +696,16 @@ function App() {
               ))}
             </select>
           </label>
-          <span>{roleLabel(profile)}</span>
+          <span className="session-usuario">
+            <FotoSesion hasFoto={profile.hasFoto} />
+            {profile.displayName}
+          </span>
           <button type="button" onClick={onLogout}>
             Salir
           </button>
           </div>
         </header>
-        <main className={section === 'calendario' || section === 'horarios' || section === 'resultados' || section === 'goles' || section === 'tabla' || section === 'suspensiones' ? 'workspace estrecho' : 'workspace'}>
+        <main className={section === 'ligas' || section === 'ediciones' || section === 'categorias' || section === 'calendario' || section === 'horarios' || section === 'resultados' || section === 'goles' || section === 'tabla' || section === 'suspensiones' || section === 'usuarios' ? 'workspace estrecho' : 'workspace'}>
         <h1>{current.label}</h1>
         {section !== 'inicio' && <p>{current.summary}</p>}
         {section === 'inicio' && (
@@ -685,25 +717,7 @@ function App() {
               profile.master || profile.memberships.some((item) => item.role === 'ADMINISTRATIVO'),
             ).map((item) => (
               <button key={item.id} type="button" onClick={() => abrirSeccion(item.id)}>
-                <span className="acceso-balon">
-                  <svg className="acceso-costuras" viewBox="0 0 100 100" aria-hidden="true">
-                    <defs>
-                      <clipPath id={`corte-balon-${item.id}`}>
-                        <circle cx="50" cy="50" r="47.5" />
-                      </clipPath>
-                    </defs>
-                    <g clipPath={`url(#corte-balon-${item.id})`}>
-                      <circle cx="50" cy="50" r="47.5" />
-                      <polygon points="50,34 51.97,15.29 69.16,7.64 84.38,18.7 82.41,37.41 65.22,45.06" />
-                      <polygon points="65.22,45.06 83.62,41.15 96.2,55.12 90.39,73.01 72,76.92 59.41,62.95" />
-                      <polygon points="59.4,62.94 68.81,79.23 59.41,95.52 40.6,95.53 31.19,79.24 40.59,62.95" />
-                      <polygon points="40.6,62.94 28.02,76.93 9.61,73.02 3.79,55.13 16.37,41.14 34.78,45.05" />
-                      <polygon points="34.78,45.06 17.59,37.41 15.62,18.7 30.84,7.64 48.03,15.29 50,34" />
-                      <polygon className="centro" points="50,34 65.22,45.06 59.4,62.94 40.6,62.94 34.78,45.06" />
-                    </g>
-                  </svg>
-                  <IconoMenu nombre={item.label} />
-                </span>
+                <IconoMenu nombre={item.label} />
                 <span>{item.label}</span>
               </button>
             ))}
@@ -762,6 +776,7 @@ function App() {
         {section === 'desempate-goleadores' && <DesempateGoleadoresScreen key={editionId} profile={profile} editionId={editionId} />}
         {section === 'desempate-equipos' && <DesempateEquiposScreen key={editionId} profile={profile} editionId={editionId} />}
         {section === 'publicaciones' && <PublicacionesScreen key={leagueId} profile={profile} leagueId={leagueId} editionId={editionId} />}
+        {section === 'usuarios' && <UsuariosScreen key={leagueId} profile={profile} leagueId={leagueId} />}
       </main>
       </div>
     </div>

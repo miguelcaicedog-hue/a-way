@@ -31,6 +31,8 @@ public class DatabaseUserDetailsService implements UserDetailsService {
         }
         user.getMemberships().forEach(membership ->
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + membership.getRole())));
-        return new User(user.getUsername(), user.getPasswordHash(), authorities);
+        boolean activo = "ACTIVO".equals(user.getEstado());
+        return new User(user.getUsername(), user.getPasswordHash() == null ? "" : user.getPasswordHash(),
+                activo, true, true, true, authorities);
     }
 }

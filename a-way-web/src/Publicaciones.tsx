@@ -586,6 +586,11 @@ export function PublicacionesScreen({
                           disabled={!writable}
                           onChange={(valor) => cambiarTabla(tabla.tipo, 'agruparPrimeraColumna', valor)}
                         />
+                        <Letra etiqueta="Letra" valor={tabla.grupoFamilia || 'Arial'} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'grupoFamilia', valor)} />
+                        <Numero etiqueta="Tamaño" valor={tabla.grupoTamano || tabla.filaTamano} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'grupoTamano', valor)} />
+                        <Numero etiqueta="Alto" valor={tabla.grupoAlto || tabla.filaAlto} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'grupoAlto', valor)} />
+                        <ColorCampo etiqueta="Fondo" valor={tabla.grupoFondo || tabla.filaFondo} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'grupoFondo', valor)} />
+                        <ColorCampo etiqueta="Color" valor={tabla.grupoColor || tabla.filaColor} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'grupoColor', valor)} />
                       </Grupo>
                       <Grupo titulo="Posición de la tabla" abierto>
                         <Numero etiqueta="X" valor={tabla.tablaX} disabled={!writable} onChange={(valor) => cambiarTabla(tabla.tipo, 'tablaX', valor)} />
